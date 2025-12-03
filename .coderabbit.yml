@@ -1,0 +1,23 @@
+reviewer: "code-review-bot"
+language: "ko-KR"
+frameworks:
+  - "Spring Boot"
+  - "JPA"
+rules:
+  - name: "Spring Boot Best Practices"
+  - name: "Use Lombok Judiciously"
+  - name: "Avoid Field Injection"
+  - name: "Avoid N+1 Queries"
+  - name: "Use Constructor Injection"
+style: "concise"
+ignore:
+  - path: "src/test/"
+  - path: "**/*.md"
+reviews:
+  review_status: true
+  profile: "chill"
+  auto_review:
+    enabled: true
+    drafts: false
+chat:
+  auto_reply: true
