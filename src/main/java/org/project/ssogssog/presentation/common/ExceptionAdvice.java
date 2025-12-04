@@ -1,11 +1,11 @@
-package org.project.ssogssog.global.response.code.exception;
+package org.project.ssogssog.presentation.common;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.global.response.ApiResponse;
-import org.project.ssogssog.global.response.code.dto.ErrorReasonDTO;
-import org.project.ssogssog.global.response.code.status.ErrorStatus;
+import org.project.ssogssog.application.response.exception.GeneralException;
+import org.project.ssogssog.application.response.dto.ErrorReasonDTO;
+import org.project.ssogssog.application.response.status.ErrorStatus;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;

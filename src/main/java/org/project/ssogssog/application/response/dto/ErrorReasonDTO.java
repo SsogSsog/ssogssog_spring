@@ -1,4 +1,4 @@
-package org.project.ssogssog.global.response.code.dto;
+package org.project.ssogssog.application.response.dto;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @Builder
-public class ReasonDTO {
+public class ErrorReasonDTO {
 
     private HttpStatus httpStatus;
 

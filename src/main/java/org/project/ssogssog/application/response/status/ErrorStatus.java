@@ -1,8 +1,8 @@
-package org.project.ssogssog.global.response.code.status;
+package org.project.ssogssog.application.response.status;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.project.ssogssog.global.response.code.dto.ErrorReasonDTO;
+import org.project.ssogssog.application.response.dto.ErrorReasonDTO;
 import org.springframework.http.HttpStatus;
 
 @Getter

@@ -1,13 +1,13 @@
-package org.project.ssogssog.global.response;
+package org.project.ssogssog.presentation.common;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.project.ssogssog.global.response.code.status.BaseCode;
-import org.project.ssogssog.global.response.code.status.BaseErrorCode;
-import org.project.ssogssog.global.response.code.status.SuccessStatus;
+import org.project.ssogssog.application.response.status.BaseCode;
+import org.project.ssogssog.application.response.status.BaseErrorCode;
+import org.project.ssogssog.application.response.status.SuccessStatus;
 
 @Getter
 @AllArgsConstructor
