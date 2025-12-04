@@ -5,9 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.project.ssogssog.application.response.status.BaseCode;
-import org.project.ssogssog.application.response.status.BaseErrorCode;
-import org.project.ssogssog.application.response.status.SuccessStatus;
+import org.project.ssogssog.application.common.response.status.BaseCode;
+import org.project.ssogssog.application.common.response.status.BaseErrorCode;
+import org.project.ssogssog.application.common.response.status.SuccessStatus;
 
 @Getter
 @AllArgsConstructor
