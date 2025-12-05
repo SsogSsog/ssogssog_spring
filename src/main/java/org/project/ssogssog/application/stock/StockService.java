@@ -73,6 +73,11 @@ public class StockService {
 
         // 2. XML 파싱 준비
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        // XXE 공격 방지
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document doc = builder.parse(new InputSource(new StringReader(xmlData)));
         doc.getDocumentElement().normalize();
