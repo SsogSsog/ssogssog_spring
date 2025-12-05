@@ -4,10 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
-import org.springframework.beans.factory.annotation.Value;
+import org.project.ssogssog.infrastructure.opendart.OpenDartClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -33,10 +32,7 @@ import java.util.zip.ZipInputStream;
 public class StockService {
 
     private final StockRepository stockRepository;
-    private final RestTemplate restTemplate;
-
-    @Value("${opendart.api-key}")
-    private String apiKey;
+    private final OpenDartClient openDartClient;
 
     /**
      * [Step 1] DART 고유번호(corp_code) 업데이트
@@ -47,11 +43,9 @@ public class StockService {
     public void fillCorpCodes() {
         log.info("🚀 OpenDART 고유번호(CorpCode) 업데이트 시작...");
 
-        String url = "https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key=" + apiKey;
-
         try {
             // 1. ZIP 파일 다운로드
-            byte[] zipBytes = restTemplate.getForObject(url, byte[].class);
+            byte[] zipBytes = openDartClient.getCorpCodeZip();
             if (zipBytes == null) throw new RuntimeException("OpenDART 다운로드 실패");
 
             // 2. 압축 해제 (XML 문자열 획득)
