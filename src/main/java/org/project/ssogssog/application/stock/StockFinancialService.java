@@ -9,11 +9,11 @@ import org.project.ssogssog.domain.stock.entity.StockFinancial;
 import org.project.ssogssog.domain.stock.repository.StockFinancialRepository;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.infrastructure.opendart.OpenDartClient;
+import org.project.ssogssog.infrastructure.opendart.StockFinancialWriter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -22,6 +22,8 @@ public class StockFinancialService {
 
     private final StockRepository stockRepository;
     private final StockFinancialRepository stockFinancialRepository;
+    private final StockFinancialWriter stockFinancialWriter;
+
     private final ObjectMapper objectMapper = new ObjectMapper(); // JSON 파싱용
     private final OpenDartClient openDartClient;
 
@@ -45,14 +47,13 @@ public class StockFinancialService {
 
                 // 2. 데이터가 있으면 저장 (API에 데이터가 없는 경우 null 반환됨)
                 if (financial != null) {
-                    saveOrUpdate(financial);
+                    stockFinancialWriter.saveOrUpdate(financial);
                     successCount++;
                 } else {
                     // 데이터가 없는 경우 (금융업이거나, 아직 공시 안 됨 등)
                     failCount++;
                 }
-
-                System.out.println("timeSleep 들어가기 직전 : " + failCount);
+                log.debug("Processing stock: {}, failCount: {}", stock.getStockCode(), failCount);
 
                 // API 호출 제한 고려 (너무 빠르면 차단될 수 있으니 0.1초 대기)
                 Thread.sleep(100);
@@ -65,7 +66,7 @@ public class StockFinancialService {
         log.info("✅ 재무제표 수집 완료. 성공: {}, 실패/없음: {}", successCount, failCount);
     }
 
-    // --- [내부 로직 1] API 호출 및 DTO 변환 ---
+    // --- [내부 로직] API 호출 및 DTO 변환 ---
     private StockFinancial fetchFinancialData(Stock stock, Integer year, String reportCode) {
 
         if (stock.getCorpCode() == null || stock.getCorpCode().isEmpty()) {
@@ -126,25 +127,6 @@ public class StockFinancialService {
         } catch (Exception e) {
             log.warn("파싱 에러: {}", stock.getCorpName());
             return null;
-        }
-    }
-
-    // --- [내부 로직 2] 저장 (Upsert) ---
-    protected void saveOrUpdate(StockFinancial newData) {
-        // 기존 데이터 확인 (Stock ID + 연도 + 분기)
-        Optional<StockFinancial> existingOpt = stockFinancialRepository
-                .findByStockIdAndYearAndQuarter(
-                        newData.getStock().getId(),
-                        newData.getYear(),
-                        newData.getQuarter()
-                );
-
-        if (existingOpt.isPresent()) {
-            // 이미 있으면? -> (JPA Dirty Checking으로 업데이트하거나, 여기선 편의상 삭제 후 재등록 or 값 변경)
-            // 여기선 간단하게 기존 데이터가 있으면 pass (업데이트 로직 필요시 추가)
-            // log.info("이미 존재함: {}", newData.getStock().getCorpName());
-        } else {
-            stockFinancialRepository.save(newData);
         }
     }
 
