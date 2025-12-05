@@ -9,7 +9,14 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "daily_price")
+@Table(name = "daily_price",
+    uniqueConstraints = {
+        @UniqueConstraint(
+                name = "uk_daily_price_stock_date",
+                columnNames = {"stock_id", "date"}
+        )
+    }
+)
 @Getter
 @Builder
 @NoArgsConstructor
