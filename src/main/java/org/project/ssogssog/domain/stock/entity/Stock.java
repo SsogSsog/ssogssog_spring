@@ -21,10 +21,10 @@ public class Stock {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // 시스템 내부 식별자
 
-    @Unique
+    @Column(unique = true, nullable = false)
     private String stockCode; // 주식 종목코드 (예: 005930)
 
-    @Unique
+    @Column(unique = true, nullable = false)
     private String corpCode;  // DART 고유번호 (예: 00126380)
 
     private String corpName;  // 회사명 (예: 삼성전자)
