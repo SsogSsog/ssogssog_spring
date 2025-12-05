@@ -68,6 +68,11 @@ public class StockFinancialService {
     // --- [내부 로직 1] API 호출 및 DTO 변환 ---
     private StockFinancial fetchFinancialData(Stock stock, Integer year, String reportCode) {
 
+        if (stock.getCorpCode() == null || stock.getCorpCode().isEmpty()) {
+            log.debug("CorpCode 없음: {} ({})", stock.getCorpName(), stock.getStockCode());
+            return null;
+        }
+
         try {
             String response = openDartClient.getFinancialInfo(stock.getCorpCode(), year, reportCode);
             JsonNode root = objectMapper.readTree(response);
