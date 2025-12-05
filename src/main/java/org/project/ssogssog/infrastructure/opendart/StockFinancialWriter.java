@@ -12,7 +12,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class StockFinancialWriter {
 
-    StockFinancialRepository stockFinancialRepository;
+    private final StockFinancialRepository stockFinancialRepository;
 
     @Transactional
     // --- [내부 로직] 저장 (Upsert) ---
