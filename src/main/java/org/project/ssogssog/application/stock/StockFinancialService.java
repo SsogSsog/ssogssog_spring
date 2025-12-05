@@ -8,13 +8,10 @@ import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.entity.StockFinancial;
 import org.project.ssogssog.domain.stock.repository.StockFinancialRepository;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
-import org.springframework.beans.factory.annotation.Value;
+import org.project.ssogssog.infrastructure.opendart.OpenDartClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,15 +23,14 @@ public class StockFinancialService {
     private final StockRepository stockRepository;
     private final StockFinancialRepository stockFinancialRepository;
     private final ObjectMapper objectMapper = new ObjectMapper(); // JSON 파싱용
-
-    @Value("${opendart.api-key:YOUR_API_KEY}") // application.yml 키
-    private String apiKey;
+    private final OpenDartClient openDartClient;
 
     /**
      * 전 종목 재무제표 수집 및 저장
      * @param year 대상 연도 (예: 2023)
      * @param reprtCode 보고서 코드 (1분기: 11013, 반기: 11012, 3분기: 11014, 사업보고서: 11011)
      */
+    @Transactional
     public void updateAllFinancials(Integer year, String reprtCode) {
         List<Stock> stocks = stockRepository.findAll(); // 2,500개 종목 로딩
         log.info("총 {}개 종목의 {}년도 보고서({}) 수집 시작...", stocks.size(), year, reprtCode);
@@ -71,20 +67,9 @@ public class StockFinancialService {
 
     // --- [내부 로직 1] API 호출 및 DTO 변환 ---
     private StockFinancial fetchFinancialData(Stock stock, Integer year, String reportCode) {
-        String url = "https://opendart.fss.or.kr/api/fnlttSinglAcnt.json";
-
-        URI uri = UriComponentsBuilder.fromUriString(url)
-                .queryParam("crtfc_key", apiKey)
-                .queryParam("corp_code", stock.getCorpCode()) // Stock 엔티티의 corpCode 사용
-                .queryParam("bsns_year", year)
-                .queryParam("reprt_code", reportCode)
-                .build()
-                .toUri();
-
-        RestTemplate restTemplate = new RestTemplate();
 
         try {
-            String response = restTemplate.getForObject(uri, String.class);
+            String response = openDartClient.getFinancialInfo(stock.getCorpCode(), year, reportCode);
             JsonNode root = objectMapper.readTree(response);
 
             if (!"000".equals(root.path("status").asText())) {
@@ -140,7 +125,6 @@ public class StockFinancialService {
     }
 
     // --- [내부 로직 2] 저장 (Upsert) ---
-    @Transactional
     protected void saveOrUpdate(StockFinancial newData) {
         // 기존 데이터 확인 (Stock ID + 연도 + 분기)
         Optional<StockFinancial> existingOpt = stockFinancialRepository
