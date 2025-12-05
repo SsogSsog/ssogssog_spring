@@ -1,5 +1,6 @@
 package org.project.ssogssog.infrastructure.opendart;
 
+import lombok.RequiredArgsConstructor;
 import org.project.ssogssog.domain.stock.entity.StockFinancial;
 import org.project.ssogssog.domain.stock.repository.StockFinancialRepository;
 import org.springframework.stereotype.Component;
@@ -8,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 @Component
+@RequiredArgsConstructor
 public class StockFinancialWriter {
 
     StockFinancialRepository stockFinancialRepository;

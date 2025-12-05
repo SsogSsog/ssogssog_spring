@@ -32,7 +32,6 @@ public class StockFinancialService {
      * @param year 대상 연도 (예: 2023)
      * @param reprtCode 보고서 코드 (1분기: 11013, 반기: 11012, 3분기: 11014, 사업보고서: 11011)
      */
-    @Transactional
     public void updateAllFinancials(Integer year, String reprtCode) {
         List<Stock> stocks = stockRepository.findAll(); // 2,500개 종목 로딩
         log.info("총 {}개 종목의 {}년도 보고서({}) 수집 시작...", stocks.size(), year, reprtCode);
