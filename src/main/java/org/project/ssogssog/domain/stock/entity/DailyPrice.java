@@ -41,4 +41,11 @@ public class DailyPrice {
 
     private Long volume;        // 거래량
     private Long marketCap;     // 시가총액
+
+    private Integer changePrice;   // 등락금액
+    private Double changeRate;     // 등락률
+    private Integer prevClosePrice;     // 전일 종가
+
+    private Long listedShares;        // (상장주식수)
+    private Long foreignHeldShares;   // (외국인 보유주식수)
 }
