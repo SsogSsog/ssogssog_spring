@@ -9,6 +9,7 @@ import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.DailyPriceRepository;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
+import org.project.ssogssog.infrastructure.ksi.DailyPriceWriter;
 import org.project.ssogssog.infrastructure.ksi.KSIClient;
 
 import org.springframework.stereotype.Service;
@@ -23,8 +24,9 @@ import java.util.Optional;
 public class KisMarketDataService {
 
     private final StockRepository stockRepository;
-    private final DailyPriceRepository dailyPriceRepository;
-    // 1초에 15개 요청 제한 (KIS 제한: 초당 20건, 안전마진 확보)
+    private final DailyPriceWriter dailyPriceWriter;
+
+    // 1초에 10개 요청 제한 (KIS 제한: 초당 20건, 안전마진 확보)
     private final RateLimiter rateLimiter = RateLimiter.create(10.0);
 
     private final KSIClient ksiClient;
@@ -62,7 +64,7 @@ public class KisMarketDataService {
                         index, stocks.size(), stock.getCorpName(), stock.getStockCode());
 
                 if (dailyPrice != null) {
-                    saveDailyPrice(dailyPrice);
+                    dailyPriceWriter.saveDailyPrice(dailyPrice);
                     success++;
                 }
             } catch (Exception e) {
@@ -116,7 +118,7 @@ public class KisMarketDataService {
             long volume = Parser.parserStringToLong(output.path("acml_vol").asText().trim());
             long marketCap = Parser.parserStringToLong(output.path("hts_avls").asText().trim()); // 억 단위로 환산됨
 
-            long listedShares     = Parser.parserStringToLong(output.path("lstn_stcn").asText().trim());
+            long listedShares = Parser.parserStringToLong(output.path("lstn_stcn").asText().trim());
             long foreignHeldShares = Parser.parserStringToLong(output.path("frgn_hldn_qty").asText().trim());
             int changePrice = Parser.parserStringToInt(output.path("prdy_vrss").asText().trim());
             double changeRate = Parser.parserStringToDouble(output.path("prdy_ctrt").asText().trim());
@@ -142,18 +144,6 @@ public class KisMarketDataService {
             log.error("시세 파싱 에러 - 종목: {}({}), 메시지: {}",
                     stock.getCorpName(), stock.getStockCode(), e.getMessage(), e);
             return null;
-        }
-    }
-
-    // --- [내부 3] 저장 (중복 방지) ---
-    protected void saveDailyPrice(DailyPrice newPrice) {
-        Optional<DailyPrice> existing = dailyPriceRepository.findByStockIdAndDate(
-                newPrice.getStock().getId(), newPrice.getDate());
-
-        if (existing.isEmpty()) {
-            dailyPriceRepository.save(newPrice);
-        } else {
-            // 이미 있으면 업데이트 로직 (필요시 구현)
         }
     }
 
@@ -211,7 +201,7 @@ public class KisMarketDataService {
             long volume = Parser.parserStringToLong(output.path("acml_vol").asText().trim());
             long marketCap = Parser.parserStringToLong(output.path("hts_avls").asText().trim()); // 억 단위로 환산됨
 
-            long listedShares     = Parser.parserStringToLong(output.path("lstn_stcn").asText().trim());
+            long listedShares = Parser.parserStringToLong(output.path("lstn_stcn").asText().trim());
             long foreignHeldShares = Parser.parserStringToLong(output.path("frgn_hldn_qty").asText().trim());
             int changePrice = Parser.parserStringToInt(output.path("prdy_vrss").asText().trim());
             double changeRate = Parser.parserStringToDouble(output.path("prdy_ctrt").asText().trim());
