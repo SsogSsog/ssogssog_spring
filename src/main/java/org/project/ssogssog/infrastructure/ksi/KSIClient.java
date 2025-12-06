@@ -71,7 +71,12 @@ public class KSIClient {
         ResponseEntity<String> response = restTemplate.exchange(
                 uri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
 
-        log.info("API Response for {}: {}", stockCode, response.getBody());
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            log.error("KIS API 호출 실패 - 종목: {}, 상태: {}", stockCode, response.getStatusCode());
+            throw new RuntimeException("KIS API 호출 실패: " + response.getStatusCode());
+        }
+
+        log.debug("API 호출 성공 - 종목: {}", stockCode);
 
 
         return objectMapper.readTree(response.getBody());
