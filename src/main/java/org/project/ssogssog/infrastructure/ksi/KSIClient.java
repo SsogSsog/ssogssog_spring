@@ -1,10 +1,10 @@
 package org.project.ssogssog.infrastructure.ksi;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.util.concurrent.RateLimiter;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -75,6 +75,68 @@ public class KSIClient {
 
 
         return objectMapper.readTree(response.getBody());
+    }
+
+    //TODO 같은 엔드포인트의 값을 하나는 JsonNode 기반, 다른 하나는 DTO 기반으로 값을 가져오므로 통일성을 맞출 필요가 있어보임
+    public String fetchSectorFromKis(String stockCode, String accessToken) {
+        // API 경로: 국내주식시세 > 주식현재가 시세
+        String path = "/uapi/domestic-stock/v1/quotations/inquire-price";
+
+        // 1. URI 생성
+        URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl)
+                .path(path)
+                .queryParam("FID_COND_MRKT_DIV_CODE", "J") // J: 주식, ETF 등
+                .queryParam("FID_INPUT_ISCD", stockCode)   // 종목코드
+                .build()
+                .toUri();
+
+        // 2. 헤더 설정
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("authorization", "Bearer " + accessToken);
+        headers.set("appkey", appKey);
+        headers.set("appsecret", appSecret);
+        headers.set("tr_id", "FHKST01010100"); // 거래 ID (주식현재가)
+
+        // 3. 요청 엔티티 생성 (Body는 없으므로 null, Header만 포함)
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        try {
+            // 4. API 호출 (GET 방식)
+            ResponseEntity<KisPriceResponse> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.GET,
+                    requestEntity,
+                    KisPriceResponse.class
+            );
+
+            // 5. 응답 파싱
+            if (response.getBody() != null && response.getBody().getOutput() != null) {
+                return response.getBody().getOutput().getSectorName();
+            }
+
+        } catch (Exception e) {
+            log.warn("KIS API 호출 중 오류 발생 (종목코드: {}): {}", stockCode, e.getMessage());
+        }
+
+        return null;
+    }
+
+    // --- 내부 DTO 클래스 (응답 매핑용) ---
+    @Data
+    static class KisPriceResponse {
+        @JsonProperty("output")
+        private Output output;
+
+        @JsonProperty("rt_cd")
+        private String returnCode;
+    }
+
+    @Data
+    static class Output {
+        // KIS API 응답 필드: bstp_kor_isnm (업종 한글명)
+        @JsonProperty("bstp_kor_isnm")
+        private String sectorName;
     }
 
 
