@@ -24,7 +24,6 @@ public class Stock {
     @Column(unique = true, nullable = false)
     private String stockCode; // 주식 종목코드 (예: 005930)
 
-    @Column(unique = true, nullable = false)
     private String corpCode;  // DART 고유번호 (예: 00126380)
 
     private String corpName;  // 회사명 (예: 삼성전자)
