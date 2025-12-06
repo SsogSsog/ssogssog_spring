@@ -2,9 +2,9 @@ package org.project.ssogssog.application.common.utils;
 
 public class Parser {
 
-    public static long parserStringToLong(String text) {
+    public static long parseStringToLong(String text) {
         try{
-            if (text.isEmpty() || "-".equals(text)) {
+            if (text == null || text.isEmpty() || "-".equals(text)) {
                 return 0;
             }
             return Long.parseLong(text);
@@ -13,9 +13,9 @@ public class Parser {
         }
     }
 
-    public static double parserStringToDouble(String text) {
+    public static double parseStringToDouble(String text) {
         try{
-            if (text.isEmpty() || "-".equals(text)) {
+            if (text == null || text.isEmpty() || "-".equals(text)) {
                 return 0;
             }
             return Double.parseDouble(text);
@@ -24,9 +24,9 @@ public class Parser {
         }
     }
 
-    public static int parserStringToInt(String text) {
+    public static int parseStringToInt(String text) {
         try{
-            if (text.isEmpty() || "-".equals(text)) {
+            if (text == null || text.isEmpty() || "-".equals(text)) {
                 return 0;
             }
             return Integer.parseInt(text);
