@@ -1,6 +1,6 @@
 package org.project.ssogssog.application.common.utils;
 
-public class Parser {
+public class ParserUtils {
 
     public static long parseStringToLong(String text) {
         try{

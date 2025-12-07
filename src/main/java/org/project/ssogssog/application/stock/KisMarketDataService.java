@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.RateLimiter; // Guava 라이브러리
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.application.common.utils.Parser;
+import org.project.ssogssog.application.common.utils.ParserUtils;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
@@ -109,18 +109,18 @@ public class KisMarketDataService {
                 // return null; // 0인 데이터는 저장하기 싫으면 여기서 리턴
             }
 
-            int closePrice = Parser.parseStringToInt(closeStr);
-            int openPrice = Parser.parseStringToInt(openStr);
-            int highPrice = Parser.parseStringToInt(output.path("stck_hgpr").asText().trim());
-            int lowPrice = Parser.parseStringToInt(output.path("stck_lwpr").asText().trim());
-            long volume = Parser.parseStringToLong(output.path("acml_vol").asText().trim());
-            long marketCap = Parser.parseStringToLong(output.path("hts_avls").asText().trim()); // 억 단위로 환산됨
+            int closePrice = ParserUtils.parseStringToInt(closeStr);
+            int openPrice = ParserUtils.parseStringToInt(openStr);
+            int highPrice = ParserUtils.parseStringToInt(output.path("stck_hgpr").asText().trim());
+            int lowPrice = ParserUtils.parseStringToInt(output.path("stck_lwpr").asText().trim());
+            long volume = ParserUtils.parseStringToLong(output.path("acml_vol").asText().trim());
+            long marketCap = ParserUtils.parseStringToLong(output.path("hts_avls").asText().trim()); // 억 단위로 환산됨
 
-            long listedShares = Parser.parseStringToLong(output.path("lstn_stcn").asText().trim());
-            long foreignHeldShares = Parser.parseStringToLong(output.path("frgn_hldn_qty").asText().trim());
-            int changePrice = Parser.parseStringToInt(output.path("prdy_vrss").asText().trim());
-            double changeRate = Parser.parseStringToDouble(output.path("prdy_ctrt").asText().trim());
-            int prevClosePrice = Parser.parseStringToInt(output.path("stck_sdpr").asText().trim());
+            long listedShares = ParserUtils.parseStringToLong(output.path("lstn_stcn").asText().trim());
+            long foreignHeldShares = ParserUtils.parseStringToLong(output.path("frgn_hldn_qty").asText().trim());
+            int changePrice = ParserUtils.parseStringToInt(output.path("prdy_vrss").asText().trim());
+            double changeRate = ParserUtils.parseStringToDouble(output.path("prdy_ctrt").asText().trim());
+            int prevClosePrice = ParserUtils.parseStringToInt(output.path("stck_sdpr").asText().trim());
 
             return DailyPrice.builder()
                     .stock(stock)
@@ -192,18 +192,18 @@ public class KisMarketDataService {
                 // return null; // 0인 데이터는 저장하기 싫으면 여기서 리턴
             }
 
-            int closePrice = Parser.parseStringToInt(closeStr);
-            int openPrice = Parser.parseStringToInt(openStr);
-            int highPrice = Parser.parseStringToInt(output.path("stck_hgpr").asText().trim());
-            int lowPrice = Parser.parseStringToInt(output.path("stck_lwpr").asText().trim());
-            long volume = Parser.parseStringToLong(output.path("acml_vol").asText().trim());
-            long marketCap = Parser.parseStringToLong(output.path("hts_avls").asText().trim()); // 억 단위로 환산됨
+            int closePrice = ParserUtils.parseStringToInt(closeStr);
+            int openPrice = ParserUtils.parseStringToInt(openStr);
+            int highPrice = ParserUtils.parseStringToInt(output.path("stck_hgpr").asText().trim());
+            int lowPrice = ParserUtils.parseStringToInt(output.path("stck_lwpr").asText().trim());
+            long volume = ParserUtils.parseStringToLong(output.path("acml_vol").asText().trim());
+            long marketCap = ParserUtils.parseStringToLong(output.path("hts_avls").asText().trim()); // 억 단위로 환산됨
 
-            long listedShares = Parser.parseStringToLong(output.path("lstn_stcn").asText().trim());
-            long foreignHeldShares = Parser.parseStringToLong(output.path("frgn_hldn_qty").asText().trim());
-            int changePrice = Parser.parseStringToInt(output.path("prdy_vrss").asText().trim());
-            double changeRate = Parser.parseStringToDouble(output.path("prdy_ctrt").asText().trim());
-            int prevClosePrice = Parser.parseStringToInt(output.path("stck_sdpr").asText().trim());
+            long listedShares = ParserUtils.parseStringToLong(output.path("lstn_stcn").asText().trim());
+            long foreignHeldShares = ParserUtils.parseStringToLong(output.path("frgn_hldn_qty").asText().trim());
+            int changePrice = ParserUtils.parseStringToInt(output.path("prdy_vrss").asText().trim());
+            double changeRate = ParserUtils.parseStringToDouble(output.path("prdy_ctrt").asText().trim());
+            int prevClosePrice = ParserUtils.parseStringToInt(output.path("stck_sdpr").asText().trim());
 
             return DailyPrice.builder()
                     .stock(stock)
