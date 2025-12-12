@@ -1,4 +1,4 @@
-package org.project.ssogssog.infrastructure.opendart;
+package org.project.ssogssog.application.stock;
 
 import lombok.RequiredArgsConstructor;
 import org.project.ssogssog.domain.stock.entity.StockFinancial;
