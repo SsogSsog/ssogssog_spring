@@ -40,8 +40,15 @@ public class StockMetric {
 
     // --- [성장성 지표] ---
     // 둘 다 QoQ / YoY 분리
+    // QoQ 정의:
+    // - 2Q: (1~6 vs 1~3)
+    // - 3Q: (1~9 vs 1~6)
+    // - 4Q: (1~12 vs 1~9)
+    // - 1Q: (당기 1Q 누적 vs 전년도 4Q(연간))  <-- 비표준 정의, 해석 주의
     private Double salesGrowthQoQ;      // 매출액 성장률 (직전 분기)
     private Double salesGrowthYoY;      // 매출액 성장률 (전년)
+
+    // 직전 재무보고서 대비 누적 기준 순이익 성장률 (1Q는 전년도 사업보고서 대비)
     private Double netProfitGrowthQoQ;  // 순이익 성장률 (직전 분기)
     private Double netProfitGrowthYoY;  // 순수익 성장률 (작년)
 
@@ -59,5 +66,51 @@ public class StockMetric {
 
     // 언제 기준 데이터인지 (데이터 갱신일)
     private LocalDate calculatedAt;
+
+
+
+    /**
+    비즈니스 로직
+     */
+    public void updateAll(
+            Integer currentPrice,
+            Long marketCap,
+            Double per,
+            Double roe,
+            Double netProfitMargin,
+            Double debtRatio,
+            Double salesGrowthQoQ,
+            Double salesGrowthYoY,
+            Double netProfitGrowthQoQ,
+            Double netProfitGrowthYoY,
+            Double dividendYield,
+            Double foreignOwnershipRate,
+            Double return3M,
+            Double return6M,
+            Double return12M
+    ) {
+        this.currentPrice = currentPrice;
+        this.marketCap = marketCap;
+
+        this.per = per;
+        this.roe = roe;
+        this.netProfitMargin = netProfitMargin;
+        this.debtRatio = debtRatio;
+
+        this.salesGrowthQoQ = salesGrowthQoQ;
+        this.salesGrowthYoY = salesGrowthYoY;
+        this.netProfitGrowthQoQ = netProfitGrowthQoQ;
+        this.netProfitGrowthYoY = netProfitGrowthYoY;
+
+        this.dividendYield = dividendYield;
+        this.foreignOwnershipRate = foreignOwnershipRate;
+
+        this.return3M = return3M;
+        this.return6M = return6M;
+        this.return12M = return12M;
+
+        // 지표 재계산 시점
+        this.calculatedAt = LocalDate.now();
+    }
 
 }
