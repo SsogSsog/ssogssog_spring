@@ -19,9 +19,13 @@ public class StockMetricCalculator {
             StockFinancial prev,
             StockFinancial prevYearSame
     ) {
-        if (latest == null || current == null) {
-            // 핵심 데이터가 없으면 전부 null로 채워서 반환 (혹은 IllegalArgumentException 던져도 됨)
-            throw new RuntimeException("<UNK>");
+        if (latest == null) {
+            throw new IllegalArgumentException("최신 시세 데이터(DailyPrice)가 필요합니다. stockCode: " +
+                    (stock != null ? stock.getStockCode() : "unknown"));
+        }
+        if (current == null) {
+            throw new IllegalArgumentException("현재 재무 데이터(StockFinancial)가 필요합니다. stockCode: " +
+                    (stock != null ? stock.getStockCode() : "unknown"));
         }
 
         // -----------------------
