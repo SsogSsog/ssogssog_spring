@@ -1,4 +1,4 @@
-package org.project.ssogssog.infrastructure.ksi;
+package org.project.ssogssog.infrastructure.client.ksi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;

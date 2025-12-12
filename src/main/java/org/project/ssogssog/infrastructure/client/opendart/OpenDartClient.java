@@ -1,4 +1,4 @@
-package org.project.ssogssog.infrastructure.opendart;
+package org.project.ssogssog.infrastructure.client.opendart;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

@@ -8,7 +8,7 @@ import org.project.ssogssog.application.common.utils.ParserUtils;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
-import org.project.ssogssog.infrastructure.ksi.KSIClient;
+import org.project.ssogssog.infrastructure.client.ksi.KSIClient;
 
 import org.springframework.stereotype.Service;
 
