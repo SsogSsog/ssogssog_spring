@@ -8,7 +8,7 @@ public record YearQuarter(int year, String quarter) {
             case "2Q" -> new YearQuarter(year, "1Q");
             case "3Q" -> new YearQuarter(year, "2Q");
             case "4Q" -> new YearQuarter(year, "3Q");
-            default -> null;
+            default -> throw new IllegalArgumentException("Invalid quarter: " + quarter);
         };
     }
 
