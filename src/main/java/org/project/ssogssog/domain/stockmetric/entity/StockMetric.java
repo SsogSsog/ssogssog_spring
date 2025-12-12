@@ -23,7 +23,7 @@ public class StockMetric {
 
     // 어떤 종목의 지표인지 (1:1 관계)
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "stock_id")
+    @JoinColumn(name = "stock_id", unique = true)
     private Stock stock;
 
     // --- [가격 정보] ---
