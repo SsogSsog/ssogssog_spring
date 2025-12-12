@@ -13,6 +13,6 @@ public interface DailyPriceRepository extends JpaRepository<DailyPrice, Long> {
     // 이미 수집한 날짜인지 확인용
     Optional<DailyPrice> findByStockIdAndDate(Long stockId, LocalDate date);
 
-    // 가잔 최신 KIS 데이터 조회
+    // 가장 최신 KIS 데이터 조회
     Optional<DailyPrice> findTopByStockOrderByDateDesc(Stock stock);
 }
