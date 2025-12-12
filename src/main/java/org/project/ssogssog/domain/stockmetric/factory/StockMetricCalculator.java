@@ -51,8 +51,11 @@ public class StockMetricCalculator {
 
         // (1) PER = 주가 / EPS,   EPS = netIncome / listedShares
         Double per = null;
-        if (currentPrice != null &&
-                netIncome != null &&
+
+
+        //XXX: PER는 "주가 > 0 & 순이익 > 0"인 경우에만 계산!! (적자는 N/A 취급)
+        if (currentPrice != null && currentPrice > 0 &&
+                netIncome != null && netIncome > 0 &&
                 listedShares != null && listedShares > 0) {
 
             double eps = (double) netIncome / listedShares;
@@ -93,22 +96,15 @@ public class StockMetricCalculator {
         }
 
         // (7) 순이익 성장률 QoQ = (curNI / prevNI - 1) * 100
-        Double netProfitGrowthQoQ = null;
-        if (prev != null) {
-            Long prevNI = prev.getNetIncome();
-            if (netIncome != null && prevNI != null && prevNI != 0) {
-                netProfitGrowthQoQ = ((double) netIncome / prevNI - 1.0) * 100.0;
-            }
-        }
+        Double netProfitGrowthQoQ = (prev != null)
+                ? safeEarningsGrowth(netIncome, prev.getNetIncome())
+                : null;
 
         // (8) 순이익 성장률 YoY = (curNI / prevYearNI - 1) * 100
-        Double netProfitGrowthYoY = null;
-        if (prevYearSame != null) {
-            Long prevYearNI = prevYearSame.getNetIncome();
-            if (netIncome != null && prevYearNI != null && prevYearNI != 0) {
-                netProfitGrowthYoY = ((double) netIncome / prevYearNI - 1.0) * 100.0;
-            }
-        }
+        Double netProfitGrowthYoY = (prevYearSame != null)
+                ? safeEarningsGrowth(netIncome, prevYearSame.getNetIncome())
+                : null;
+
 
         // -----------------------
         // 4. 배당수익률 (현재는 데이터 소스 없으므로 null 처리)
@@ -175,5 +171,13 @@ public class StockMetricCalculator {
             return null;
         }
         return (double) numerator / denominator * 100.0;
+    }
+
+    private static Double safeEarningsGrowth(Long current, Long previous) {
+        if (current == null || previous == null || previous <= 0L) {
+            // 전기 순이익이 0 이하(적자/손익분기)면 퍼센트 성장률은 의미 없다고 보고 null
+            return null;
+        }
+        return ((double) current / previous - 1.0) * 100.0;
     }
 }
