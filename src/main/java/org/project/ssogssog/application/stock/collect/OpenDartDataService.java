@@ -17,7 +17,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class StockFinancialService {
+public class OpenDartDataService {
 
     private final StockRepository stockRepository;
     private final StockFinancialRepository stockFinancialRepository;
