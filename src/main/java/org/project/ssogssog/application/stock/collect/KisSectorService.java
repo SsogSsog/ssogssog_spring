@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.stock;
+package org.project.ssogssog.application.stock.collect;
 
 
 import com.google.common.util.concurrent.RateLimiter;
