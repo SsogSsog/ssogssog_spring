@@ -24,13 +24,42 @@ public class StockResponse {
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
-    public static class ThemeCollectedItemDTO  {
+    public static class ThemeCollectedItemDTO implements Comparable<ThemeCollectedItemDTO> {
 
         private String themeName;
         private double changeRateAverage = 0.0;
         private int totalCount = 0;
         private double sum = 0.0;
 
+        @Override
+        public int compareTo(ThemeCollectedItemDTO o) {
+            return this.themeName.compareTo(o.themeName);
+        }
+
+        /**
+         * 아래는 비즈니스 로직
+         */
+
+        public void addRate(double changeRateAverage) {
+            this.sum += changeRateAverage;
+            this.totalCount += 1;
+        }
+
+
+        public ThemeCollectedItemDTO(String themeName){
+            this.themeName = themeName;
+            this.changeRateAverage = 0.0;
+            this.totalCount = 0;
+            this.sum = 0.0;
+        }
+
+        public void calculateAverage() {
+            if (this.totalCount <= 0) {
+                this.changeRateAverage = 0.0;
+            } else {
+                this.changeRateAverage = this.sum / this.totalCount;
+            }
+        }
     }
 
 
