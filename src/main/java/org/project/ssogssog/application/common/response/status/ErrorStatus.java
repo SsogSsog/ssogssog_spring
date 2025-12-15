@@ -17,6 +17,11 @@ public enum ErrorStatus implements BaseErrorCode {
 
     // 유효성 검사 에러(메시지는 @interface의 message로 처리)
     VALIDATOR_ERROR(HttpStatus.BAD_REQUEST,"VALID400",null),
+
+    // StockMetric 에러
+    INVALID_METRIC_BASED_PERIOD(HttpStatus.BAD_REQUEST, "METRIC4100", "직전 분기 또는 작년 중 분기 선택이 필요합니다.")
+
+
     ;
 
     private final HttpStatus httpStatus;

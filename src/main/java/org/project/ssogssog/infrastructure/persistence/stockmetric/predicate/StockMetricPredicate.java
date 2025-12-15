@@ -151,8 +151,7 @@ public class StockMetricPredicate {
         }else if (metricBasePeriod == MetricBasePeriod.PREV_QUARTER){
             qSalesGrowthRatio = qStockMetric.salesGrowthQoQ;
         }else{
-            //TODO 에러코드 수정하기
-            throw new GeneralException(ErrorStatus.VALIDATOR_ERROR);
+            throw new GeneralException(ErrorStatus.INVALID_METRIC_BASED_PERIOD);
         }
 
         // 둘 다 있으면 between
@@ -187,8 +186,7 @@ public class StockMetricPredicate {
         }else if (metricBasePeriod == MetricBasePeriod.PREV_QUARTER){
             qNetProfitGrowthRatio = qStockMetric.netProfitGrowthQoQ;
         }else{
-            //TODO 에러코드 수정하기
-            throw new GeneralException(ErrorStatus.VALIDATOR_ERROR);
+            throw new GeneralException(ErrorStatus.INVALID_METRIC_BASED_PERIOD);
         }
 
         // 둘 다 있으면 between
