@@ -91,6 +91,7 @@ public class StockMetricRepositoryImpl implements StockMetricRepositoryCustom {
 
         return jpaQueryFactory
                 .selectFrom(qStockMetric)
+                .leftJoin(qStockMetric.stock).fetchJoin() // N+1 방지
                 .where(currentPriceCondition)
                 .where(marketCapCondition)
                 .where(perCondition)

@@ -16,7 +16,7 @@ public class StockMetricPredicate {
      * 1. 현재가(종가 기준)
      * 2. 시가 총액
      * 3. PER
-     * 4. POE
+     * 4. ROE
      * 5. 부채비율
      * 6. 매출액 성장률
      * 7. 순이익 성장률
