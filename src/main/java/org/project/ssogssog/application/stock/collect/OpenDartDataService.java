@@ -1,9 +1,10 @@
-package org.project.ssogssog.application.stock;
+package org.project.ssogssog.application.stock.collect;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.project.ssogssog.application.stock.writer.StockFinancialWriter;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.entity.StockFinancial;
 import org.project.ssogssog.domain.stock.repository.StockFinancialRepository;
@@ -16,7 +17,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class StockFinancialService {
+public class OpenDartDataService {
 
     private final StockRepository stockRepository;
     private final StockFinancialRepository stockFinancialRepository;

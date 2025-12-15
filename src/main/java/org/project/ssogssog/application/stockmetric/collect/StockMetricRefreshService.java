@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.stockmetric;
+package org.project.ssogssog.application.stockmetric.collect;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +13,7 @@ import org.project.ssogssog.domain.stockmetric.factory.StockMetricCalculator;
 import org.project.ssogssog.domain.stockmetric.repository.StockMetricRepository;
 import org.project.ssogssog.domain.stockmetric.vo.MetricValues;
 import org.project.ssogssog.domain.stockmetric.vo.YearQuarter;
+import org.project.ssogssog.presentation.controller.stockmetric.dto.StockMetricRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +23,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class StockMetricService {
+public class StockMetricRefreshService {
 
     private final StockRepository stockRepository;
     private final StockMetricRepository stockMetricRepository;
@@ -110,8 +111,5 @@ public class StockMetricService {
 
         stockMetricRepository.save(metric);
     }
-
-
-
 }
 

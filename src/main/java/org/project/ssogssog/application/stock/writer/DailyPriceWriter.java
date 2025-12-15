@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.stock;
+package org.project.ssogssog.application.stock.writer;
 
 import lombok.RequiredArgsConstructor;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;

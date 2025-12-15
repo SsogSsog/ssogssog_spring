@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.stock;
+package org.project.ssogssog.application.stock.collect;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,7 @@ import java.util.zip.ZipInputStream;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class StockService {
+public class StockCorpCodeService {
 
     private final StockRepository stockRepository;
     private final OpenDartClient openDartClient;
