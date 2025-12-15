@@ -3,7 +3,7 @@ package org.project.ssogssog.presentation.controller.stockmetric;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.project.ssogssog.application.stockmetric.api.StockMetricService;
+import org.project.ssogssog.application.service.stockmetric.api.StockMetricService;
 import org.project.ssogssog.presentation.common.ApiResponse;
 import org.project.ssogssog.presentation.controller.stockmetric.dto.StockMetricRequest;
 import org.project.ssogssog.presentation.controller.stockmetric.dto.StockMetricResponse;

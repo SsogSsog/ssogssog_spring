@@ -1,10 +1,10 @@
-package org.project.ssogssog.application.stock.collect;
+package org.project.ssogssog.application.service.stock.collect;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.application.stock.writer.StockFinancialWriter;
+import org.project.ssogssog.application.service.stock.writer.StockFinancialWriter;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.entity.StockFinancial;
 import org.project.ssogssog.domain.stock.repository.StockFinancialRepository;
