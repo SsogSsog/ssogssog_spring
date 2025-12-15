@@ -26,7 +26,7 @@ class StockServiceTest {
 
     @Test
     @DisplayName("섹터별 그룹핑 후 평균 계산 + themeName 오름차순 정렬 + totalCount는 그룹 개수")
-    void findStocksGroupedPerSector_groupAndAverageAndSort() {
+    void getThemeStockStats_groupAndAverageAndSort() {
         // given
         List<StockResponse.ThemeItemDTO> items = List.of(
                 new StockResponse.ThemeItemDTO("IT", 1.0),
@@ -36,13 +36,13 @@ class StockServiceTest {
                 new StockResponse.ThemeItemDTO("BIO", 30.0)
         );
 
-        when(stockRepository.findStocksGroupedPerSector()).thenReturn(items);
+        when(stockRepository.getThemeStockStats()).thenReturn(items);
 
         // when
-        StockResponse.ThemeResponseDTO result = stockService.findStocksGroupedPerSector();
+        StockResponse.ThemeResponseDTO result = stockService.getThemeStockStats();
 
         // then
-        verify(stockRepository, times(1)).findStocksGroupedPerSector();
+        verify(stockRepository, times(1)).getThemeStockStats();
 
         assertThat(result).isNotNull();
         assertThat(result.getTotalCount()).isEqualTo(2); // BIO, IT 두 그룹
@@ -69,7 +69,7 @@ class StockServiceTest {
 
     @Test
     @DisplayName("themeName null/빈값 또는 changeRate null 은 필터링되어 결과에서 제외된다")
-    void findStocksGroupedPerSector_filtersInvalidItems() {
+    void getThemeStockStats_filtersInvalidItems() {
         // given
         List<StockResponse.ThemeItemDTO> items = List.of(
                 new StockResponse.ThemeItemDTO(null, 1.0),     // 제외
@@ -79,13 +79,13 @@ class StockServiceTest {
                 new StockResponse.ThemeItemDTO("IT", 5.0)      // 포함
         );
 
-        when(stockRepository.findStocksGroupedPerSector()).thenReturn(items);
+        when(stockRepository.getThemeStockStats()).thenReturn(items);
 
         // when
-        StockResponse.ThemeResponseDTO result = stockService.findStocksGroupedPerSector();
+        StockResponse.ThemeResponseDTO result = stockService.getThemeStockStats();
 
         // then
-        verify(stockRepository, times(1)).findStocksGroupedPerSector();
+        verify(stockRepository, times(1)).getThemeStockStats();
 
         assertThat(result).isNotNull();
         
@@ -104,7 +104,7 @@ class StockServiceTest {
 
     @Test
     @DisplayName("유효한 데이터가 하나도 없으면 빈 리스트와 totalCount=0을 반환한다")
-    void findStocksGroupedPerSector_emptyWhenAllInvalid() {
+    void getThemeStockStats_emptyWhenAllInvalid() {
         // given
         List<StockResponse.ThemeItemDTO> items = List.of(
                 new StockResponse.ThemeItemDTO(null, 1.0),
@@ -112,10 +112,10 @@ class StockServiceTest {
                 new StockResponse.ThemeItemDTO("IT", null)
         );
 
-        when(stockRepository.findStocksGroupedPerSector()).thenReturn(items);
+        when(stockRepository.getThemeStockStats()).thenReturn(items);
 
         // when
-        StockResponse.ThemeResponseDTO result = stockService.findStocksGroupedPerSector();
+        StockResponse.ThemeResponseDTO result = stockService.getThemeStockStats();
 
         // then
         assertThat(result).isNotNull();

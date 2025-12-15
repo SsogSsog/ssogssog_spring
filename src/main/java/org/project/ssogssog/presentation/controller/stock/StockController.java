@@ -26,9 +26,9 @@ public class StockController {
             응답의 totalCount는 해당 테마의 주식 개수입니다.
             """
     )
-    public ApiResponse<StockResponse.ThemeResponseDTO> getStockListBySector(){
+    public ApiResponse<StockResponse.ThemeResponseDTO> getThemeStockStats(){
 
-        StockResponse.ThemeResponseDTO result = stockService.findStocksGroupedPerSector();
+        StockResponse.ThemeResponseDTO result = stockService.getThemeStockStats();
         return ApiResponse.onSuccess(result);
 
     }

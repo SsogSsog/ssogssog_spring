@@ -23,7 +23,7 @@ public class StockRepositoryImpl implements StockRepositoryCustom {
     QDailyPrice dpSub = new QDailyPrice("dpSub"); // 서브쿼리용 별칭
 
     @Override
-    public List<StockResponse.ThemeItemDTO> findStocksGroupedPerSector() {
+    public List<StockResponse.ThemeItemDTO> getThemeStockStats() {
 
         return jpaQueryFactory
                 .select(

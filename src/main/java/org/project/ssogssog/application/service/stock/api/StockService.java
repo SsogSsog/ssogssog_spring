@@ -15,7 +15,7 @@ public class StockService {
 
     private final StockRepository stockRepository;
 
-    public StockResponse.ThemeResponseDTO findStocksGroupedPerSector() {
+    public StockResponse.ThemeResponseDTO getThemeStockStats() {
 
         // 개선한 점
         // 1. sector 나 rate에 관해 null 예외 처리
@@ -23,7 +23,7 @@ public class StockService {
         // 3. 마지막에 총합으로 평균 계산
         // 4. (중요!!) arrayList 정렬하기(사전 순으로)
 
-        List<StockResponse.ThemeItemDTO> items = stockRepository.findStocksGroupedPerSector();
+        List<StockResponse.ThemeItemDTO> items = stockRepository.getThemeStockStats();
 
         Map<String, StockResponse.ThemeCollectedItemDTO> m = new HashMap<>();
         for(var item : items){
