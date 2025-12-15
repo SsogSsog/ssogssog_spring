@@ -16,5 +16,38 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StockRepositoryImpl implements StockRepositoryCustom {
 
+    private final JPAQueryFactory jpaQueryFactory;
+    private static final QStock qStock = QStock.stock;
+    private static final QDailyPrice qDailyPrice = QDailyPrice.dailyPrice;
+
+    QDailyPrice dpSub = new QDailyPrice("dpSub"); // 서브쿼리용 별칭
+
+    @Override
+    public List<StockResponse.ThemeItemDTO> findStocksGroupedPerSector() {
+
+        return jpaQueryFactory
+                .select(
+                        Projections.constructor(StockResponse.ThemeItemDTO.class,
+                                qStock.sector,
+                                qDailyPrice.changeRate
+                        ))
+                .from(qStock)
+                .leftJoin(qDailyPrice)
+                .on(
+                        qDailyPrice.stock.eq(qStock)
+                                .and(
+                                        qDailyPrice.date.eq(
+                                                JPAExpressions
+                                                        .select(dpSub.date.max())
+                                                        .from(dpSub)
+                                                        .where(dpSub.stock.eq(qStock))
+                                        )
+                                )
+
+                )
+                .fetch();
+
+
+    }
 
 }
