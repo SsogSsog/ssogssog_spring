@@ -3,8 +3,7 @@ package org.project.ssogssog.domain.stock.repository;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+
 
 import java.time.LocalDate;
 import java.util.Optional;

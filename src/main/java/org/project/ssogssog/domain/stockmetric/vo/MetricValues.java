@@ -1,9 +1,5 @@
 package org.project.ssogssog.domain.stockmetric.vo;
 
-import org.project.ssogssog.domain.stock.entity.DailyPrice;
-import org.project.ssogssog.domain.stock.entity.Stock;
-import org.project.ssogssog.domain.stock.entity.StockFinancial;
-
 /**
  * StockMetricCalculator의 계산 결과를 담는 값 객체(VO).
  * - 불변(immutable)
