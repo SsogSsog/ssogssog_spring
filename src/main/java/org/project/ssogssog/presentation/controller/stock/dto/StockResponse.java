@@ -57,7 +57,10 @@ public class StockResponse {
             if (this.totalCount <= 0) {
                 this.changeRateAverage = 0.0;
             } else {
-                this.changeRateAverage = this.sum / this.totalCount;
+                double result = this.sum / this.totalCount;
+
+                // 소수점 두 번째 자리까지 표현
+                this.changeRateAverage = Math.round(result * 100.0) / 100.0;
             }
         }
     }
