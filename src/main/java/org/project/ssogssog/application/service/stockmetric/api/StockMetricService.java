@@ -1,8 +1,8 @@
-package org.project.ssogssog.application.stockmetric.api;
+package org.project.ssogssog.application.service.stockmetric.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.application.stockmetric.api.dto.StockMetricScreenerCondition;
+import org.project.ssogssog.application.service.stockmetric.api.dto.StockMetricScreenerCondition;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stockmetric.entity.StockMetric;
 import org.project.ssogssog.domain.stockmetric.repository.StockMetricRepository;

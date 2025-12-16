@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.stockmetric.api.dto;
+package org.project.ssogssog.application.service.stockmetric.api.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,11 +1,11 @@
-package org.project.ssogssog.application.stock.collect;
+package org.project.ssogssog.application.service.stock.collect;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.RateLimiter; // Guava 라이브러리
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.common.utils.ParserUtils;
-import org.project.ssogssog.application.stock.writer.DailyPriceWriter;
+import org.project.ssogssog.application.service.stock.writer.DailyPriceWriter;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.StockRepository;

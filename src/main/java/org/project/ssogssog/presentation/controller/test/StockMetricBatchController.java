@@ -1,7 +1,7 @@
 package org.project.ssogssog.presentation.controller.test;
 
 import lombok.RequiredArgsConstructor;
-import org.project.ssogssog.application.stockmetric.collect.StockMetricRefreshService;
+import org.project.ssogssog.application.service.stockmetric.collect.StockMetricRefreshService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

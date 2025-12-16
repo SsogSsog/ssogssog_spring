@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.stock.writer;
+package org.project.ssogssog.application.service.stock.writer;
 
 import lombok.RequiredArgsConstructor;
 import org.project.ssogssog.domain.stock.entity.StockFinancial;

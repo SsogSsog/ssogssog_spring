@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.checkerframework.common.aliasing.qual.Unique;
 import org.project.ssogssog.domain.stock.enums.Country;
 import org.project.ssogssog.domain.stock.enums.MarketType;
 
