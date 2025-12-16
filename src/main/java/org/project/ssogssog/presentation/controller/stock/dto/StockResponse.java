@@ -13,17 +13,6 @@ public class StockResponse {
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
-    public static class ThemeItemDTO {
-
-        private String themeName;
-        private Double changeRate;
-
-    }
-
-    @Getter
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
     public static class ThemeCollectedItemDTO implements Comparable<ThemeCollectedItemDTO> {
 
         private String themeName;
