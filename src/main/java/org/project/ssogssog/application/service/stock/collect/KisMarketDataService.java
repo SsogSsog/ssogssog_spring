@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.RateLimiter; // Guava 라이브러리
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.common.utils.ParserUtils;
+import org.project.ssogssog.application.service.stock.collect.dto.KisHistoricalPriceResponse;
 import org.project.ssogssog.application.service.stock.writer.DailyPriceWriter;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
@@ -14,6 +15,8 @@ import org.project.ssogssog.infrastructure.client.ksi.KSIClient;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Slf4j
@@ -30,7 +33,7 @@ public class KisMarketDataService {
     private final KSIClient ksiClient;
 
     /**
-     * 전 종목 시세 업데이트 (Batch용)
+     * 전 종목 시세 업데이트(당일 정보) (Batch용)
      */
     public void updateAllStockPrices() {
         // 1. 토큰 발급 (루프 시작 전 1회)
@@ -206,4 +209,31 @@ public class KisMarketDataService {
         }
 
     }
+
+    /**
+     * 특정 종목의 과거 N개월치 데이터를 가져와 DB에 저장
+     * @param stockCode 종목코드
+     * @param months 몇 개월 전부터 가져올지 (예: 6)
+     */
+    public void fetchAndSavePastPrices(String stockCode, int months) {
+        // 0. 토큰 확보
+        String accessToken = ksiClient.getAccessToken(); // 기존에 만드신 메소드 활용
+
+        // 1. 날짜 계산 (YYYYMMDD 포맷)
+        LocalDate endDate = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        LocalDate startDate = endDate.minusMonths(months);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        String strStartDate = startDate.format(formatter);
+        String strEndDate = endDate.format(formatter);
+
+        // 2. KIS API 호출 (국내주식 기간별 시세)
+        KisHistoricalPriceResponse kisHistoricalPriceResponse = ksiClient.fetchPastPrices(stockCode, accessToken, strStartDate, strEndDate);
+
+        if (kisHistoricalPriceResponse != null && kisHistoricalPriceResponse.getDailyItems() != null) {
+            dailyPriceWriter.saveHistoricalPrices(stockCode, kisHistoricalPriceResponse.getDailyItems());
+        }
+
+    }
+
 }
