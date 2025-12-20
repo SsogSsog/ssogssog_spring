@@ -145,28 +145,6 @@ public class KisMarketDataService {
         }
     }
 
-//    public void testSingleStock() {
-//        String accessToken = ksiClient.getAccessToken();
-//        LocalDate today = LocalDate.now();
-//
-//        Stock samsung = Stock.builder()
-//                .stockCode("005930")
-//                .corpName("삼성전자")
-//                .build();
-//
-//        log.info(">>> 삼성전자 단건 테스트 시작");
-//        DailyPrice result = fetchPrice(accessToken, samsung, today);
-//
-//        if (result != null) {
-//            log.info(">>> 파싱 결과: 종목={}, 코드={}, 종가={}, 시가={}, 고가={}, 저가={}, 거래량={}, 시가총액={}",
-//                    samsung.getCorpName(), samsung.getStockCode(),
-//                    result.getClosePrice(), result.getOpenPrice(), result.getHighPrice(),
-//                    result.getLowPrice(), result.getVolume(), result.getMarketCap());
-//        } else {
-//            log.error(">>> 삼성전자조차 null이 반환됨. API 호출 설정 문제임.");
-//        }
-//    }
-
 
     private DailyPrice retryFetchPriceOnce(String token, Stock stock, LocalDate date) {
         rateLimiter.acquire(); // 재시도도 RateLimiter 적용
