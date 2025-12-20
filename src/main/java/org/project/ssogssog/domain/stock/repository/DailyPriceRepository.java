@@ -14,4 +14,6 @@ public interface DailyPriceRepository extends JpaRepository<DailyPrice, Long> {
 
     // 가장 최신 KIS 데이터 조회
     Optional<DailyPrice> findTopByStockOrderByDateDesc(Stock stock);
+
+    Boolean existsByStockAndDate(Stock stock, LocalDate date);
 }
