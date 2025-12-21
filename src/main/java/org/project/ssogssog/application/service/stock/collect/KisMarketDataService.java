@@ -247,12 +247,26 @@ public class KisMarketDataService {
 
             log.info(" >>> API 요청 구간: {} ~ {}", strStartDate, strEndDate);
 
+            // 1초에 10번만 통과 가능하므로, 요청이 몰리면 여기서 자동으로 대기(Block)합니다.
+            rateLimiter.acquire();
+
+            // Thread.sleep 보다 Guava의 rateLimiter가 안전한 이유
+            // 전역 통제: 스레드가 1개든 10개든 rateLimiter 인스턴스 하나를 공유한다면
+            // (Spring Bean은 기본 싱글톤이므로 공유됨), 전체 합쳐서 초당 10회 절대 안 넘는다.
+
+            // 유연함: API 응답이 빨라지면 RateLimiter도 그에 맞춰 바로 다음 요청을 보내고,
+            // 느리면 알아서 기다줌. 따라서 sleep(100)처럼 무조건 기다리는 낭비 시간이 사라진다.
+
             // 2. KIS API 호출 (국내주식 기간별 시세)
             KisHistoricalPriceResponse kisHistoricalPriceResponse = ksiClient.fetchPastPrices(stockCode, accessToken, strStartDate, strEndDate);
 
+            // 3. DB 저장
             if (kisHistoricalPriceResponse != null && kisHistoricalPriceResponse.getDailyItems() != null) {
                 dailyPriceWriter.saveHistoricalPrices(stockCode, kisHistoricalPriceResponse.getDailyItems());
             }
+
+            // 4. 종료일을 '이번 시작일의 하루 전'으로 설정
+            currentEnd = currentStart.minusDays(1);
 
             log.info("[{}] 데이터 수집 완료!", stockCode);
 
