@@ -219,20 +219,45 @@ public class KisMarketDataService {
         // 0. 토큰 확보
         String accessToken = ksiClient.getAccessToken(); // 기존에 만드신 메소드 활용
 
-        // 1. 날짜 계산 (YYYYMMDD 포맷)
-        LocalDate endDate = LocalDate.now(ZoneId.of("Asia/Seoul"));
-        LocalDate startDate = endDate.minusMonths(months);
+        // KIS API가 한 번에 100건 밖에 데이터를 가져올 수 없으므로 3개월씩 쪼개서 가져오는 로직으로 변경
+        // 전체 목표 기간: 오늘 ~ N개월 전
+        final LocalDate finalEndDate = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        final LocalDate finalStartDate = finalEndDate.minusMonths(months);
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-        String strStartDate = startDate.format(formatter);
-        String strEndDate = endDate.format(formatter);
+        log.info("[{}] 과거 {}개월 데이터 수집 시작 (목표: {} ~ {})",
+                stockCode, months, finalStartDate, finalEndDate);
 
-        // 2. KIS API 호출 (국내주식 기간별 시세)
-        KisHistoricalPriceResponse kisHistoricalPriceResponse = ksiClient.fetchPastPrices(stockCode, accessToken, strStartDate, strEndDate);
+        // 3개월 마다 자를 기간 중 마지막 기간을 나타내는 변수 지정
+        LocalDate currentEnd = finalEndDate;
 
-        if (kisHistoricalPriceResponse != null && kisHistoricalPriceResponse.getDailyItems() != null) {
-            dailyPriceWriter.saveHistoricalPrices(stockCode, kisHistoricalPriceResponse.getDailyItems());
+        // 루프: 현재 종료일이 최종 시작일 보다 미래인 동안 계속 실행
+        while(currentEnd.isAfter(finalStartDate)) {
+            // 1. 이번 요청의 시작일 계산
+            LocalDate currentStart = currentEnd.minusMonths(3);
+
+            // 만약 3개월 전이 최종 목표보다 더 과거라면, currentStart를 최종 목표일로 맞춤
+            if(currentStart.isBefore(finalStartDate)) {
+                currentStart = finalStartDate;
+            }
+
+            // 날짜 포맷팅 (YYYYMMDD)
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            String strStartDate = currentStart.format(formatter);
+            String strEndDate = currentEnd.format(formatter);
+
+            log.info(" >>> API 요청 구간: {} ~ {}", strStartDate, strEndDate);
+
+            // 2. KIS API 호출 (국내주식 기간별 시세)
+            KisHistoricalPriceResponse kisHistoricalPriceResponse = ksiClient.fetchPastPrices(stockCode, accessToken, strStartDate, strEndDate);
+
+            if (kisHistoricalPriceResponse != null && kisHistoricalPriceResponse.getDailyItems() != null) {
+                dailyPriceWriter.saveHistoricalPrices(stockCode, kisHistoricalPriceResponse.getDailyItems());
+            }
+
+            log.info("[{}] 데이터 수집 완료!", stockCode);
+
         }
+
 
     }
 
