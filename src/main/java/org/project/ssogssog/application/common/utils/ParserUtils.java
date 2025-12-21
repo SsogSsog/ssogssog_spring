@@ -35,4 +35,27 @@ public class ParserUtils {
         }
     }
 
+    public static Integer parseIntOrNull(String t){
+        if(t == null){
+            return null;
+        }
+        try{
+            return Integer.parseInt(t);
+        }catch (NumberFormatException e){
+            return null;
+        }
+    }
+
+    public static Long parseLongOrNull(String t){
+        if(t == null){
+            return null;
+        }
+        try{
+            return Long.parseLong(t);
+        }catch (NumberFormatException e){
+            return null;
+        }
+
+    }
+
 }
