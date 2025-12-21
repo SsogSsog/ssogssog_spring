@@ -49,6 +49,17 @@ public class DailyPriceWriter {
         // 해당 주식이 갖고 았는 모든 DailyPrice의 날짜 가져오기(중복 제거)
         Set<LocalDate> existDates = dailyPriceRepository.findAllDatesByStock(stock);
 
+        // 만약 복합키에 대해서 Set을 사용해야 할 일이 있다면?..
+        // 1. record 사용
+        // record는 내부적으로 equals()와 hashCode()를 자동으로 완벽하게 구현해주기에 바로 Set<class> 사용 가능
+
+        // 2. @EqualsAndHashCode 사용
+        // equals()와 hashCode() 자동 생성
+
+        // 3. Hacky 문자열 합치기
+        // 필드가 복잡하지 않고 단순한 타입(숫자, 날짜)들 뿐이라면, 굳이 클래스를 안 만들고 String Key를 만들기!
+        // (ex 20251219_119291)
+
         for (KisHistoricalPriceResponse.DailyItem item : items) {
             // 데이터가 비어있는 휴장일 등은 패스
             if (item.getClosePrice() == null || item.getClosePrice().isEmpty()) continue;
