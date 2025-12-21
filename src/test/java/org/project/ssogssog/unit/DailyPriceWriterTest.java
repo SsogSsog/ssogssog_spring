@@ -75,5 +75,25 @@ class DailyPriceWriterTest {
         assertEquals(2000, saved.get(0).getClosePrice());
         assertEquals(1900, saved.get(0).getOpenPrice());
     }
+
+    @Test
+    void saveHistoricalPrices_skipsIfParsingFails() {
+        String stockCode = "005930";
+        when(stockRepository.findByStockCode(stockCode)).thenReturn(Optional.of(stock));
+        when(dailyPriceRepository.findAllDatesByStock(stock)).thenReturn(Collections.emptySet());
+
+        // closePrice가 숫자가 아니라 파싱 실패 → 스킵되어 saveAll이 호출되지 않아야 함
+        KisHistoricalPriceResponse.DailyItem badItem = new KisHistoricalPriceResponse.DailyItem();
+        badItem.setDate("20251221");
+        badItem.setClosePrice("ABC"); // 파싱 실패
+        badItem.setOpenPrice("1900");
+        badItem.setHighPrice("2100");
+        badItem.setLowPrice("1800");
+        badItem.setVolume("20");
+
+        dailyPriceWriter.saveHistoricalPrices(stockCode, List.of(badItem));
+
+        verify(dailyPriceRepository, never()).saveAll(any());
+    }
 }
 
