@@ -47,12 +47,7 @@ public class DailyPriceWriter {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
         // 해당 주식이 갖고 았는 모든 DailyPrice의 날짜 가져오기(중복 제거)
-        Set<LocalDate> existDates;
-        List<DailyPrice> dailyPrices = dailyPriceRepository.findDailyPricesByStock(stock);
-
-        existDates = dailyPrices.stream()
-                .map(DailyPrice::getDate)
-                .collect(Collectors.toSet());
+        Set<LocalDate> existDates = dailyPriceRepository.findAllDatesByStock(stock);
 
         for (KisHistoricalPriceResponse.DailyItem item : items) {
             // 데이터가 비어있는 휴장일 등은 패스
