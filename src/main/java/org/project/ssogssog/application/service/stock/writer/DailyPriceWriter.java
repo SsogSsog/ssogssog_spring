@@ -12,9 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Component
@@ -40,20 +39,28 @@ public class DailyPriceWriter {
     @Transactional
     public void saveHistoricalPrices(String stockCode, List<KisHistoricalPriceResponse.DailyItem> items) {
 
+        // 해당 주식 정보 가져오기
         Stock stock = stockRepository.findByStockCode(stockCode)
                 .orElseThrow(() -> new RuntimeException("종목 없음"));
 
         List<DailyPrice> priceList = new ArrayList<>();
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
+        // 해당 주식이 갖고 았는 모든 DailyPrice의 날짜 가져오기(중복 제거)
+        Set<LocalDate> existDates;
+        List<DailyPrice> dailyPrices = dailyPriceRepository.findDailyPricesByStock(stock);
+
+        existDates = dailyPrices.stream()
+                .map(DailyPrice::getDate)
+                .collect(Collectors.toSet());
+
         for (KisHistoricalPriceResponse.DailyItem item : items) {
             // 데이터가 비어있는 휴장일 등은 패스
             if (item.getClosePrice() == null || item.getClosePrice().isEmpty()) continue;
-
             LocalDate date = LocalDate.parse(item.getDate(), dateFormatter);
 
             // 이미 DB에 있는 날짜면 건너뛰기 (중복 저장 방지)
-            if (dailyPriceRepository.existsByStockAndDate(stock, date)) {
+            if (existDates.contains(date)) {
                 continue;
             }
 
