@@ -15,6 +15,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.project.ssogssog.application.common.utils.NormalizeUtils.normalizeNumber;
+import static org.project.ssogssog.application.common.utils.ParserUtils.parseIntOrNull;
+import static org.project.ssogssog.application.common.utils.ParserUtils.parseLongOrNull;
+
 @RequiredArgsConstructor
 @Component
 @Slf4j
@@ -70,14 +74,28 @@ public class DailyPriceWriter {
                 continue;
             }
 
+            Integer close = parseIntOrNull(normalizeNumber(item.getClosePrice()));
+            Integer open  = parseIntOrNull(normalizeNumber(item.getOpenPrice()));
+            Integer high  = parseIntOrNull(normalizeNumber(item.getHighPrice()));
+            Integer low   = parseIntOrNull(normalizeNumber(item.getLowPrice()));
+            Long volume   = parseLongOrNull(normalizeNumber(item.getVolume()));
+
+            // 필수 필드 하나라도 파싱 실패면 스킵
+            if (close == null || open == null || high == null || low == null || volume == null) {
+                log.warn("[{}] 파싱 실패로 스킵: date={}, close={}, open={}, high={}, low={}, vol={}",
+                        stockCode, item.getDate(),
+                        item.getClosePrice(), item.getOpenPrice(), item.getHighPrice(), item.getLowPrice(), item.getVolume());
+                continue;
+            }
+
             DailyPrice dailyPrice = DailyPrice.builder()
                     .stock(stock)
                     .date(date)
-                    .closePrice(Integer.parseInt(item.getClosePrice()))
-                    .openPrice(Integer.parseInt(item.getOpenPrice()))
-                    .highPrice(Integer.parseInt(item.getHighPrice()))
-                    .lowPrice(Integer.parseInt(item.getLowPrice()))
-                    .volume(Long.parseLong(item.getVolume()))
+                    .closePrice(close)
+                    .openPrice(open)
+                    .highPrice(high)
+                    .lowPrice(low)
+                    .volume(volume)
                     // 시가총액은 이 API에서 안 주므로 null 혹은 별도 계산
                     .build();
 
