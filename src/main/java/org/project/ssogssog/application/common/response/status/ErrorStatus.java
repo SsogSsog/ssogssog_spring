@@ -17,6 +17,17 @@ public enum ErrorStatus implements BaseErrorCode {
 
     // 유효성 검사 에러(메시지는 @interface의 message로 처리)
     VALIDATOR_ERROR(HttpStatus.BAD_REQUEST,"VALID400",null),
+
+    // StockMetric 에러
+    INVALID_METRIC_BASED_PERIOD(HttpStatus.BAD_REQUEST, "METRIC4100", "직전 분기 또는 작년 중 분기 선택이 필요합니다."),
+
+    // KIS 에러
+    BODY_NULL(HttpStatus.INTERNAL_SERVER_ERROR, "KIS4000", "KIS Body가 비어있습니다."),
+    FAIL_RT_CD(HttpStatus.INTERNAL_SERVER_ERROR, "KIS4001", "RT_CD 값을 받아오는 것에 실패했습니다"),
+    KIS_HTTP_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "KIS4100", "KIS HTTP 에러가 발생했습니다."),
+    KIS_OTHERS_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "KIS4200", "KIS unknown 에러가 발생했습니다."),
+
+
     ;
 
     private final HttpStatus httpStatus;
