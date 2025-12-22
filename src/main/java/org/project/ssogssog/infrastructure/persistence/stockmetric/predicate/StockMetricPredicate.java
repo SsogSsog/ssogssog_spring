@@ -5,7 +5,7 @@ import com.querydsl.core.types.dsl.NumberPath;
 import org.project.ssogssog.application.common.response.exception.GeneralException;
 import org.project.ssogssog.application.common.response.status.ErrorStatus;
 import org.project.ssogssog.domain.stockmetric.entity.QStockMetric;
-import org.project.ssogssog.presentation.controller.stockmetric.enums.MetricBasePeriod;
+import org.project.ssogssog.domain.stockmetric.enums.MetricBasePeriod;
 import org.springframework.stereotype.Component;
 
 @Component

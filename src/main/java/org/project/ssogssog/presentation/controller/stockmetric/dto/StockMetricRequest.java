@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.project.ssogssog.presentation.controller.stockmetric.enums.MarketCapBucket;
-import org.project.ssogssog.presentation.controller.stockmetric.enums.MetricBasePeriod;
+import org.project.ssogssog.domain.stockmetric.enums.MetricBasePeriod;
 import org.project.ssogssog.presentation.controller.stockmetric.enums.StockPriceRange;
 
 public class StockMetricRequest {

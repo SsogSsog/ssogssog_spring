@@ -1,6 +1,6 @@
 package org.project.ssogssog.domain.stockmetric.vo;
 
-import org.project.ssogssog.presentation.controller.stockmetric.enums.MetricBasePeriod;
+import org.project.ssogssog.domain.stockmetric.enums.MetricBasePeriod;
 
 public record StockMetricScreenerCondition(
 
