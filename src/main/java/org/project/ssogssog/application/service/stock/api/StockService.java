@@ -2,7 +2,7 @@ package org.project.ssogssog.application.service.stock.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.application.service.stock.api.dto.ThemeItemDTO;
+import org.project.ssogssog.domain.stock.vo.ThemeItemDTO;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.presentation.controller.stock.dto.StockResponse;
 import org.springframework.stereotype.Service;

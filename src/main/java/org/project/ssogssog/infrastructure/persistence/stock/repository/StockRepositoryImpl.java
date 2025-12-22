@@ -4,7 +4,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.project.ssogssog.application.service.stock.api.dto.ThemeItemDTO;
+import org.project.ssogssog.domain.stock.vo.ThemeItemDTO;
 import org.springframework.stereotype.Repository;
 import org.project.ssogssog.domain.stock.entity.QDailyPrice;
 import org.project.ssogssog.domain.stock.entity.QStock;
