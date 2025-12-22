@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.project.ssogssog.application.service.stock.collect.dto.KisHistoricalPriceResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -125,6 +126,44 @@ public class KSIClient {
         }
 
         return null;
+    }
+
+    public KisHistoricalPriceResponse fetchPastPrices(String stockCode, String accessToken, String strStartDate, String strEndDate) {
+
+        // KIS API 호출 (국내주식 기간별 시세)
+        final String path = "/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
+
+        URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl)
+                .path(path)
+                .queryParam("FID_COND_MRKT_DIV_CODE", "J") // J: 주식
+                .queryParam("FID_INPUT_ISCD", stockCode)   // 종목코드
+                .queryParam("FID_INPUT_DATE_1", strStartDate) // 시작일
+                .queryParam("FID_INPUT_DATE_2", strEndDate)   // 종료일
+                .queryParam("FID_PERIOD_DIV_CODE", "D")    // D: 일봉
+                .queryParam("FID_ORG_ADJ_PRC", "1")        // 1: 수정주가 (중요! 액면분할 반영)
+                .build()
+                .toUri();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("authorization", "Bearer " + accessToken);
+        headers.set("appkey", appKey);
+        headers.set("appsecret", appSecret);
+        headers.set("tr_id", "FHKST03010100"); // [중요] 기간별 시세 조회 TR ID
+
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<KisHistoricalPriceResponse> response = restTemplate.exchange(
+                    uri, HttpMethod.GET, requestEntity, KisHistoricalPriceResponse.class
+            );
+
+            KisHistoricalPriceResponse body = response.getBody();
+            return body;
+        }catch (Exception e) {
+            log.error("과거 시세 수집 실패 [{}]: {}", stockCode, e.getMessage());
+            return null;
+        }
     }
 
     // --- 내부 DTO 클래스 (응답 매핑용) ---
