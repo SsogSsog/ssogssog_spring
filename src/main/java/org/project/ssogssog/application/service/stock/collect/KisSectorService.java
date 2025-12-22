@@ -26,7 +26,6 @@ public class KisSectorService {
     /**
      * 섹터 정보가 없는 종목들을 찾아 KIS API로 업데이트
      */
-    @Transactional
     public void updateMissingSectors() {
 
         // 0. 토큰 발급 (루프 시작 전 1회)
@@ -50,6 +49,7 @@ public class KisSectorService {
                 // 3. 업데이트 (Dirty Checking)
                 if (sectorName != null && !sectorName.isEmpty()) {
                     stock.updateSector(sectorName);
+                    stockRepository.save(stock);
                     count++;
                     log.info("[{}] 섹터 업데이트 완료: {}", stock.getCorpName(), sectorName);
                 }
