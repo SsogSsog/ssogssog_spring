@@ -10,6 +10,7 @@ import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -67,7 +68,14 @@ public class DailyPriceWriter {
         for (KisHistoricalPriceResponse.DailyItem item : items) {
             // 데이터가 비어있는 휴장일 등은 패스
             if (item.getClosePrice() == null || item.getClosePrice().isEmpty()) continue;
-            LocalDate date = LocalDate.parse(item.getDate(), dateFormatter);
+
+            LocalDate date;
+            try{
+                date = LocalDate.parse(item.getDate(), dateFormatter);
+            }catch(DateTimeException e){
+                log.error("[Date Error] 종목: {}, 잘못된 날짜 포맷: {}", stockCode, item.getDate());
+                continue;
+            }
 
             // 이미 DB에 있는 날짜면 건너뛰기 (중복 저장 방지)
             if (existDates.contains(date)) {
