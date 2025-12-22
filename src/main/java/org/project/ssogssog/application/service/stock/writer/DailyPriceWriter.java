@@ -2,6 +2,7 @@ package org.project.ssogssog.application.service.stock.writer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.project.ssogssog.application.common.utils.DateUtils;
 import org.project.ssogssog.application.service.stock.collect.dto.KisHistoricalPriceResponse;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
@@ -27,8 +28,6 @@ public class DailyPriceWriter {
 
     private final DailyPriceRepository dailyPriceRepository;
     private final StockRepository stockRepository;
-
-    private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     @Transactional
     // --- 저장 (중복 방지) ---
@@ -72,7 +71,7 @@ public class DailyPriceWriter {
 
             LocalDate date;
             try{
-                date = LocalDate.parse(item.getDate(), dateFormatter);
+                date = LocalDate.parse(item.getDate(), DateUtils.dateTimeFormatter);
             }catch(DateTimeException e){
                 log.error("[Date Error] 종목: {}, 잘못된 날짜 포맷: {}", stockCode, item.getDate());
                 continue;
