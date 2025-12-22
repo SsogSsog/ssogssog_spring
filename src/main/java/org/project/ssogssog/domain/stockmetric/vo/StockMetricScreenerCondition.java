@@ -1,9 +1,5 @@
-package org.project.ssogssog.application.service.stockmetric.api.dto;
+package org.project.ssogssog.domain.stockmetric.vo;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.project.ssogssog.presentation.controller.stockmetric.enums.MetricBasePeriod;
 
 public record StockMetricScreenerCondition(

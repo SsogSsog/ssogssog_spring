@@ -3,7 +3,7 @@ package org.project.ssogssog.infrastructure.persistence.stockmetric.repository;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.project.ssogssog.application.service.stockmetric.api.dto.StockMetricScreenerCondition;
+import org.project.ssogssog.domain.stockmetric.vo.StockMetricScreenerCondition;
 import org.project.ssogssog.domain.stockmetric.entity.QStockMetric;
 import org.project.ssogssog.domain.stockmetric.entity.StockMetric;
 import org.project.ssogssog.domain.stockmetric.repository.StockMetricRepositoryCustom;
