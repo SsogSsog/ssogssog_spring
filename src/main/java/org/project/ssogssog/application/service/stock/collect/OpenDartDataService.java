@@ -90,7 +90,8 @@ public class OpenDartDataService {
             StockFinancial.StockFinancialBuilder builder = StockFinancial.builder()
                     .stock(stock) // @ManyToOne 관계 설정 (객체 자체를 넣음)
                     .year(year)
-                    .quarter(convertReportCodeToQuarter(reportCode));
+                    .quarter(convertReportCodeToQuarter(reportCode))
+                    .isConsolidated(true);
 
             boolean isDataFound = false;
 
