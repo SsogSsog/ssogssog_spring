@@ -28,6 +28,8 @@ public class DailyPriceWriter {
     private final DailyPriceRepository dailyPriceRepository;
     private final StockRepository stockRepository;
 
+    private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+
     @Transactional
     // --- 저장 (중복 방지) ---
     public void saveDailyPrice(DailyPrice newPrice) {
@@ -49,7 +51,6 @@ public class DailyPriceWriter {
                 .orElseThrow(() -> new RuntimeException("종목 없음"));
 
         List<DailyPrice> priceList = new ArrayList<>();
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
         // 해당 주식이 갖고 았는 모든 DailyPrice의 날짜 가져오기(중복 제거)
         Set<LocalDate> existDates = dailyPriceRepository.findAllDatesByStock(stock);
