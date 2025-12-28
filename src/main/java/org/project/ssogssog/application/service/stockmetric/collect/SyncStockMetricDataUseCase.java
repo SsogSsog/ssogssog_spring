@@ -13,7 +13,6 @@ import org.project.ssogssog.domain.stockmetric.factory.StockMetricCalculator;
 import org.project.ssogssog.domain.stockmetric.repository.StockMetricRepository;
 import org.project.ssogssog.domain.stockmetric.vo.MetricValues;
 import org.project.ssogssog.domain.stockmetric.vo.YearQuarter;
-import org.project.ssogssog.presentation.controller.stockmetric.dto.StockMetricRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +22,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class StockMetricRefreshService {
+public class SyncStockMetricDataUseCase {
 
     private final StockRepository stockRepository;
     private final StockMetricRepository stockMetricRepository;
