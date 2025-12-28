@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.application.service.stock.usecase.dto.KisHistoricalPriceResponse;
+import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -84,7 +84,7 @@ public class KSIClient {
     }
 
     //TODO 같은 엔드포인트의 값을 하나는 JsonNode 기반, 다른 하나는 DTO 기반으로 값을 가져오므로 통일성을 맞출 필요가 있어보임
-    public String fetchSectorFromKis(String stockCode, String accessToken) {
+    public String fetchSector(String stockCode, String accessToken) {
         // API 경로: 국내주식시세 > 주식현재가 시세
         String path = "/uapi/domestic-stock/v1/quotations/inquire-price";
 
@@ -128,7 +128,7 @@ public class KSIClient {
         return null;
     }
 
-    public KisHistoricalPriceResponse fetchPastPrices(String stockCode, String accessToken, String strStartDate, String strEndDate) {
+    public HistoricalPriceResponse fetchPastPrices(String stockCode, String accessToken, String strStartDate, String strEndDate) {
 
         // KIS API 호출 (국내주식 기간별 시세)
         final String path = "/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
@@ -154,11 +154,11 @@ public class KSIClient {
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
         try {
-            ResponseEntity<KisHistoricalPriceResponse> response = restTemplate.exchange(
-                    uri, HttpMethod.GET, requestEntity, KisHistoricalPriceResponse.class
+            ResponseEntity<HistoricalPriceResponse> response = restTemplate.exchange(
+                    uri, HttpMethod.GET, requestEntity, HistoricalPriceResponse.class
             );
 
-            KisHistoricalPriceResponse body = response.getBody();
+            HistoricalPriceResponse body = response.getBody();
             return body;
         }catch (Exception e) {
             log.error("과거 시세 수집 실패 [{}]: {}", stockCode, e.getMessage());

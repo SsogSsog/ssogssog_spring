@@ -4,7 +4,7 @@ import com.google.common.util.concurrent.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.common.utils.DateUtils;
-import org.project.ssogssog.application.service.stock.usecase.dto.KisHistoricalPriceResponse;
+import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceResponse;
 import org.project.ssogssog.application.service.stock.writer.DailyPriceWriter;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
@@ -83,11 +83,11 @@ public class CollectHistoricalPricesUseCase {
                 // 느리면 알아서 기다줌. 따라서 sleep(100)처럼 무조건 기다리는 낭비 시간이 사라진다.
 
                 // 2. KIS API 호출 (국내주식 기간별 시세)
-                KisHistoricalPriceResponse kisHistoricalPriceResponse = ksiClient.fetchPastPrices(stock.getStockCode(), accessToken, strStartDate, strEndDate);
+                HistoricalPriceResponse historicalPriceResponse = ksiClient.fetchPastPrices(stock.getStockCode(), accessToken, strStartDate, strEndDate);
 
                 // 3. DB 저장
-                if (kisHistoricalPriceResponse != null && kisHistoricalPriceResponse.getDailyItems() != null) {
-                    dailyPriceWriter.saveHistoricalPrices(stock.getStockCode(), kisHistoricalPriceResponse.getDailyItems());
+                if (historicalPriceResponse != null && historicalPriceResponse.getDailyItems() != null) {
+                    dailyPriceWriter.saveHistoricalPrices(stock.getStockCode(), historicalPriceResponse.getDailyItems());
                 }
 
                 // 4. 종료일을 '이번 시작일의 하루 전'으로 설정

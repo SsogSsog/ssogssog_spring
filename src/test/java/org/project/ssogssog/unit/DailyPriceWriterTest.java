@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.project.ssogssog.application.service.stock.usecase.dto.KisHistoricalPriceResponse;
+import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceResponse;
 import org.project.ssogssog.application.service.stock.writer.DailyPriceWriter;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
@@ -44,7 +44,7 @@ class DailyPriceWriterTest {
         when(dailyPriceRepository.findAllDatesByStock(stock)).thenReturn(Set.of(existDate));
 
         // items: 기존 날짜 1개 + 신규 날짜 1개
-        KisHistoricalPriceResponse.DailyItem oldItem = new KisHistoricalPriceResponse.DailyItem();
+        HistoricalPriceResponse.DailyItem oldItem = new HistoricalPriceResponse.DailyItem();
         oldItem.setDate("20251220");
         oldItem.setClosePrice("1,000");
         oldItem.setOpenPrice("900");
@@ -52,7 +52,7 @@ class DailyPriceWriterTest {
         oldItem.setLowPrice("800");
         oldItem.setVolume("10");
 
-        KisHistoricalPriceResponse.DailyItem newItem = new KisHistoricalPriceResponse.DailyItem();
+        HistoricalPriceResponse.DailyItem newItem = new HistoricalPriceResponse.DailyItem();
         newItem.setDate("20251221");
         newItem.setClosePrice("2,000");
         newItem.setOpenPrice("1900");
@@ -60,7 +60,7 @@ class DailyPriceWriterTest {
         newItem.setLowPrice("1800");
         newItem.setVolume("20");
 
-        List<KisHistoricalPriceResponse.DailyItem> items = List.of(oldItem, newItem);
+        List<HistoricalPriceResponse.DailyItem> items = List.of(oldItem, newItem);
 
         // when
         dailyPriceWriter.saveHistoricalPrices(stockCode, items);
@@ -83,7 +83,7 @@ class DailyPriceWriterTest {
         when(dailyPriceRepository.findAllDatesByStock(stock)).thenReturn(Collections.emptySet());
 
         // closePrice가 숫자가 아니라 파싱 실패 → 스킵되어 saveAll이 호출되지 않아야 함
-        KisHistoricalPriceResponse.DailyItem badItem = new KisHistoricalPriceResponse.DailyItem();
+        HistoricalPriceResponse.DailyItem badItem = new HistoricalPriceResponse.DailyItem();
         badItem.setDate("20251221");
         badItem.setClosePrice("ABC"); // 파싱 실패
         badItem.setOpenPrice("1900");

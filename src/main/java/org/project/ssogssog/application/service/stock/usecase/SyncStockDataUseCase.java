@@ -55,7 +55,7 @@ public class SyncStockDataUseCase {
 
                 rateLimiter.acquire();
                 // 2. KIS API 호출
-                String sectorName = ksiClient.fetchSectorFromKis(stock.getStockCode(), accessToken);
+                String sectorName = ksiClient.fetchSector(stock.getStockCode(), accessToken);
 
                 // 3. 업데이트 (Dirty Checking)
                 if (sectorName != null && !sectorName.isEmpty()) {
