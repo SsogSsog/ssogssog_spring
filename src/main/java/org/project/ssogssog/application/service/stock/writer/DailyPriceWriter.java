@@ -2,7 +2,7 @@ package org.project.ssogssog.application.service.stock.writer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.application.common.utils.DateUtils;
+import org.project.ssogssog.application.utils.DateUtils;
 import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceResponse;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
@@ -15,9 +15,9 @@ import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.util.*;
 
-import static org.project.ssogssog.application.common.utils.NormalizeUtils.normalizeNumber;
-import static org.project.ssogssog.application.common.utils.ParserUtils.parseIntOrNull;
-import static org.project.ssogssog.application.common.utils.ParserUtils.parseLongOrNull;
+import static org.project.ssogssog.application.utils.NormalizeUtils.normalizeNumber;
+import static org.project.ssogssog.application.utils.ParserUtils.parseIntOrNull;
+import static org.project.ssogssog.application.utils.ParserUtils.parseLongOrNull;
 
 @RequiredArgsConstructor
 @Component

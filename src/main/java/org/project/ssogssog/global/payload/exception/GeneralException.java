@@ -1,9 +1,9 @@
-package org.project.ssogssog.application.common.response.exception;
+package org.project.ssogssog.global.payload.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.project.ssogssog.application.common.response.dto.ErrorReasonDTO;
-import org.project.ssogssog.application.common.response.status.BaseErrorCode;
+import org.project.ssogssog.global.payload.code.dto.ErrorReasonDTO;
+import org.project.ssogssog.global.payload.code.BaseErrorCode;
 
 @Getter
 @AllArgsConstructor

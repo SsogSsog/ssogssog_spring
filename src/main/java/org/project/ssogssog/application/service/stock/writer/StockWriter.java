@@ -2,7 +2,7 @@ package org.project.ssogssog.application.service.stock.writer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.application.common.utils.ParserUtils;
+import org.project.ssogssog.application.utils.ParserUtils;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.springframework.stereotype.Component;

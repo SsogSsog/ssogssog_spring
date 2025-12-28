@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.common.utils;
+package org.project.ssogssog.application.utils;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;

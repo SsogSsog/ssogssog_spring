@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.common.response.dto;
+package org.project.ssogssog.global.payload.code.dto;
 
 import lombok.Builder;
 import lombok.Getter;

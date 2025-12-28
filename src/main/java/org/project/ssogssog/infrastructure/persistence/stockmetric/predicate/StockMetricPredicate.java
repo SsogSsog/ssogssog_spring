@@ -2,8 +2,8 @@ package org.project.ssogssog.infrastructure.persistence.stockmetric.predicate;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.NumberPath;
-import org.project.ssogssog.application.common.response.exception.GeneralException;
-import org.project.ssogssog.application.common.response.status.ErrorStatus;
+import org.project.ssogssog.global.payload.exception.GeneralException;
+import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.domain.stockmetric.entity.QStockMetric;
 import org.project.ssogssog.domain.stockmetric.enums.MetricBasePeriod;
 import org.springframework.stereotype.Component;

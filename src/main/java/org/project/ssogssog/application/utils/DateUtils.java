@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.common.utils;
+package org.project.ssogssog.application.utils;
 
 import java.time.format.DateTimeFormatter;
 

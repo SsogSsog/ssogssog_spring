@@ -3,7 +3,7 @@ package org.project.ssogssog.presentation.controller.stock;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.project.ssogssog.application.service.stock.api.StockService;
-import org.project.ssogssog.presentation.common.ApiResponse;
+import org.project.ssogssog.global.payload.ApiResponse;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;

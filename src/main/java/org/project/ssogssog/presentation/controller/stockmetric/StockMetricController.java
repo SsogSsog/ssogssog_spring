@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.project.ssogssog.application.service.stockmetric.api.StockMetricService;
-import org.project.ssogssog.presentation.common.ApiResponse;
+import org.project.ssogssog.global.payload.ApiResponse;
 import org.project.ssogssog.application.service.stockmetric.api.dto.StockMetricRequest;
 import org.project.ssogssog.application.service.stockmetric.api.dto.StockMetricResponse;
 import org.springframework.validation.annotation.Validated;
