@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.application.service.stock.utils.ParserUtils;
+import org.project.ssogssog.application.common.utils.ParserUtils;
 import org.project.ssogssog.application.service.stock.writer.StockFinancialWriter;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.entity.StockFinancial;

@@ -3,7 +3,7 @@ package org.project.ssogssog.application.service.stock.usecase;
 import com.google.common.util.concurrent.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.application.service.stock.utils.ParserUtils;
+import org.project.ssogssog.application.common.utils.ParserUtils;
 import org.project.ssogssog.application.service.stock.writer.StockFinancialWriter;
 import org.project.ssogssog.application.service.stock.writer.StockWriter;
 import org.project.ssogssog.domain.stock.entity.Stock;
