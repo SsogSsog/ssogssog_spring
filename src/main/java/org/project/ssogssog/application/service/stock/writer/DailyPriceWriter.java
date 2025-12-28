@@ -3,7 +3,7 @@ package org.project.ssogssog.application.service.stock.writer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.common.utils.DateUtils;
-import org.project.ssogssog.application.service.stock.collect.dto.KisHistoricalPriceResponse;
+import org.project.ssogssog.application.service.stock.usecase.dto.KisHistoricalPriceResponse;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.DailyPriceRepository;
@@ -13,9 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.project.ssogssog.application.common.utils.NormalizeUtils.normalizeNumber;
 import static org.project.ssogssog.application.common.utils.ParserUtils.parseIntOrNull;

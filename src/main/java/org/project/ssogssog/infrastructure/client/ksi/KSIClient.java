@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.application.service.stock.collect.dto.KisHistoricalPriceResponse;
+import org.project.ssogssog.application.service.stock.usecase.dto.KisHistoricalPriceResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;

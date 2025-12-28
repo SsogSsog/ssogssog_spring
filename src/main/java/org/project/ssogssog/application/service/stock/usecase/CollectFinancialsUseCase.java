@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.service.stock.collect;
+package org.project.ssogssog.application.service.stock.usecase;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,7 +8,6 @@ import org.project.ssogssog.application.service.stock.utils.ParserUtils;
 import org.project.ssogssog.application.service.stock.writer.StockFinancialWriter;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.entity.StockFinancial;
-import org.project.ssogssog.domain.stock.repository.StockFinancialRepository;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.infrastructure.client.opendart.OpenDartClient;
 import org.springframework.stereotype.Service;

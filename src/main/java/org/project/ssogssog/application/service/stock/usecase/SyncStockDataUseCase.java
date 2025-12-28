@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.service.stock.collect;
+package org.project.ssogssog.application.service.stock.usecase;
 
 import com.google.common.util.concurrent.RateLimiter;
 import lombok.RequiredArgsConstructor;
