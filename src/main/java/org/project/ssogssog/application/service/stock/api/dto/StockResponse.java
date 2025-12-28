@@ -1,4 +1,4 @@
-package org.project.ssogssog.presentation.controller.stock.dto;
+package org.project.ssogssog.application.service.stock.api.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
