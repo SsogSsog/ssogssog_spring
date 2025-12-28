@@ -1,10 +1,10 @@
 package org.project.ssogssog.presentation.controller.test;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.project.ssogssog.presentation.common.ApiResponse;
-import org.project.ssogssog.application.common.response.exception.GeneralException;
-import org.project.ssogssog.application.common.response.status.ErrorStatus;
-import org.project.ssogssog.application.common.response.status.SuccessStatus;
+import org.project.ssogssog.global.payload.ApiResponse;
+import org.project.ssogssog.global.payload.exception.GeneralException;
+import org.project.ssogssog.global.payload.code.status.ErrorStatus;
+import org.project.ssogssog.global.payload.code.status.SuccessStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
