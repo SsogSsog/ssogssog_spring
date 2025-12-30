@@ -122,6 +122,10 @@ public class CollectTodayPricesUseCase {
             double changeRate = ParserUtils.parseStringToDouble(output.path("prdy_ctrt").asText().trim());
             int prevClosePrice = ParserUtils.parseStringToInt(output.path("stck_sdpr").asText().trim());
 
+            int w52HighPrice = ParserUtils.parseStringToInt(output.path("w52_hgpr").asText().trim()); // 52주 최고가
+            int w52LowPrice = ParserUtils.parseStringToInt(output.path("w52_lwpr").asText().trim());  // 52주 최저가
+            double pbr = ParserUtils.parseStringToDouble(output.path("pbr").asText().trim());         // PBR
+
             return DailyPrice.builder()
                     .stock(stock)
                     .date(date)
@@ -136,6 +140,9 @@ public class CollectTodayPricesUseCase {
                     .changePrice(changePrice)
                     .changeRate(changeRate)
                     .prevClosePrice(prevClosePrice)
+                    .w52HighPrice(w52HighPrice)
+                    .w52LowPrice(w52LowPrice)
+                    .pbr(pbr)
                     .build();
 
         } catch (Exception e) {
