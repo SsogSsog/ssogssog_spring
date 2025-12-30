@@ -2,12 +2,15 @@ package org.project.ssogssog.application.service.stock.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.project.ssogssog.application.service.stock.port.StockIssuePort;
+import org.project.ssogssog.application.service.stock.usecase.dto.NewsDTO;
 import org.project.ssogssog.domain.stock.vo.ThemeItemDTO;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -15,6 +18,7 @@ import java.util.*;
 public class StockService {
 
     private final StockRepository stockRepository;
+    private final StockIssuePort stockIssuePort;
 
     public StockResponse.ThemeResponseDTO getThemeStockStats() {
 
@@ -62,6 +66,28 @@ public class StockService {
                 collectedItems,
                 collectedItems.size()
         );
+    }
+
+    // TODO 페이지 네이션 적용
+    public StockResponse.NewsResponseDTO getStockNews(String keyword){
+        List<NewsDTO> news = stockIssuePort.searchNews(keyword);
+
+        List<StockResponse.NewsResponseItemDTO> newsItems =
+                news.stream()
+                        .map(n -> StockResponse.NewsResponseItemDTO.builder()
+                                .title(n.title())
+                                .link(n.link())
+                                .pubDate(n.pubDate())
+                                .build()
+                        )
+                        .collect(Collectors.toList());
+
+
+        return StockResponse.NewsResponseDTO.builder()
+                .items(newsItems)
+                .totalCount(news.size())
+                .build();
+
     }
 
 }
