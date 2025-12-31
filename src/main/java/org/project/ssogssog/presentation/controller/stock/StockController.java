@@ -1,6 +1,8 @@
 package org.project.ssogssog.presentation.controller.stock;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.project.ssogssog.application.service.stock.api.StockService;
 import org.project.ssogssog.global.payload.ApiResponse;
@@ -59,15 +61,16 @@ public class StockController {
             summary = "특정 종목의 실시간 공시(보고서) 목록 조회",
             description = """
             OpenDART API를 실시간으로 호출하여, 해당 종목의 최근 3개월 치(20개 제한) 주요 공시 및 보고서 리스트를 반환합니다.
-            요청 시 종목코드(예: 00126380)를 입력하면, 서버
+            요청 시 종목코드(예: 005930)를 입력하면, 서버에서 stockCode로 변환 후 해당 주식을 찾아 공시 데이터를 가져옵니다.
             
             - DB에 저장하지 않고 OpenDART API를 통해 실시간 데이터를 가져옵니다.
-            - response의 `receiptNo`(접수번호)를 이용해 아래와 같이 DART 전자공시 뷰어 링크를 생성할 수 있습니다.
+            - response의 receiptNo(접수번호)를 이용해 아래와 같이 DART 전자공시 뷰어 링크를 생성할 수 있습니다.
               (링크 예시: http://dart.fss.or.kr/dsaf001/main.do?rcpNo={receiptNo})
             """
     )
     @GetMapping("/disclosures")
-    public ApiResponse<StockResponse.DisclosureResponseDTO> getDisclosures(@RequestParam String stockCode){
+    public ApiResponse<StockResponse.DisclosureResponseDTO> getDisclosures(
+            @Parameter(description = "검색할 종목 코드 (필수)", required = true) @RequestParam @NotBlank(message = "종목 코드를 입력해주세요.")String stockCode){
 
         StockResponse.DisclosureResponseDTO result = stockService.getDisclosures(stockCode);
         return ApiResponse.onSuccess(result);

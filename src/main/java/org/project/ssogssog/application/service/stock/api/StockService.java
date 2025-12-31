@@ -102,6 +102,9 @@ public class StockService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
 
         String corpCode = stock.getCorpCode();
+        if(corpCode == null || corpCode.isBlank()){
+            return null;
+        }
 
         List<DisclosureDTO> disclosures = stockIssuePort.searchDisclosures(corpCode);
 
