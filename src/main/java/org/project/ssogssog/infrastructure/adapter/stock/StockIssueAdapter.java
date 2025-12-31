@@ -30,7 +30,7 @@ public class StockIssueAdapter implements StockIssuePort {
 
         if (responseBody == null || responseBody.isBlank()) {
             log.error("네이버 뉴스 검색 실패 - keyword: {}", keyword);
-            // 에러 발생 시 null 반환
+            // 에러 발생 시 emptyList 반환
             return Collections.emptyList();
         }
 

@@ -9,6 +9,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -28,7 +29,12 @@ public class NaverClient {
      */
     public String searchNews(String query) {
         // 1. API 호출 URL 설정 (JSON 요청)
-        String apiURL = "https://openapi.naver.com/v1/search/news.json?query=" + query + "&display=10&sort=date";
+        String apiURL = UriComponentsBuilder
+                .fromHttpUrl("https://openapi.naver.com/v1/search/news.json")
+                .queryParam("query", query)
+                .queryParam("display", 10)
+                .queryParam("sort", "date")
+                .toUriString();
 
         // 2. 헤더 설정
         HttpHeaders headers = new HttpHeaders();
