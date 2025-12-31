@@ -51,4 +51,26 @@ public class StockController {
         return ApiResponse.onSuccess(result);
     }
 
+    // TODO
+    // 1. 뉴스 + 공시 탭에서 캐싱(Caching)을 통해 api 호출 시간을 줄이고 빠르게 정보 가져오기
+    // 2. 매크로에 대한 토큰 사용 방어 정책 및 토큰 제한 문제 해결하기(하루 10,000회)
+    // 3. DB + 뉴스 + 공시 ... 등의 로직에 대해 비동기 병렬 처리 로직
+    @Operation(
+            summary = "특정 종목의 실시간 공시(보고서) 목록 조회",
+            description = """
+            OpenDART API를 실시간으로 호출하여, 해당 종목의 최근 3개월 치(20개 제한) 주요 공시 및 보고서 리스트를 반환합니다.
+            요청 시 종목코드(예: 00126380)를 입력하면, 서버
+            
+            - DB에 저장하지 않고 OpenDART API를 통해 실시간 데이터를 가져옵니다.
+            - response의 `receiptNo`(접수번호)를 이용해 아래와 같이 DART 전자공시 뷰어 링크를 생성할 수 있습니다.
+              (링크 예시: http://dart.fss.or.kr/dsaf001/main.do?rcpNo={receiptNo})
+            """
+    )
+    @GetMapping("/disclosures")
+    public ApiResponse<StockResponse.DisclosureResponseDTO> getDisclosures(@RequestParam String stockCode){
+
+        StockResponse.DisclosureResponseDTO result = stockService.getDisclosures(stockCode);
+        return ApiResponse.onSuccess(result);
+    }
+
 }
