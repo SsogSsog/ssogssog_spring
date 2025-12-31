@@ -20,7 +20,6 @@ public class OpenDartClient {
     @Value("${opendart.api-key}")
     private String apiKey;
 
-    private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
     private static final String OPENDART_CORPCODE_URL  = "https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key=";
     private static final String OPENDART_FINANCIAL_API_URL = "https://opendart.fss.or.kr/api/fnlttSinglAcnt.json";
