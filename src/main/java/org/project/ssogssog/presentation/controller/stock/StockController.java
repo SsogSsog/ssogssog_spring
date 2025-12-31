@@ -7,6 +7,7 @@ import org.project.ssogssog.global.payload.ApiResponse;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -47,7 +48,7 @@ public class StockController {
             - response의 link를 통해 웹뷰나 브라우저로 기사 원문을 띄울 수 있습니다.
             """
     )
-    public ApiResponse<StockResponse.NewsResponseDTO> getStockNews(String keyword){
+    public ApiResponse<StockResponse.NewsResponseDTO> getStockNews(@RequestBody String keyword){
 
         StockResponse.NewsResponseDTO result = stockService.getStockNews(keyword);
         return ApiResponse.onSuccess(result);
