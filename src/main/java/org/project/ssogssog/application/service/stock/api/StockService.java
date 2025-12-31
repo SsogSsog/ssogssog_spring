@@ -3,10 +3,14 @@ package org.project.ssogssog.application.service.stock.api;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.stock.port.StockIssuePort;
+import org.project.ssogssog.application.service.stock.usecase.dto.DisclosureDTO;
 import org.project.ssogssog.application.service.stock.usecase.dto.NewsDTO;
+import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.vo.ThemeItemDTO;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
+import org.project.ssogssog.global.payload.code.status.ErrorStatus;
+import org.project.ssogssog.global.payload.exception.GeneralException;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -90,4 +94,31 @@ public class StockService {
 
     }
 
+
+    // TODO 페이지 네이션 적용
+    public StockResponse.DisclosureResponseDTO getDisclosures(String stockCode) {
+
+        Stock stock = stockRepository.findByStockCode(stockCode)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
+
+        String corpCode = stock.getCorpCode();
+
+        List<DisclosureDTO> disclosures = stockIssuePort.searchDisclosures(corpCode);
+
+        List<StockResponse.DisclosureItemResponseDTO> disclosureItems =
+                disclosures.stream()
+                        .map(d -> StockResponse.DisclosureItemResponseDTO.builder()
+                                .reportName(d.reportName())
+                                .receiptNo(d.receiptNo())
+                                .submitter(d.submitter())
+                                .date(d.date())
+                                .build()
+                        )
+                        .collect(Collectors.toList());
+
+        return StockResponse.DisclosureResponseDTO.builder()
+                .items(disclosureItems)
+                .totalCount(disclosures.size())
+                .build();
+    }
 }
