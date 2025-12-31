@@ -48,4 +48,8 @@ public class DailyPrice {
 
     private Long listedShares;        // (상장주식수)
     private Long foreignHeldShares;   // (외국인 보유주식수)
+
+    private Integer w52HighPrice;     // 52주 최고가
+    private Integer w52LowPrice;      // 52주 최저가
+    private Double pbr;               // PBR (주가순자산비율)
 }

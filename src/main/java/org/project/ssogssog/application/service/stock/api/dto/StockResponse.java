@@ -64,4 +64,25 @@ public class StockResponse {
         private List<ThemeCollectedItemDTO> items;
         private int totalCount;
     }
+
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class NewsResponseItemDTO {
+
+       String title;
+       String link;
+       String pubDate;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class NewsResponseDTO{
+        private List<NewsResponseItemDTO> items;
+        private int totalCount;
+    }
+
 }
