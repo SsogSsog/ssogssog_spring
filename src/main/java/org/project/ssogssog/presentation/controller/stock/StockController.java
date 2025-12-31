@@ -47,9 +47,10 @@ public class StockController {
             - response의 link를 통해 웹뷰나 브라우저로 기사 원문을 띄울 수 있습니다.
             """
     )
-    public ApiResponse<StockResponse.NewsResponseDTO> getStockNews(@RequestParam String keyword){
+    public ApiResponse<StockResponse.NewsResponseDTO> getStockNews(
+            @Parameter(description = "검색할 종목 코드 (필수)", required = true) @RequestParam @NotBlank(message = "종목 코드를 입력해주세요.")String stockCode){
 
-        StockResponse.NewsResponseDTO result = stockService.getStockNews(keyword);
+        StockResponse.NewsResponseDTO result = stockService.getStockNews(stockCode);
         return ApiResponse.onSuccess(result);
     }
 

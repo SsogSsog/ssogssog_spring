@@ -73,7 +73,15 @@ public class StockService {
     }
 
     // TODO 페이지 네이션 적용
-    public StockResponse.NewsResponseDTO getStockNews(String keyword){
+    public StockResponse.NewsResponseDTO getStockNews(String stockCode){
+        Stock stock = stockRepository.findByStockCode(stockCode)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
+
+        String keyword = stock.getCorpName();
+        if(keyword == null || keyword.isBlank()){
+            return null;
+        }
+
         List<NewsDTO> news = stockIssuePort.searchNews(keyword);
 
         List<StockResponse.NewsResponseItemDTO> newsItems =
