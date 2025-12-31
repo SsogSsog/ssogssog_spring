@@ -50,7 +50,7 @@ public class StockIssueAdapter implements StockIssuePort {
         } catch (JsonProcessingException e) {
             log.error("네이버 뉴스 검색 실패 - 에러: {}", e.getMessage());
 
-            return null;
+            return Collections.emptyList();
         }
         JsonNode items = root.path("items");
 
