@@ -89,7 +89,6 @@ public class StockController {
             @Parameter(description = "페이지 번호(기본값 0")
             @RequestParam(name="page", defaultValue = "0")
             @Min(value = 0, message = "page는 0 이상이여야 합니다.")
-            @NotBlank
             int page
     ) {
 
@@ -122,7 +121,6 @@ public class StockController {
             @Parameter(description = "페이지 번호(기본값 0")
             @RequestParam(name="page", defaultValue = "0")
             @Min(value = 0, message = "page는 0 이상이여야 합니다.")
-            @NotBlank
             int page
     ){
 
