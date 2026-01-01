@@ -10,8 +10,12 @@ import org.project.ssogssog.global.paging.PageDTO;
 import org.project.ssogssog.global.paging.SliceDTO;
 import org.project.ssogssog.global.payload.ApiResponse;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import static org.springframework.data.domain.Sort.Direction.DESC;
 
 @RestController
 @RequiredArgsConstructor
@@ -38,9 +42,11 @@ public class StockController {
 
     @GetMapping("/themes")
     public ApiResponse<PageDTO<StockResponse.StockItemResponseDTO>> getStocksForTheme(
-            @RequestParam String theme){
+            @NotBlank @RequestParam String theme,
+            @PageableDefault(size=10, sort="closePrice", direction=DESC) Pageable pageable
+            ){
 
-        PageDTO<StockResponse.StockItemResponseDTO> result = stockService.getStocksForTheme(theme);
+        PageDTO<StockResponse.StockItemResponseDTO> result = stockService.getStocksForTheme(theme, pageable);
         return ApiResponse.onSuccess(result);
 
     }
