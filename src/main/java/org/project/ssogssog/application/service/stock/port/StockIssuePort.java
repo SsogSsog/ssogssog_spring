@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface StockIssuePort {
 
-    List<NewsDTO> searchNews(String keyword);
+    List<NewsDTO> searchNews(String keyword, int page);
     List<DisclosureDTO> searchDisclosures(String corpCode);
 }

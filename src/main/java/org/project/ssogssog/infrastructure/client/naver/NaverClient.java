@@ -29,12 +29,19 @@ public class NaverClient {
     /**
      * 네이버 뉴스 검색 후 responseBody를 string 자료형으로 반환
      */
-    public String searchNews(String query) {
+    public String searchNews(String query, int page) {
+        final int display = 10;           // 고정
+        int start = page * display + 1; // 0-based page -> 1-based start
+
+        if (page < 0) page = 0;
+        if (start > 1000) start = 1; // start가 1000 넘을 시 에러가 발생됨
+
         // 1. API 호출 URL 설정 (URI 객체로 생성하여 이중 인코딩 방지)
         URI uri = UriComponentsBuilder
                 .fromUriString("https://openapi.naver.com/v1/search/news.json")
                 .queryParam("query", query)
                 .queryParam("display", 10)
+                .queryParam("start", start)
                 .queryParam("sort", "date")
                 .encode() // 인코딩 적용
                 .build()

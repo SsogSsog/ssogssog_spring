@@ -28,8 +28,8 @@ public class StockIssueAdapter implements StockIssuePort {
     private final OpenDartClient openDartClient;
 
     @Override
-    public List<NewsDTO> searchNews(String keyword){
-        String responseBody = naverClient.searchNews(keyword);
+    public List<NewsDTO> searchNews(String keyword, int page){
+        String responseBody = naverClient.searchNews(keyword, page);
 
         if (responseBody == null || responseBody.isBlank()) {
             log.error("네이버 뉴스 검색 실패 - keyword: {}", keyword);
