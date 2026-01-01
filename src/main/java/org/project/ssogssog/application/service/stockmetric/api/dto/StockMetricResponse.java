@@ -52,13 +52,4 @@ public class StockMetricResponse {
         private LocalDate calculatedAt;
     }
 
-    @Getter
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    public static class ScreenerResponseDTO {
-
-        private List<ScreenerItemDTO> items;
-        private int totalCount;
-    }
 }

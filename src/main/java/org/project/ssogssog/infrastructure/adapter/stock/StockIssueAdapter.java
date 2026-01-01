@@ -28,8 +28,8 @@ public class StockIssueAdapter implements StockIssuePort {
     private final OpenDartClient openDartClient;
 
     @Override
-    public List<NewsDTO> searchNews(String keyword){
-        String responseBody = naverClient.searchNews(keyword);
+    public List<NewsDTO> searchNews(String keyword, int page){
+        String responseBody = naverClient.searchNews(keyword, page);
 
         if (responseBody == null || responseBody.isBlank()) {
             log.error("네이버 뉴스 검색 실패 - keyword: {}", keyword);
@@ -42,8 +42,8 @@ public class StockIssueAdapter implements StockIssuePort {
     }
 
     @Override
-    public List<DisclosureDTO> searchDisclosures(String corpCode){
-        String responseBody = openDartClient.getDisclosures(corpCode);
+    public List<DisclosureDTO> searchDisclosures(String corpCode, int page){
+        String responseBody = openDartClient.getDisclosures(corpCode, page);
 
         if (responseBody == null || responseBody.isBlank()) {
             log.error("OpenDart 공시 검색 실패 - corpCode: {}", corpCode);

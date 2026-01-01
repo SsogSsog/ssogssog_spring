@@ -9,6 +9,7 @@ import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.vo.ThemeItemDTO;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
+import org.project.ssogssog.global.paging.SliceDTO;
 import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,9 @@ public class StockService {
 
     private final StockRepository stockRepository;
     private final StockIssuePort stockIssuePort;
+
+    private static final int NEWS_PAGE_SIZE = 10;
+    private static final int DISCLOSURE_PAGE_SIZE = 20;
 
     public StockResponse.ThemeResponseDTO getThemeStockStats() {
 
@@ -72,8 +76,7 @@ public class StockService {
         );
     }
 
-    // TODO 페이지 네이션 적용
-    public StockResponse.NewsResponseDTO getStockNews(String stockCode){
+    public SliceDTO<StockResponse.NewsResponseItemDTO> getStockNews(String stockCode, int page){
         Stock stock = stockRepository.findByStockCode(stockCode)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
 
@@ -82,7 +85,7 @@ public class StockService {
             return null;
         }
 
-        List<NewsDTO> news = stockIssuePort.searchNews(keyword);
+        List<NewsDTO> news = stockIssuePort.searchNews(keyword, page);
 
         List<StockResponse.NewsResponseItemDTO> newsItems =
                 news.stream()
@@ -94,17 +97,12 @@ public class StockService {
                         )
                         .collect(Collectors.toList());
 
-
-        return StockResponse.NewsResponseDTO.builder()
-                .items(newsItems)
-                .totalCount(news.size())
-                .build();
+        return SliceDTO.of(newsItems, page, NEWS_PAGE_SIZE, true);
 
     }
 
 
-    // TODO 페이지 네이션 적용
-    public StockResponse.DisclosureResponseDTO getDisclosures(String stockCode) {
+    public SliceDTO<StockResponse.DisclosureItemResponseDTO> getDisclosures(String stockCode, int page) {
 
         Stock stock = stockRepository.findByStockCode(stockCode)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
@@ -114,7 +112,7 @@ public class StockService {
             return null;
         }
 
-        List<DisclosureDTO> disclosures = stockIssuePort.searchDisclosures(corpCode);
+        List<DisclosureDTO> disclosures = stockIssuePort.searchDisclosures(corpCode, page);
 
         List<StockResponse.DisclosureItemResponseDTO> disclosureItems =
                 disclosures.stream()
@@ -127,9 +125,6 @@ public class StockService {
                         )
                         .collect(Collectors.toList());
 
-        return StockResponse.DisclosureResponseDTO.builder()
-                .items(disclosureItems)
-                .totalCount(disclosures.size())
-                .build();
+        return SliceDTO.of(disclosureItems, page, DISCLOSURE_PAGE_SIZE, true);
     }
 }

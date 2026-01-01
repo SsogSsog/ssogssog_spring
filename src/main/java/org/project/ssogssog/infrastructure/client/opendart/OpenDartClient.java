@@ -47,10 +47,14 @@ public class OpenDartClient {
     /**
      * 특정 기업(corp_code)의 최근 3개월 공시 목록 조회
      */
-    public String getDisclosures(String corpCode) {
+    public String getDisclosures(String corpCode, int page) {
         if (corpCode == null || corpCode.isEmpty()) {
             return null;
         }
+
+        // 0-based page 방어
+        int safePage = Math.max(page, 0);
+        int pageNo = safePage + 1; // OpenDART는 1부터 시작
 
         // 1. 날짜 계산 (최근 3개월)
         String today = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
@@ -62,7 +66,8 @@ public class OpenDartClient {
                 .queryParam("corp_code", corpCode)
                 .queryParam("bgn_de", threeMonthsAgo)
                 .queryParam("end_de", today)
-                .queryParam("page_count", 20) // 최근 20개만
+                .queryParam("page_no", pageNo)
+                .queryParam("page_count", 20) // 한 페이지에 20개만
                 .build()
                 .toUriString();
 

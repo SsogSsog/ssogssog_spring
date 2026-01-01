@@ -80,15 +80,6 @@ public class StockResponse {
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
-    public static class NewsResponseDTO{
-        private List<NewsResponseItemDTO> items;
-        private int totalCount;
-    }
-
-    @Getter
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
     public static class DisclosureItemResponseDTO{
         private String reportName; // 공시 제목 (예: 분기보고서)
         private String receiptNo;  // 접수번호 (링크 생성용 핵심 Key)
