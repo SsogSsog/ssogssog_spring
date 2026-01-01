@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.project.ssogssog.application.service.stock.api.StockService;
+import org.project.ssogssog.global.paging.PageDTO;
 import org.project.ssogssog.global.paging.SliceDTO;
 import org.project.ssogssog.global.payload.ApiResponse;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
@@ -34,6 +35,16 @@ public class StockController {
         return ApiResponse.onSuccess(result);
 
     }
+
+    @GetMapping("/themes")
+    public ApiResponse<PageDTO<StockResponse.StockItemResponseDTO>> getStocksForTheme(
+            @RequestParam String theme){
+
+        PageDTO<StockResponse.StockItemResponseDTO> result = stockService.getStocksForTheme(theme);
+        return ApiResponse.onSuccess(result);
+
+    }
+
 
     // TODO
     // 1. 뉴스 + 공시 탭에서 캐싱(Caching)을 통해 api 호출 시간을 줄이고 빠르게 정보 가져오기

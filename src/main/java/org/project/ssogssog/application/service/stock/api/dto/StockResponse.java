@@ -91,9 +91,13 @@ public class StockResponse {
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
-    public static class DisclosureResponseDTO{
-        List<DisclosureItemResponseDTO> items;
-        private int totalCount;
+    public static class StockItemResponseDTO {
+        private Long StockId;
+        private String StockName;
+        private String StockCode;
+        private Integer currentPrice;
+        private Long volume;
+        private Double changeRateAverage;
     }
 
 
