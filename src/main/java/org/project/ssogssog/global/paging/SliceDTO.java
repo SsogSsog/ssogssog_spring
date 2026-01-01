@@ -21,7 +21,7 @@ public class SliceDTO<T> {
     }
 
     public static <T> SliceDTO<T> of(List<T> content, int currentPage, int size, boolean hasNext) {
-        return new SliceDTO(content, currentPage, size,hasNext);
+        return new SliceDTO<>(content, currentPage, size,hasNext);
     }
 
     private SliceDTO(Slice<T> sliceContent) {
@@ -32,6 +32,6 @@ public class SliceDTO<T> {
     }
 
     public static <T> SliceDTO<T> from(Slice<T> sliceContent) {
-        return new SliceDTO(sliceContent);
+        return new SliceDTO<>(sliceContent);
     }
 }
