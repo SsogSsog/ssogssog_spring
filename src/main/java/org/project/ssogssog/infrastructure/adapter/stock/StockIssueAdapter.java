@@ -6,8 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.stock.port.StockIssuePort;
+import org.project.ssogssog.application.service.stock.usecase.dto.DisclosureDTO;
 import org.project.ssogssog.application.service.stock.usecase.dto.NewsDTO;
 import org.project.ssogssog.infrastructure.client.naver.NaverClient;
+import org.project.ssogssog.infrastructure.client.opendart.OpenDartClient;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -23,6 +25,7 @@ public class StockIssueAdapter implements StockIssuePort {
     private final ObjectMapper objectMapper;
 
     private final NaverClient naverClient;
+    private final OpenDartClient openDartClient;
 
     @Override
     public List<NewsDTO> searchNews(String keyword){
@@ -36,6 +39,19 @@ public class StockIssueAdapter implements StockIssuePort {
 
         return parseNewsResponse(responseBody);
 
+    }
+
+    @Override
+    public List<DisclosureDTO> searchDisclosures(String corpCode){
+        String responseBody = openDartClient.getDisclosures(corpCode);
+
+        if (responseBody == null || responseBody.isBlank()) {
+            log.error("OpenDart 공시 검색 실패 - corpCode: {}", corpCode);
+
+            return Collections.emptyList();
+        }
+
+        return parseDisclosureResponse(responseBody);
     }
 
 
@@ -76,5 +92,42 @@ public class StockIssueAdapter implements StockIssuePort {
         }
 
         return newsList;
+    }
+
+    /**
+     * JSON 파싱 로직
+     */
+    private List<DisclosureDTO> parseDisclosureResponse(String jsonResponse){
+
+        JsonNode root = null;
+        try {
+            root = objectMapper.readTree(jsonResponse);
+        } catch (JsonProcessingException e) {
+            log.error("OpenDart 공시 검색 실패 - 에러: {}", e.getMessage());
+
+            return Collections.emptyList();
+        }
+
+        // OpenDART 상태 코드 확인 ("000"이 정상)
+        String status = root.path("status").asText();
+        if (!"000".equals(status)) {
+            // 데이터가 없거나("013") 에러인 경우
+            return Collections.emptyList();
+        }
+
+        JsonNode listNode = root.path("list");
+        List<DisclosureDTO> resultList = new ArrayList<>();
+
+        if (listNode.isArray()) {
+            for (JsonNode item : listNode) {
+                String reportName = item.path("report_nm").asText();
+                String receiptNo = item.path("rcept_no").asText();
+                String submitter = item.path("flr_nm").asText();
+                String date = item.path("rcept_dt").asText();
+
+                resultList.add(new DisclosureDTO(reportName, receiptNo, submitter, date));
+            }
+        }
+        return resultList;
     }
 }

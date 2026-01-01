@@ -85,4 +85,25 @@ public class StockResponse {
         private int totalCount;
     }
 
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class DisclosureItemResponseDTO{
+        private String reportName; // 공시 제목 (예: 분기보고서)
+        private String receiptNo;  // 접수번호 (링크 생성용 핵심 Key)
+        private String submitter;  // 제출인 (회사명 or 제출자)
+        private String date;       // 접수일자 (YYYYMMDD)
+    }
+
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class DisclosureResponseDTO{
+        List<DisclosureItemResponseDTO> items;
+        private int totalCount;
+    }
+
+
 }
