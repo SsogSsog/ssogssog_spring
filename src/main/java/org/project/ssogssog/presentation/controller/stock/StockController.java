@@ -81,7 +81,7 @@ public class StockController {
             """
     )
     @GetMapping("/disclosures")
-    public ApiResponse<StockResponse.DisclosureResponseDTO> getDisclosures(
+    public ApiResponse<SliceDTO<StockResponse.DisclosureItemResponseDTO>> getDisclosures(
             @Parameter(description = "검색할 종목 코드 (필수)", required = true)
             @RequestParam @NotBlank(message = "종목 코드를 입력해주세요.")
             String stockCode,
@@ -92,7 +92,7 @@ public class StockController {
             int page
     ){
 
-        StockResponse.DisclosureResponseDTO result = stockService.getDisclosures(stockCode, page);
+        SliceDTO<StockResponse.DisclosureItemResponseDTO> result = stockService.getDisclosures(stockCode, page);
         return ApiResponse.onSuccess(result);
     }
 

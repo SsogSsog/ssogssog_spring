@@ -102,7 +102,7 @@ public class StockService {
     }
 
 
-    public StockResponse.DisclosureResponseDTO getDisclosures(String stockCode, int page) {
+    public SliceDTO<StockResponse.DisclosureItemResponseDTO> getDisclosures(String stockCode, int page) {
 
         Stock stock = stockRepository.findByStockCode(stockCode)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
@@ -125,9 +125,6 @@ public class StockService {
                         )
                         .collect(Collectors.toList());
 
-        return StockResponse.DisclosureResponseDTO.builder()
-                .items(disclosureItems)
-                .totalCount(disclosures.size())
-                .build();
+        return SliceDTO.of(disclosureItems, page, DISCLOSURE_PAGE_SIZE, true);
     }
 }
