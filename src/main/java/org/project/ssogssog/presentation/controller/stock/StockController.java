@@ -2,6 +2,7 @@ package org.project.ssogssog.presentation.controller.stock;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.project.ssogssog.application.service.stock.api.StockService;
@@ -48,9 +49,18 @@ public class StockController {
             """
     )
     public ApiResponse<StockResponse.NewsResponseDTO> getStockNews(
-            @Parameter(description = "검색할 종목 코드 (필수)", required = true) @RequestParam @NotBlank(message = "종목 코드를 입력해주세요.")String stockCode){
+            @Parameter(description = "검색할 종목 코드 (필수)", required = true)
+            @RequestParam @NotBlank(message = "종목 코드를 입력해주세요.")
+            String stockCode,
 
-        StockResponse.NewsResponseDTO result = stockService.getStockNews(stockCode);
+            @Parameter(description = "페이지 번호(기본값 0")
+            @RequestParam(name="page", defaultValue = "0")
+            @Min(value = 0, message = "page는 0 이상이여야 합니다.")
+            int page
+    ) {
+
+        // size 및 sort는 고정되어 있음
+        StockResponse.NewsResponseDTO result = stockService.getStockNews(stockCode, page);
         return ApiResponse.onSuccess(result);
     }
 
