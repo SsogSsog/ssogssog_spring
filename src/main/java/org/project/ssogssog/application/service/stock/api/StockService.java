@@ -25,6 +25,9 @@ public class StockService {
     private final StockRepository stockRepository;
     private final StockIssuePort stockIssuePort;
 
+    private static final int NEWS_PAGE_SIZE = 10;
+    private static final int DISCLOSURE_PAGE_SIZE = 20;
+
     public StockResponse.ThemeResponseDTO getThemeStockStats() {
 
         // 개선한 점
@@ -94,13 +97,11 @@ public class StockService {
                         )
                         .collect(Collectors.toList());
 
-
-        return SliceDTO.of(newsItems, page, 10, true);
+        return SliceDTO.of(newsItems, page, NEWS_PAGE_SIZE, true);
 
     }
 
 
-    // TODO 페이지 네이션 적용
     public StockResponse.DisclosureResponseDTO getDisclosures(String stockCode, int page) {
 
         Stock stock = stockRepository.findByStockCode(stockCode)
