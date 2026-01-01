@@ -25,7 +25,7 @@ public class StockController {
 
     private final StockService stockService;
 
-    @GetMapping("/themes")
+    @GetMapping("/themes/stats")
     @Operation(
             summary = "테마별 주식 개수 + 변동률 평균 목록 조회",
             description = """
@@ -41,9 +41,24 @@ public class StockController {
     }
 
     @GetMapping("/themes")
+    @Operation(
+            summary = "테마별 주식 목록 조회 (최신 종가 기준 정렬 + 페이지네이션)",
+            description = """
+            입력된 테마(섹터)에 속한 주식 목록을 조회하여, 각 종목의 가장 최신 정보를 기반으로
+            종가 내림차순으로 정렬한 뒤 페이지네이션하여 반환합니다.
+
+            - 최신 일봉 기준: 각 종목의 DailyPrice 중 가장 최신 날짜(date)의 데이터
+            - 정렬 기준: 최신 일봉의 closePrice DESC (가격 정보가 없는 종목은 뒤로 정렬)
+
+            반환 데이터에는 종목 기본 정보와 함께 최신 일봉의 closePrice/volume/changeRate 등 핵심 지표가 포함됩니다.
+            """
+    )
+
     public ApiResponse<PageDTO<StockResponse.StockItemResponseDTO>> getStocksForTheme(
-            @NotBlank @RequestParam String theme,
-            @PageableDefault(size=10, sort="closePrice", direction=DESC) Pageable pageable
+            @NotBlank
+            @RequestParam
+            String theme,
+            @PageableDefault(size=10) Pageable pageable
             ){
 
         PageDTO<StockResponse.StockItemResponseDTO> result = stockService.getStocksForTheme(theme, pageable);
@@ -74,6 +89,7 @@ public class StockController {
             @Parameter(description = "페이지 번호(기본값 0")
             @RequestParam(name="page", defaultValue = "0")
             @Min(value = 0, message = "page는 0 이상이여야 합니다.")
+            @NotBlank
             int page
     ) {
 
@@ -106,6 +122,7 @@ public class StockController {
             @Parameter(description = "페이지 번호(기본값 0")
             @RequestParam(name="page", defaultValue = "0")
             @Min(value = 0, message = "page는 0 이상이여야 합니다.")
+            @NotBlank
             int page
     ){
 
