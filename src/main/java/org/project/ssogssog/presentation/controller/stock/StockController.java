@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.project.ssogssog.application.service.stock.api.StockService;
+import org.project.ssogssog.global.paging.SliceDTO;
 import org.project.ssogssog.global.payload.ApiResponse;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
 import org.springframework.validation.annotation.Validated;
@@ -48,7 +49,7 @@ public class StockController {
             - response의 link를 통해 웹뷰나 브라우저로 기사 원문을 띄울 수 있습니다.
             """
     )
-    public ApiResponse<StockResponse.NewsResponseDTO> getStockNews(
+    public ApiResponse<SliceDTO<StockResponse.NewsResponseItemDTO>> getStockNews(
             @Parameter(description = "검색할 종목 코드 (필수)", required = true)
             @RequestParam @NotBlank(message = "종목 코드를 입력해주세요.")
             String stockCode,
@@ -60,7 +61,7 @@ public class StockController {
     ) {
 
         // size 및 sort는 고정되어 있음
-        StockResponse.NewsResponseDTO result = stockService.getStockNews(stockCode, page);
+        SliceDTO<StockResponse.NewsResponseItemDTO> result = stockService.getStockNews(stockCode, page);
         return ApiResponse.onSuccess(result);
     }
 

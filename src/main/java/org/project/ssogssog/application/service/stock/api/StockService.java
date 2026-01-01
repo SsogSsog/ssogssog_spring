@@ -9,6 +9,7 @@ import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.vo.ThemeItemDTO;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
+import org.project.ssogssog.global.paging.SliceDTO;
 import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
 import org.springframework.stereotype.Service;
@@ -72,8 +73,7 @@ public class StockService {
         );
     }
 
-    // TODO 페이지 네이션 적용
-    public StockResponse.NewsResponseDTO getStockNews(String stockCode, int page){
+    public SliceDTO<StockResponse.NewsResponseItemDTO> getStockNews(String stockCode, int page){
         Stock stock = stockRepository.findByStockCode(stockCode)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
 
@@ -95,10 +95,7 @@ public class StockService {
                         .collect(Collectors.toList());
 
 
-        return StockResponse.NewsResponseDTO.builder()
-                .items(newsItems)
-                .totalCount(news.size())
-                .build();
+        return SliceDTO.of(newsItems, page, 10, true);
 
     }
 
