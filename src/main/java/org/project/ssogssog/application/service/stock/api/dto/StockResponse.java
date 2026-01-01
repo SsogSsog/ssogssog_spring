@@ -1,9 +1,6 @@
 package org.project.ssogssog.application.service.stock.api.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
@@ -16,6 +13,8 @@ public class StockResponse {
     public static class ThemeCollectedItemDTO implements Comparable<ThemeCollectedItemDTO> {
 
         private String themeName;
+        @Setter
+        private String emoji;
         private double changeRateAverage = 0.0;
         private int totalCount = 0;
         private double sum = 0.0;
@@ -28,7 +27,6 @@ public class StockResponse {
         /**
          * 아래는 비즈니스 로직
          */
-
         public void addRate(double changeRateAverage) {
             this.sum += changeRateAverage;
             this.totalCount += 1;
