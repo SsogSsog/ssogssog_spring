@@ -1,4 +1,4 @@
-package org.project.ssogssog.domain.stock.vo;
+package org.project.ssogssog.domain.stock.projection;
 
 import lombok.Builder;
 

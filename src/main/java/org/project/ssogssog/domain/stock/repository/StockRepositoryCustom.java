@@ -1,7 +1,7 @@
 package org.project.ssogssog.domain.stock.repository;
 
-import org.project.ssogssog.domain.stock.vo.StockItemDTO;
-import org.project.ssogssog.domain.stock.vo.ThemeItemDTO;
+import org.project.ssogssog.domain.stock.projection.StockItemDTO;
+import org.project.ssogssog.domain.stock.projection.ThemeItemDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
