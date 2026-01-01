@@ -6,12 +6,17 @@ import org.project.ssogssog.application.service.stock.port.StockIssuePort;
 import org.project.ssogssog.application.service.stock.usecase.dto.DisclosureDTO;
 import org.project.ssogssog.application.service.stock.usecase.dto.NewsDTO;
 import org.project.ssogssog.domain.stock.entity.Stock;
-import org.project.ssogssog.domain.stock.vo.ThemeItemDTO;
+import org.project.ssogssog.domain.stock.policy.ThemeEmojiRegistry;
+import org.project.ssogssog.domain.stock.projection.StockItemDTO;
+import org.project.ssogssog.domain.stock.projection.ThemeItemDTO;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
+import org.project.ssogssog.global.paging.PageDTO;
 import org.project.ssogssog.global.paging.SliceDTO;
 import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -24,6 +29,8 @@ public class StockService {
 
     private final StockRepository stockRepository;
     private final StockIssuePort stockIssuePort;
+
+    private final ThemeEmojiRegistry themeEmojiRegistry;
 
     private static final int NEWS_PAGE_SIZE = 10;
     private static final int DISCLOSURE_PAGE_SIZE = 20;
@@ -66,6 +73,10 @@ public class StockService {
         }
 
         List<StockResponse.ThemeCollectedItemDTO> collectedItems = new ArrayList<>(m.values());
+
+        for (var dto : collectedItems) {
+            dto.setEmoji(themeEmojiRegistry.getEmoji(dto.getThemeName()));
+        }
 
         // 4.
         Collections.sort(collectedItems);
@@ -126,5 +137,28 @@ public class StockService {
                         .collect(Collectors.toList());
 
         return SliceDTO.of(disclosureItems, page, DISCLOSURE_PAGE_SIZE, true);
+    }
+
+    public PageDTO<StockResponse.StockItemResponseDTO> getStocksForTheme(String theme, Pageable pageable) {
+
+        Page<StockItemDTO> stockItems =
+                stockRepository.getStocksForThemeOrderByClosePrice(theme, pageable);
+
+        Page<StockResponse.StockItemResponseDTO> stockItemsResponse =
+                stockItems.map(this::toStockItemDTO);
+
+        return PageDTO.from(stockItemsResponse);
+    }
+
+    private StockResponse.StockItemResponseDTO toStockItemDTO(StockItemDTO stockItemDTO) {
+
+        return StockResponse.StockItemResponseDTO.builder()
+                .stockId(stockItemDTO.stockId())
+                .corpName(stockItemDTO.corpName())
+                .stockCode(stockItemDTO.stockCode())
+                .closePrice(stockItemDTO.closePrice())
+                .volume(stockItemDTO.volume())
+                .changeRate(stockItemDTO.changeRate())
+                .build();
     }
 }

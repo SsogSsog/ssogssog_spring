@@ -7,7 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.project.ssogssog.application.service.stock.api.StockService;
-import org.project.ssogssog.domain.stock.vo.ThemeItemDTO;
+import org.project.ssogssog.domain.stock.projection.ThemeItemDTO;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
 
