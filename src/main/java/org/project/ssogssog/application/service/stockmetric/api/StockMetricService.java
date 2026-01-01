@@ -8,8 +8,11 @@ import org.project.ssogssog.domain.stockmetric.entity.StockMetric;
 import org.project.ssogssog.domain.stockmetric.repository.StockMetricRepository;
 import org.project.ssogssog.application.service.stockmetric.api.dto.StockMetricRequest;
 import org.project.ssogssog.application.service.stockmetric.api.dto.StockMetricResponse;
+import org.project.ssogssog.global.paging.SliceDTO;
 import org.project.ssogssog.presentation.controller.stockmetric.enums.MarketCapBucket;
 import org.project.ssogssog.presentation.controller.stockmetric.enums.StockPriceRange;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,23 +26,19 @@ public class StockMetricService {
     private final StockMetricRepository stockMetricRepository;
 
     @Transactional(readOnly = true)
-    public StockMetricResponse.ScreenerResponseDTO getScreener(StockMetricRequest.ScreenerRequestDTO dto) {
+    public SliceDTO<StockMetricResponse.ScreenerItemDTO> getScreener(StockMetricRequest.ScreenerRequestDTO dto, Pageable pageable) {
 
         StockMetricScreenerCondition condition = toCondition(dto);
 
         // 레포지토리에서 조건에 해당하는 엔티티 목록 반환
-        List<StockMetric> metrics = stockMetricRepository.getScreener(condition);
+        Slice<StockMetric> metrics = stockMetricRepository.getScreener(condition, pageable);
 
-        // 엔티티 클래스를 ScreenItemDTO로 변경
-        List<StockMetricResponse.ScreenerItemDTO> items = metrics.stream()
-                .map(this::toScreenerItemDto)
-                .toList();
+        Slice<StockMetricResponse.ScreenerItemDTO> content = metrics.map(
+                this::toScreenerItemDto
+        );
 
-        // ScreenerResponseDTO로 결과 반환
-        return StockMetricResponse.ScreenerResponseDTO.builder()
-                .items(items)
-                .totalCount(items.size())
-                .build();
+        // Slice를 SliceDTO로 반환
+        return SliceDTO.from(content);
 
     }
 
