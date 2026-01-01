@@ -101,7 +101,7 @@ public class StockService {
 
 
     // TODO 페이지 네이션 적용
-    public StockResponse.DisclosureResponseDTO getDisclosures(String stockCode) {
+    public StockResponse.DisclosureResponseDTO getDisclosures(String stockCode, int page) {
 
         Stock stock = stockRepository.findByStockCode(stockCode)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
@@ -111,7 +111,7 @@ public class StockService {
             return null;
         }
 
-        List<DisclosureDTO> disclosures = stockIssuePort.searchDisclosures(corpCode);
+        List<DisclosureDTO> disclosures = stockIssuePort.searchDisclosures(corpCode, page);
 
         List<StockResponse.DisclosureItemResponseDTO> disclosureItems =
                 disclosures.stream()

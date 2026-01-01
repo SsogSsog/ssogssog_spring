@@ -82,9 +82,17 @@ public class StockController {
     )
     @GetMapping("/disclosures")
     public ApiResponse<StockResponse.DisclosureResponseDTO> getDisclosures(
-            @Parameter(description = "검색할 종목 코드 (필수)", required = true) @RequestParam @NotBlank(message = "종목 코드를 입력해주세요.")String stockCode){
+            @Parameter(description = "검색할 종목 코드 (필수)", required = true)
+            @RequestParam @NotBlank(message = "종목 코드를 입력해주세요.")
+            String stockCode,
 
-        StockResponse.DisclosureResponseDTO result = stockService.getDisclosures(stockCode);
+            @Parameter(description = "페이지 번호(기본값 0")
+            @RequestParam(name="page", defaultValue = "0")
+            @Min(value = 0, message = "page는 0 이상이여야 합니다.")
+            int page
+    ){
+
+        StockResponse.DisclosureResponseDTO result = stockService.getDisclosures(stockCode, page);
         return ApiResponse.onSuccess(result);
     }
 
