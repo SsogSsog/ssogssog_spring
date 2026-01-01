@@ -6,6 +6,7 @@ import org.project.ssogssog.application.service.stock.port.StockIssuePort;
 import org.project.ssogssog.application.service.stock.usecase.dto.DisclosureDTO;
 import org.project.ssogssog.application.service.stock.usecase.dto.NewsDTO;
 import org.project.ssogssog.domain.stock.entity.Stock;
+import org.project.ssogssog.domain.stock.policy.ThemeEmojiRegistry;
 import org.project.ssogssog.domain.stock.projection.StockItemDTO;
 import org.project.ssogssog.domain.stock.projection.ThemeItemDTO;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
@@ -28,6 +29,8 @@ public class StockService {
 
     private final StockRepository stockRepository;
     private final StockIssuePort stockIssuePort;
+
+    private final ThemeEmojiRegistry themeEmojiRegistry;
 
     private static final int NEWS_PAGE_SIZE = 10;
     private static final int DISCLOSURE_PAGE_SIZE = 20;
@@ -70,6 +73,10 @@ public class StockService {
         }
 
         List<StockResponse.ThemeCollectedItemDTO> collectedItems = new ArrayList<>(m.values());
+
+        for (var dto : collectedItems) {
+            dto.setEmoji(themeEmojiRegistry.getEmoji(dto.getThemeName()));
+        }
 
         // 4.
         Collections.sort(collectedItems);
