@@ -92,12 +92,12 @@ public class StockResponse {
     @NoArgsConstructor
     @Builder
     public static class StockItemResponseDTO {
-        private Long StockId;
-        private String StockName;
-        private String StockCode;
-        private Integer currentPrice;
+        private Long stockId;
+        private String corpName;
+        private String stockCode;
+        private Integer closePrice;
         private Long volume;
-        private Double changeRateAverage;
+        private Double changeRate;
     }
 
 
