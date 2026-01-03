@@ -78,6 +78,7 @@ public class StockMetricWriter {
                 metricValues.roe(),
                 metricValues.netProfitMargin(),
                 metricValues.debtRatio(),
+                metricValues.operatingProfitMargin(),
                 metricValues.salesGrowthQoQ(),
                 metricValues.salesGrowthYoY(),
                 metricValues.netProfitGrowthQoQ(),

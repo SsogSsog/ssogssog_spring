@@ -80,6 +80,7 @@ public class StockMetric {
             Double roe,
             Double netProfitMargin,
             Double debtRatio,
+            Double operatingProfitMargin,
             Double salesGrowthQoQ,
             Double salesGrowthYoY,
             Double netProfitGrowthQoQ,
@@ -97,6 +98,7 @@ public class StockMetric {
         this.roe = roe;
         this.netProfitMargin = netProfitMargin;
         this.debtRatio = debtRatio;
+        this.operatingProfitMargin = operatingProfitMargin;
 
         this.salesGrowthQoQ = salesGrowthQoQ;
         this.salesGrowthYoY = salesGrowthYoY;
