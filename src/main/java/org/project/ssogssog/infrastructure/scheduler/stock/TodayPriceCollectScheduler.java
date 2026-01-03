@@ -61,7 +61,7 @@ public class TodayPriceCollectScheduler {
             log.error("[주식 통계 업데이트][{}] 실패 msg={}", runId, e.getMessage(), e);
         }
 
-        log.info("[][{}] end {}ms", runId, System.currentTimeMillis() - start);
+        log.info("[일별 시세 수집 완료][{}] end {}ms", runId, System.currentTimeMillis() - start);
 
     }
 

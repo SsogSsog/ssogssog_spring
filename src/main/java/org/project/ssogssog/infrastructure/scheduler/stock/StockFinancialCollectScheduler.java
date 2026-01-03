@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
         havingValue = "true",
         matchIfMissing = false
 )
-public class StockFinancialCollectSchedular {
+public class StockFinancialCollectScheduler {
 
     private final CollectFinancialsUseCase collectFinancialsUseCase;
 
