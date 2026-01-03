@@ -94,6 +94,9 @@ public class StockMetricService {
                 dto.getMinDebtRatio(),
                 dto.getMaxDebtRatio(),
 
+                dto.getMinOperatingProfitRatio(),
+                dto.getMaxOperatingProfitRatio(),
+
                 dto.getMinSalesGrowthRatio(),
                 dto.getMaxSalesGrowthRatio(),
                 dto.getSalesGrowthMetricBasePeriod(),
