@@ -149,11 +149,11 @@ public class StockMetricPredicate {
 
         // 최소만 있으면 >=
         if (minOperatingProfitRatio != null && maxOperatingProfitRatio == null) {
-            return qStockMetric.debtRatio.goe(minOperatingProfitRatio);
+            return qStockMetric.operatingProfitMargin.goe(minOperatingProfitRatio);
         }
 
         // 최대만 있으면 <=
-        return qStockMetric.debtRatio.loe(maxOperatingProfitRatio);
+        return qStockMetric.operatingProfitMargin.loe(maxOperatingProfitRatio);
     }
 
     // 매출액 성장률
