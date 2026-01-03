@@ -1,12 +1,20 @@
-package org.project.ssogssog.infrastructure.scheduler.stock.entity;
+package org.project.ssogssog.infrastructure.scheduler;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "shed_lock")
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ShedLock { // 중복 실행에 대한 안전장치
 
     @Id
