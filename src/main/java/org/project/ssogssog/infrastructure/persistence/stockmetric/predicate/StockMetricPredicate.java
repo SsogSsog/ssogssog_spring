@@ -18,9 +18,10 @@ public class StockMetricPredicate {
      * 3. PER
      * 4. ROE
      * 5. 부채비율
-     * 6. 매출액 성장률
-     * 7. 순이익 성장률
-     * 8. 외국인 보유률
+     * 6. 영업이익률
+     * 7. 매출액 성장률
+     * 8. 순이익 성장률
+     * 9. 외국인 보유률
      * (배당 수익률, 주가 수익률의 경우는 데이터 부족으로 현재 반영x)
      */
     public BooleanExpression filterCurrentPrice(QStockMetric qStockMetric, Integer minCurrentPrice, Integer maxCurrentPrice) {
@@ -131,6 +132,28 @@ public class StockMetricPredicate {
 
         // 최대만 있으면 <=
         return qStockMetric.debtRatio.loe(maxDebtRatio);
+    }
+
+    // 영업이익률
+    public BooleanExpression filterOperatingProfitRatio(QStockMetric qStockMetric, Double minOperatingProfitRatio, Double maxOperatingProfitRatio) {
+
+        // 둘 다 null 이면 조건 없음
+        if (minOperatingProfitRatio == null && maxOperatingProfitRatio == null) {
+            return null;
+        }
+
+        // 둘 다 있으면 between
+        if (minOperatingProfitRatio != null && maxOperatingProfitRatio != null) {
+            return qStockMetric.operatingProfitMargin.between(minOperatingProfitRatio, maxOperatingProfitRatio);
+        }
+
+        // 최소만 있으면 >=
+        if (minOperatingProfitRatio != null && maxOperatingProfitRatio == null) {
+            return qStockMetric.debtRatio.goe(minOperatingProfitRatio);
+        }
+
+        // 최대만 있으면 <=
+        return qStockMetric.debtRatio.loe(maxOperatingProfitRatio);
     }
 
     // 매출액 성장률
