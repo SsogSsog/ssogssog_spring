@@ -27,8 +27,12 @@ public class StockIssueAdapter implements StockIssuePort {
     private final NaverClient naverClient;
     private final OpenDartClient openDartClient;
 
+    // TODO NaverClient 이름 변경 및 RateLimiter 적용하기
+
     @Override
     public List<NewsDTO> searchNews(String keyword, int page){
+
+
         String responseBody = naverClient.searchNews(keyword, page);
 
         if (responseBody == null || responseBody.isBlank()) {

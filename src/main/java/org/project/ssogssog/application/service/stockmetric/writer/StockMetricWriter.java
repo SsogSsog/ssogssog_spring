@@ -40,8 +40,14 @@ public class StockMetricWriter {
                 .findTopByStockOrderByYearDescQuarterDesc(stock)
                 .orElse(null);
 
-        if (latestDailyPrice == null || latestStockFinancial == null) {
-            log.warn("❌ StockMetric 계산 불가 - 기초 데이터 부족. stockId={}, code={}",
+        if (latestDailyPrice == null) {
+            log.warn("❌ StockMetric 계산 불가 - 일별시세 정보 부족. stockId={}, code={}",
+                    stock.getId(), stock.getStockCode());
+            return;
+        }
+
+        if(latestStockFinancial == null){
+            log.warn("❌ StockMetric 계산 불가 - 재무제표 정보 부족. stockId={}, code={}",
                     stock.getId(), stock.getStockCode());
             return;
         }

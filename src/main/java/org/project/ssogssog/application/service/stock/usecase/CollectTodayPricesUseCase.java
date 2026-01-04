@@ -1,15 +1,14 @@
 package org.project.ssogssog.application.service.stock.usecase;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.util.concurrent.RateLimiter; // Guava 라이브러리
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.project.ssogssog.application.service.stock.port.DailyPricePort;
 import org.project.ssogssog.application.utils.ParserUtils;
 import org.project.ssogssog.application.service.stock.writer.DailyPriceWriter;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
-import org.project.ssogssog.infrastructure.client.ksi.KSIClient;
 
 import org.springframework.stereotype.Service;
 
@@ -24,24 +23,13 @@ public class CollectTodayPricesUseCase {
     private final StockRepository stockRepository;
     private final DailyPriceWriter dailyPriceWriter;
 
-    // 1초에 10개 요청 제한 (KIS 제한: 초당 20건, 안전마진 확보)
-    private final RateLimiter rateLimiter = RateLimiter.create(10.0);
-
-    private final KSIClient ksiClient;
+    private final DailyPricePort dailyPricePort;
 
     /**
      * 전 종목 시세 업데이트(당일 정보) (Batch용)
      */
     public void updateAllStockPrices() {
-        // 1. 토큰 발급 (루프 시작 전 1회)
-        String accessToken = ksiClient.getAccessToken();
-        if (accessToken == null) {
-            log.error("❌ 토큰 발급 실패로 작업을 중단합니다.");
-            return;
-        }
-
         List<Stock> stocks = stockRepository.findAll();
-        // 테스트용: stocks = stocks.subList(0, 10);
 
         log.info("총 {}개 종목 시세 수집 시작...", stocks.size());
         LocalDate today = LocalDate.now();
@@ -51,13 +39,12 @@ public class CollectTodayPricesUseCase {
 
         for (Stock stock : stocks) {
             index++;
-            rateLimiter.acquire();
 
             log.info("[{} / {}] 시세 조회 시작 - 종목: {}({})",
                     index, stocks.size(), stock.getCorpName(), stock.getStockCode());
 
             try {
-                DailyPrice dailyPrice = fetchPrice(accessToken, stock, today);
+                DailyPrice dailyPrice = fetchPrice(stock, today);
                 log.info("[{} / {}] 시세 조회 완료 - 종목: {}({})",
                         index, stocks.size(), stock.getCorpName(), stock.getStockCode());
 
@@ -74,11 +61,11 @@ public class CollectTodayPricesUseCase {
     }
 
 
-    // --- [내부 2] 개별 종목 시세 조회 ---
-    private DailyPrice fetchPrice(String token, Stock stock, LocalDate date) {
+    // --- 개별 종목 시세 조회 ---
+    private DailyPrice fetchPrice(Stock stock, LocalDate date) {
 
         try {
-            JsonNode root = ksiClient.getPriceRoot(token, stock.getStockCode());
+            JsonNode root = dailyPricePort.getPriceRoot(stock.getStockCode());
 
             // 에러코드 체크
             String rtCd = root.path("rt_cd").asText();
@@ -88,7 +75,7 @@ public class CollectTodayPricesUseCase {
                 log.warn("⚠️ 초당 거래건수 초과. 1초 대기 후 재시도 - 종목: {}", stock.getStockCode());
                 Thread.sleep(1000); // 1초 쉬고
                 // 재시도 한 번만 (무한 루프 방지)
-                return retryFetchPriceOnce(token, stock, date);
+                return retryFetchPriceOnce(stock, date);
             }
 
             JsonNode output = root.path("output");
@@ -152,12 +139,12 @@ public class CollectTodayPricesUseCase {
         }
     }
 
-
-    private DailyPrice retryFetchPriceOnce(String token, Stock stock, LocalDate date) {
-        rateLimiter.acquire(); // 재시도도 RateLimiter 적용
+    // TODO queue 방식으로 재시도 로직 리팩토링 하기
+    // TODO 공통 로직 private 메서드로 분리하기
+    private DailyPrice retryFetchPriceOnce(Stock stock, LocalDate date) {
 
         try {
-            JsonNode root = ksiClient.getPriceRoot(token, stock.getStockCode());
+            JsonNode root = dailyPricePort.getPriceRoot(stock.getStockCode());
             JsonNode output = root.path("output");
 
             // 문자열 파싱 전 trim() 처리 & 값 확인

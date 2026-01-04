@@ -4,10 +4,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceResponse;
+import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -21,10 +22,13 @@ import java.util.Map;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class KSIClient {
+public class KISClient {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private static final String KEY = "KIS_ACCESS_TOKEN";
+    private final Cache<String, String> kisTokenCache; // CacheConfig에 설정 등록(12시간) 넉넉히 12시간 마진으로 설정
 
     @Value("${kis.app-key}")
     private String appKey;
@@ -34,6 +38,34 @@ public class KSIClient {
 
     @Value("${kis.base-url}")
     private String baseUrl;
+
+    /**
+     * TTL에 맞게 KIS 토큰 저장 및 필요 시 조회 메서드
+     *
+     * @return
+     */
+    public String getValidAccessToken() {
+        String token = kisTokenCache.getIfPresent(KEY);
+        if (token != null)
+            return token;
+
+        // 토큰 만료 시 KIS api 동시 요청을 막기 위한 락
+        synchronized (this) {
+            // 이 전 synchronized 내부에 들어간 스레드가 KIS 토큰을 가져올 수 있으므로 한 번 더 검사
+            token = kisTokenCache.getIfPresent(KEY);
+            if (token != null)
+                return token;
+
+            String issued = this.getAccessToken();
+            if (issued == null) {
+                log.warn("KIS access token 발급 실패...");
+                return null;
+            }
+
+            kisTokenCache.put(KEY, issued);
+            return issued;
+        }
+    }
 
     // 토큰 발급
     public String getAccessToken() {
@@ -54,7 +86,7 @@ public class KSIClient {
         }
     }
 
-    public JsonNode getPriceRoot(String token, String stockCode) throws JsonProcessingException {
+    public JsonNode getPriceRoot(String token, String stockCode)  {
         String url = baseUrl + "/uapi/domestic-stock/v1/quotations/inquire-price";
         URI uri = UriComponentsBuilder.fromUriString(url)
                 .queryParam("FID_COND_MRKT_DIV_CODE", "J")
@@ -80,7 +112,12 @@ public class KSIClient {
         log.debug("API 호출 성공 - 종목: {}", stockCode);
 
 
-        return objectMapper.readTree(response.getBody());
+        try {
+            return objectMapper.readTree(response.getBody());
+        } catch (JsonProcessingException e) {
+            log.error("KIS API 호출 중 JsonNode 파싱 에러 (종목코드: {}): {}", stockCode, e.getMessage());
+            return null;
+        }
     }
 
     //TODO 같은 엔드포인트의 값을 하나는 JsonNode 기반, 다른 하나는 DTO 기반으로 값을 가져오므로 통일성을 맞출 필요가 있어보임
@@ -122,13 +159,13 @@ public class KSIClient {
             }
 
         } catch (Exception e) {
-            log.warn("KIS API 호출 중 오류 발생 (종목코드: {}): {}", stockCode, e.getMessage());
+            log.warn("KIS API 호출 중 KisPriceResponse 파싱 에러 발생 (종목코드: {}): {}", stockCode, e.getMessage());
         }
 
         return null;
     }
 
-    public HistoricalPriceResponse fetchPastPrices(String stockCode, String accessToken, String strStartDate, String strEndDate) {
+    public HistoricalPriceDTO fetchPastPrices(String stockCode, String accessToken, String strStartDate, String strEndDate) {
 
         // KIS API 호출 (국내주식 기간별 시세)
         final String path = "/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
@@ -154,14 +191,14 @@ public class KSIClient {
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
         try {
-            ResponseEntity<HistoricalPriceResponse> response = restTemplate.exchange(
-                    uri, HttpMethod.GET, requestEntity, HistoricalPriceResponse.class
+            ResponseEntity<HistoricalPriceDTO> response = restTemplate.exchange(
+                    uri, HttpMethod.GET, requestEntity, HistoricalPriceDTO.class
             );
 
-            HistoricalPriceResponse body = response.getBody();
+            HistoricalPriceDTO body = response.getBody();
             return body;
         }catch (Exception e) {
-            log.error("과거 시세 수집 실패 [{}]: {}", stockCode, e.getMessage());
+            log.error("KIS API 호출 중 과거 시세 수집 실패 [{}]: {}", stockCode, e.getMessage());
             return null;
         }
     }
