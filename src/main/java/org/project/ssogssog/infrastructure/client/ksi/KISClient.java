@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,9 @@ public class KISClient {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private static final String KEY = "KIS_ACCESS_TOKEN";
+    private final Cache<String, String> kisTokenCache; // CacheConfig에 설정 등록(12시간) 넉넉히 12시간 마진으로 설정
+
     @Value("${kis.app-key}")
     private String appKey;
 
@@ -34,6 +38,34 @@ public class KISClient {
 
     @Value("${kis.base-url}")
     private String baseUrl;
+
+    /**
+     * TTL에 맞게 KIS 토큰 저장 및 필요 시 조회 메서드
+     *
+     * @return
+     */
+    public String getValidAccessToken() {
+        String token = kisTokenCache.getIfPresent(KEY);
+        if (token != null)
+            return token;
+
+        // 토큰 만료 시 KIS api 동시 요청을 막기 위한 락
+        synchronized (this) {
+            // 이 전 synchronized 내부에 들어간 스레드가 KIS 토큰을 가져올 수 있으므로 한 번 더 검사
+            token = kisTokenCache.getIfPresent(KEY);
+            if (token != null)
+                return token;
+
+            String issued = this.getAccessToken();
+            if (issued == null) {
+                log.warn("KIS access token 발급 실패...");
+                return null;
+            }
+
+            kisTokenCache.put(KEY, issued);
+            return issued;
+        }
+    }
 
     // 토큰 발급
     public String getAccessToken() {

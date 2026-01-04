@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 public class DailyPriceAdapter implements DailyPricePort {
 
     private final KISClient kisClient;
-    private final Cache<String, String> kisTokenCache; // CacheConfig에 설정 등록(12시간) 넉넉히 12시간 마진으로 설정
 
     private static final String KEY = "KIS_ACCESS_TOKEN";
 
@@ -28,7 +27,6 @@ public class DailyPriceAdapter implements DailyPricePort {
             Cache<String, String> kisTokenCache,
             @Qualifier("kisRateLimiter") RateLimiter rateLimiter) {
         this.kisClient = kisClient;
-        this.kisTokenCache = kisTokenCache;
         this.rateLimiter = rateLimiter;
     }
 
@@ -42,7 +40,7 @@ public class DailyPriceAdapter implements DailyPricePort {
     @Override
     public JsonNode getPriceRoot(String stockCode) {
 
-        String accessToken = this.getValidAccessToken();
+        String accessToken = kisClient.getValidAccessToken();
 
         // KIS access token 발급 실패
         if (accessToken == null) {
@@ -57,7 +55,7 @@ public class DailyPriceAdapter implements DailyPricePort {
     @Override
     public String fetchSector(String stockCode) {
 
-        String accessToken = this.getValidAccessToken();
+        String accessToken = kisClient.getValidAccessToken();
 
         // KIS access token 발급 실패
         if (accessToken == null) {
@@ -71,7 +69,7 @@ public class DailyPriceAdapter implements DailyPricePort {
 
     @Override
     public HistoricalPriceDTO fetchPastPrices(String stockCode, String strStartDate, String strEndDate) {
-        String accessToken = this.getValidAccessToken();
+        String accessToken = kisClient.getValidAccessToken();
 
         // KIS access token 발급 실패
         if (accessToken == null) {
@@ -83,32 +81,5 @@ public class DailyPriceAdapter implements DailyPricePort {
 
     }
 
-    /**
-     * TTL에 맞게 KIS 토큰 저장 및 필요 시 조회 메서드
-     * 
-     * @return
-     */
-    private String getValidAccessToken() {
-        String token = kisTokenCache.getIfPresent(KEY);
-        if (token != null)
-            return token;
-
-        // 토큰 만료 시 KIS api 동시 요청을 막기 위한 락
-        synchronized (this) {
-            // 이 전 synchronized 내부에 들어간 스레드가 KIS 토큰을 가져올 수 있으므로 한 번 더 검사
-            token = kisTokenCache.getIfPresent(KEY);
-            if (token != null)
-                return token;
-
-            String issued = kisClient.getAccessToken();
-            if (issued == null) {
-                log.warn("KIS access token 발급 실패...");
-                return null;
-            }
-
-            kisTokenCache.put(KEY, issued);
-            return issued;
-        }
-    }
 
 }
