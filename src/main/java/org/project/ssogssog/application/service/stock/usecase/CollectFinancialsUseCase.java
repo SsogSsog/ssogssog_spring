@@ -8,11 +8,14 @@ import org.project.ssogssog.application.utils.ParserUtils;
 import org.project.ssogssog.application.service.stock.writer.StockFinancialWriter;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.entity.StockFinancial;
+import org.project.ssogssog.domain.stock.repository.StockFinancialRepository;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
+import org.project.ssogssog.global.payload.exception.GeneralException;
 import org.project.ssogssog.infrastructure.client.opendart.OpenDartClient;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -21,6 +24,7 @@ public class CollectFinancialsUseCase {
 
     private final StockRepository stockRepository;
     private final StockFinancialWriter stockFinancialWriter;
+    private final StockFinancialRepository stockFinancialRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper(); // JSON 파싱용
     private final OpenDartClient openDartClient;
@@ -63,6 +67,10 @@ public class CollectFinancialsUseCase {
         log.info("✅ 재무제표 수집 완료. 성공: {}, 실패/없음: {}", successCount, failCount);
     }
 
+
+
+
+
     // --- [내부 로직] API 호출 및 DTO 변환 ---
     private StockFinancial fetchFinancialData(Stock stock, Integer year, String reportCode) {
 
@@ -76,7 +84,6 @@ public class CollectFinancialsUseCase {
             JsonNode root = objectMapper.readTree(response);
 
             if (!"000".equals(root.path("status").asText())) {
-                // 에러거나 데이터가 없음 (013: 데이터 없음 등)
                 return null;
             }
 
@@ -85,46 +92,71 @@ public class CollectFinancialsUseCase {
                 return null;
             }
 
-            // 빌더 초기화
-            StockFinancial.StockFinancialBuilder builder = StockFinancial.builder()
-                    .stock(stock) // @ManyToOne 관계 설정 (객체 자체를 넣음)
-                    .year(year)
-                    .quarter(ParserUtils.convertReportCodeToQuarter(reportCode))
-                    .isConsolidated(true);
-
-            boolean isDataFound = false;
-
-            // 리스트 순회하며 필요한 값 매핑
-            for (JsonNode item : listNode) {
-                // [중요] 연결재무제표(CFS) 우선, 없으면 별도(OFS) 로직은 여기서 단순화하여 CFS만 처리
-                // (더 정교하게 하려면 CFS 다 찾고 없으면 OFS 찾는 로직 추가 필요)
-                if ("CFS".equals(item.path("fs_div").asText())) {
-                    String accountName = item.path("account_nm").asText();
-                    Long amount = ParserUtils.parseAmount(item.path("thstrm_amount").asText());
-
-                    // 계정명 매핑 (OpenDART 계정명이 회사마다 조금씩 다를 수 있어 contain 등 사용)
-                    if (accountName.contains("매출액") || accountName.equals("수익(매출액)")) {
-                        builder.revenue(amount);
-                        isDataFound = true;
-                    } else if (accountName.contains("영업이익")) {
-                        builder.operatingProfit(amount);
-                    } else if (accountName.contains("당기순이익")) {
-                        builder.netIncome(amount);
-                    } else if (accountName.equals("자산총계")) {
-                        builder.totalAssets(amount);
-                    } else if (accountName.equals("부채총계")) {
-                        builder.totalLiabilities(amount);
-                    } else if (accountName.equals("자본총계")) {
-                        builder.totalEquity(amount);
-                    }
-                }
+            // 1) CFS 먼저 시도
+            StockFinancial cfs = parseByFsDiv(stock, year, reportCode, listNode, "CFS", true);
+            if (cfs != null) {
+                return cfs;
             }
 
-            return isDataFound ? builder.build() : null;
+            // 2) CFS에서 아무 것도 못 건지면 OFS로 전체 대체
+            StockFinancial ofs = parseByFsDiv(stock, year, reportCode, listNode, "OFS", false);
+            if (ofs != null) {
+                log.debug("CFS 없음/매핑 실패 → OFS로 저장: {} ({}) year={}, quarter={}",
+                        stock.getCorpName(), stock.getStockCode(), year,
+                        ParserUtils.convertReportCodeToQuarter(reportCode));
+            }
+            return ofs;
 
         } catch (Exception e) {
-            log.warn("파싱 에러: {}", stock.getCorpName());
+            log.warn("파싱 에러: {} ({})", stock.getCorpName(), stock.getStockCode());
             return null;
         }
     }
+
+    private StockFinancial parseByFsDiv(
+            Stock stock,
+            Integer year,
+            String reportCode,
+            JsonNode listNode,
+            String fsDivToUse,
+            boolean isConsolidated
+    ) {
+        StockFinancial.StockFinancialBuilder builder = StockFinancial.builder()
+                .stock(stock)
+                .year(year)
+                .quarter(ParserUtils.convertReportCodeToQuarter(reportCode))
+                .isConsolidated(isConsolidated); // OFS면 false로 내려감
+
+        boolean isDataFound = false;
+
+        for (JsonNode item : listNode) {
+            if (!fsDivToUse.equals(item.path("fs_div").asText())) continue;
+
+            String accountName = item.path("account_nm").asText();
+            Long amount = ParserUtils.parseAmount(item.path("thstrm_amount").asText());
+
+            if (accountName.contains("매출액") || accountName.equals("수익(매출액)")) {
+                builder.revenue(amount);
+                isDataFound = true;
+            } else if (accountName.contains("영업이익")) { // "영업이익(손실)" 포함
+                builder.operatingProfit(amount);
+                isDataFound = true;
+            } else if (accountName.contains("당기순이익")) { // "당기순이익(손실)" 포함
+                builder.netIncome(amount);
+                isDataFound = true;
+            } else if (accountName.equals("자산총계")) {
+                builder.totalAssets(amount);
+                //isDataFound = true;
+            } else if (accountName.equals("부채총계")) {
+                builder.totalLiabilities(amount);
+                //isDataFound = true;
+            } else if (accountName.equals("자본총계")) {
+                builder.totalEquity(amount);
+                isDataFound = true;
+            }
+        }
+
+        return isDataFound ? builder.build() : null;
+    }
+
 }
