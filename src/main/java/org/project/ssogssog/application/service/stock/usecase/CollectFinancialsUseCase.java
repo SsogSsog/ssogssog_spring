@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.project.ssogssog.application.service.stock.port.StockFinancialPort;
 import org.project.ssogssog.application.utils.ParserUtils;
 import org.project.ssogssog.application.service.stock.writer.StockFinancialWriter;
 import org.project.ssogssog.domain.stock.entity.Stock;
@@ -28,7 +29,7 @@ public class CollectFinancialsUseCase {
     private final StockFinancialRepository stockFinancialRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper(); // JSON 파싱용
-    private final OpenDartClient openDartClient;
+    private final StockFinancialPort stockFinancialPort;
 
     // 1초에 10개 요청 제한
     private final RateLimiter rateLimiter = RateLimiter.create(10.0);
@@ -143,10 +144,10 @@ public class CollectFinancialsUseCase {
      * 특정 종목의 재무재표 세부 정보를 출력하는 디버깅 메서드
      * @param stockId
      * @param year
-     * @param reprtCode
+     * @param reportCode
      */
-    public void debugOpenDartAccountNames(Long stockId, Integer year, String reprtCode) {
-        String quarter = ParserUtils.convertReportCodeToQuarter(reprtCode);
+    public void debugOpenDartAccountNames(Long stockId, Integer year, String reportCode) {
+        String quarter = ParserUtils.convertReportCodeToQuarter(reportCode);
 
         Stock stock = stockRepository.findById(stockId)
                 .orElseThrow(() -> new IllegalArgumentException("Stock not found: " + stockId));
@@ -156,29 +157,32 @@ public class CollectFinancialsUseCase {
             return;
         }
 
-        try {
-            String response = openDartClient.getFinancialInfo(stock.getCorpCode(), year, reprtCode);
-            JsonNode root = objectMapper.readTree(response);
+        JsonNode root = stockFinancialPort.getFinancialInfo(stock.getCorpCode(), year, reportCode);
+        if(root == null){
+            // 로깅은 port에서 처리 했음
+            return;
+        }
 
+        try {
             String status = root.path("status").asText();
             String message = root.path("message").asText();
 
             if (!"000".equals(status)) {
                 log.warn("[DART 디버그] status!=000: {} ({}) year={}, quarter={}, reprtCode={}, status={}, msg={}",
-                        stock.getCorpName(), stock.getStockCode(), year, quarter, reprtCode, status, message);
+                        stock.getCorpName(), stock.getStockCode(), year, quarter, reportCode, status, message);
                 return;
             }
 
             JsonNode listNode = root.path("list");
             if (listNode.isMissingNode() || listNode.isEmpty()) {
                 log.warn("[DART 디버그] list 비어있음: {} ({}) year={}, quarter={}, reprtCode={}",
-                        stock.getCorpName(), stock.getStockCode(), year, quarter, reprtCode);
+                        stock.getCorpName(), stock.getStockCode(), year, quarter, reportCode);
                 return;
             }
 
             int totalRows = listNode.size();
             log.info("[DART 디버그] {} ({}) year={}, quarter={}, reprtCode={}, listRows={}",
-                    stock.getCorpName(), stock.getStockCode(), year, quarter, reprtCode, totalRows);
+                    stock.getCorpName(), stock.getStockCode(), year, quarter, reportCode, totalRows);
 
             // fs_div(CFS/OFS) + sj_div(재무상태표/손익계산서 등) 단위로 account_nm 모아보기
             Map<String, Set<String>> accountNamesByGroup = new LinkedHashMap<>();
@@ -219,7 +223,7 @@ public class CollectFinancialsUseCase {
 
         } catch (Exception e) {
             log.error("[DART 디버그] 실패: {} ({}) year={}, reprtCode={}, err={}",
-                    stock.getCorpName(), stock.getStockCode(), year, reprtCode, e.getMessage(), e);
+                    stock.getCorpName(), stock.getStockCode(), year, reportCode, e.getMessage(), e);
         }
     }
 
@@ -233,10 +237,13 @@ public class CollectFinancialsUseCase {
             return null;
         }
 
-        try {
-            String response = openDartClient.getFinancialInfo(stock.getCorpCode(), year, reportCode);
-            JsonNode root = objectMapper.readTree(response);
+        JsonNode root = stockFinancialPort.getFinancialInfo(stock.getCorpCode(), year, reportCode);
+        if(root == null){
+            // 로깅은 port에서 처리 했음
+            return null;
+        }
 
+        try {
             if (!"000".equals(root.path("status").asText())) {
                 return null;
             }
