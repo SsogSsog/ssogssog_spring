@@ -18,7 +18,7 @@ public class RateLimiterConfig {
     }
 
     @Bean
-    @Qualifier("naverRateLimiter")
+    @Qualifier("naverSearchRateLimiter")
     public RateLimiter naverSearchRateLimiter(
             @Value("${naver-search.rate-limit.permits-per-second}") double permitsPerSecond
     ) {
