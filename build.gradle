@@ -49,6 +49,10 @@ dependencies {
     implementation 'net.javacrumbs.shedlock:shedlock-spring:6.3.1'
     implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.3.1'
 
+    // caffeine(인메모리 캐시)
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+
+
     // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
