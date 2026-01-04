@@ -1,8 +1,6 @@
 package org.project.ssogssog.application.service.stock.usecase;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.util.concurrent.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.stock.port.StockFinancialPort;
@@ -12,8 +10,6 @@ import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.entity.StockFinancial;
 import org.project.ssogssog.domain.stock.repository.StockFinancialRepository;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
-import org.project.ssogssog.global.payload.exception.GeneralException;
-import org.project.ssogssog.infrastructure.client.opendart.OpenDartClient;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -30,8 +26,6 @@ public class CollectFinancialsUseCase {
 
     private final StockFinancialPort stockFinancialPort;
 
-    // 1초에 10개 요청 제한
-    private final RateLimiter rateLimiter = RateLimiter.create(10.0);
 
     /**
      * 전 종목 재무제표 수집 및 저장
@@ -99,8 +93,6 @@ public class CollectFinancialsUseCase {
 
         for (Stock stock : targets) {
             try {
-                //요청이 몰리지 않게 여기서 자동으로 대기(Block)합니다.
-                rateLimiter.acquire();
 
                 StockFinancial financial = fetchFinancialData(stock, year, reprtCode);
 
