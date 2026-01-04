@@ -2,6 +2,7 @@ package org.project.ssogssog.application.service.stock.usecase;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.utils.ParserUtils;
@@ -28,6 +29,9 @@ public class CollectFinancialsUseCase {
 
     private final ObjectMapper objectMapper = new ObjectMapper(); // JSON 파싱용
     private final OpenDartClient openDartClient;
+
+    // 1초에 10개 요청 제한
+    private final RateLimiter rateLimiter = RateLimiter.create(10.0);
 
     /**
      * 전 종목 재무제표 수집 및 저장
@@ -67,7 +71,73 @@ public class CollectFinancialsUseCase {
         log.info("✅ 재무제표 수집 완료. 성공: {}, 실패/없음: {}", successCount, failCount);
     }
 
+    /**
+     * (year, reprtCode=quarter) 기준으로 DB에 없는 종목만 재무제표 재수집
+     */
+    public void refillMissingFinancials(Integer year, String reprtCode) {
+        String quarter = ParserUtils.convertReportCodeToQuarter(reprtCode);
 
+        List<Stock> stocks = stockRepository.findAll();
+        Set<Long> existingStockIds = new HashSet<>(
+                stockFinancialRepository.findStockIdsByYearAndQuarter(year, quarter)
+        );
+
+        // corpCode 없는 종목은 애초에 호출 불가라 제외(원하면 별도 실패로 집계 가능)
+        List<Stock> targets = stocks.stream()
+                .filter(s -> s.getCorpCode() != null && !s.getCorpCode().isBlank())
+                .filter(s -> !existingStockIds.contains(s.getId()))
+                .collect(Collectors.toList());
+
+        log.info("[재무 누락 재수집] year={}, quarter={}, DB기존={}, 전체종목={}, 누락대상={}",
+                year, quarter, existingStockIds.size(), stocks.size(), targets.size());
+
+        int success = 0;
+        int fail = 0;
+
+        // 실패 종목 기록(너무 길어질 수 있으니 마지막에 일부만 출력)
+        List<String> failedStocks = new ArrayList<>();
+
+        for (Stock stock : targets) {
+            try {
+                //요청이 몰리지 않게 여기서 자동으로 대기(Block)합니다.
+                rateLimiter.acquire();
+
+                StockFinancial financial = fetchFinancialData(stock, year, reprtCode);
+
+                if (financial != null) {
+                    stockFinancialWriter.saveOrUpdate(financial);
+                    log.info("수집 성공 : {} ({}) year={}, quarter={}",
+                            stock.getCorpName(), stock.getStockCode(), year, quarter);
+                    success++;
+                } else {
+                    fail++;
+                    failedStocks.add(stock.getStockCode() + " (" + stock.getCorpName() + ") - NO_DATA");
+                    log.warn("❌ 재무 없음: {} ({}) year={}, quarter={}",
+                            stock.getCorpName(), stock.getStockCode(), year, quarter);
+                }
+
+
+            } catch (Exception e) {
+                fail++;
+                failedStocks.add(stock.getStockCode() + " (" + stock.getCorpName() + ") - " + e.getClass().getSimpleName());
+                log.error("❌ 재수집 실패: {} ({}) year={}, quarter={}, err={}",
+                        stock.getCorpName(), stock.getStockCode(), year, quarter, e.getMessage());
+            }
+        }
+
+        // 수집한 년도, 분기 및 성공 개수, 실패 개수 출력
+        log.info("[재무 누락 재수집 완료] year={}, quarter={}, 성공={}, 실패={}", year, quarter, success, fail);
+
+        // 실패한 목록 출력
+        if (!failedStocks.isEmpty()) {
+            int show = Math.min(50, failedStocks.size());
+            log.warn("[재무 누락 재수집 실패 목록] ({}개 중 {}개만 표시) {}",
+                    failedStocks.size(),
+                    show,
+                    String.join(", ", failedStocks.subList(0, show))
+            );
+        }
+    }
 
 
 
