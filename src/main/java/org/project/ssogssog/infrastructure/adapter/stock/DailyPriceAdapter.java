@@ -17,8 +17,6 @@ public class DailyPriceAdapter implements DailyPricePort {
 
     private final KISClient kisClient;
 
-    private static final String KEY = "KIS_ACCESS_TOKEN";
-
     private final RateLimiter rateLimiter;
 
     // 주의!
@@ -52,20 +50,6 @@ public class DailyPriceAdapter implements DailyPricePort {
 
     }
 
-    @Override
-    public String fetchSector(String stockCode) {
-
-        String accessToken = kisClient.getValidAccessToken();
-
-        // KIS access token 발급 실패
-        if (accessToken == null) {
-            return null;
-        }
-
-        rateLimiter.acquire();
-        return kisClient.fetchSector(accessToken, stockCode);
-
-    }
 
     @Override
     public HistoricalPriceDTO fetchPastPrices(String stockCode, String strStartDate, String strEndDate) {

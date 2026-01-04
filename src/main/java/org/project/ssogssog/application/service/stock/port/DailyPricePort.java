@@ -6,7 +6,5 @@ import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPric
 public interface DailyPricePort {
     JsonNode getPriceRoot(String stockCode);
 
-    String fetchSector(String stockCode);
-
     HistoricalPriceDTO fetchPastPrices(String stockCode, String strStartDate, String strEndDate);
 }

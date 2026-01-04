@@ -28,8 +28,6 @@ public class SyncStockDataUseCase {
     // 1초에 10개 요청 제한 (KIS 제한: 초당 20건, 안전마진 확보)
     private final RateLimiter rateLimiter = RateLimiter.create(10.0);
     private final KISClient KISClient;
-
-    private final StockFinancialWriter stockFinancialWriter;
     private final StockWriter stockWriter;
 
     private final OpenDartClient openDartClient;
