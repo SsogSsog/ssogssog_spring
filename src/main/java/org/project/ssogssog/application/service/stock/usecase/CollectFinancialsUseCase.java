@@ -28,7 +28,6 @@ public class CollectFinancialsUseCase {
     private final StockFinancialWriter stockFinancialWriter;
     private final StockFinancialRepository stockFinancialRepository;
 
-    private final ObjectMapper objectMapper = new ObjectMapper(); // JSON 파싱용
     private final StockFinancialPort stockFinancialPort;
 
     // 1초에 10개 요청 제한
