@@ -21,13 +21,13 @@ public class SyncStockMetricDataUseCase {
 
 
     /**
-     * 전체 종목의 StockMetric 계산 (종가 이후 하루에 한 번 실행)
+     * 전체 종목의 StockMetric 계산 (일별시세 수집 후 이어서 실행)
      */
     public void refreshAllMetrics(){
 
         List<Stock> stocks = stockRepository.findAll();
         for (Stock stock : stocks) {
-            stockMetricWriter.refreshMetricForStock(stock); // 주의) 현재 같은 클래스이므로 @Transactional이 무시되는 상황이므로 추후 원자적인 처리로 단위 고려하기
+            stockMetricWriter.refreshMetricForStock(stock);
         }
 
     }
