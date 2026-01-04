@@ -54,7 +54,7 @@ public class KISClient {
         }
     }
 
-    public JsonNode getPriceRoot(String token, String stockCode) throws JsonProcessingException {
+    public JsonNode getPriceRoot(String token, String stockCode)  {
         String url = baseUrl + "/uapi/domestic-stock/v1/quotations/inquire-price";
         URI uri = UriComponentsBuilder.fromUriString(url)
                 .queryParam("FID_COND_MRKT_DIV_CODE", "J")
@@ -80,7 +80,12 @@ public class KISClient {
         log.debug("API 호출 성공 - 종목: {}", stockCode);
 
 
-        return objectMapper.readTree(response.getBody());
+        try {
+            return objectMapper.readTree(response.getBody());
+        } catch (JsonProcessingException e) {
+            log.error("KIS API 호출 중 JsonNode 파싱 에러 (종목코드: {}): {}", stockCode, e.getMessage());
+            return null;
+        }
     }
 
     //TODO 같은 엔드포인트의 값을 하나는 JsonNode 기반, 다른 하나는 DTO 기반으로 값을 가져오므로 통일성을 맞출 필요가 있어보임
@@ -122,7 +127,7 @@ public class KISClient {
             }
 
         } catch (Exception e) {
-            log.warn("KIS API 호출 중 오류 발생 (종목코드: {}): {}", stockCode, e.getMessage());
+            log.warn("KIS API 호출 중 KisPriceResponse 파싱 에러 발생 (종목코드: {}): {}", stockCode, e.getMessage());
         }
 
         return null;
@@ -161,7 +166,7 @@ public class KISClient {
             HistoricalPriceDTO body = response.getBody();
             return body;
         }catch (Exception e) {
-            log.error("과거 시세 수집 실패 [{}]: {}", stockCode, e.getMessage());
+            log.error("KIS API 호출 중 과거 시세 수집 실패 [{}]: {}", stockCode, e.getMessage());
             return null;
         }
     }
