@@ -3,6 +3,7 @@ package org.project.ssogssog.application.service.stock.usecase;
 import com.google.common.util.concurrent.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.project.ssogssog.application.service.stock.port.StockPort;
 import org.project.ssogssog.application.utils.ParserUtils;
 import org.project.ssogssog.application.service.stock.writer.StockFinancialWriter;
 import org.project.ssogssog.application.service.stock.writer.StockWriter;
@@ -25,24 +26,13 @@ import java.util.List;
 public class SyncStockDataUseCase {
 
     private final StockRepository stockRepository;
-    // 1초에 10개 요청 제한 (KIS 제한: 초당 20건, 안전마진 확보)
-    private final RateLimiter rateLimiter = RateLimiter.create(10.0);
-    private final KISClient KISClient;
+
     private final StockWriter stockWriter;
-
-    private final OpenDartClient openDartClient;
-
+    private final StockPort stockPort;
     /**
      * Stock에 sector(분야) 정보가 없는 종목들을 찾아 Stock의 sector 업데이트
      */
     public void updateMissingSectors() {
-
-        // 0. 토큰 발급 (루프 시작 전 1회)
-        String accessToken = KISClient.getAccessToken();
-        if (accessToken == null) {
-            log.error("❌ 토큰 발급 실패로 작업을 중단합니다.");
-            return;
-        }
 
         // 1. 섹터가 null인 종목 조회
         List<Stock> targetStocks = stockRepository.findBySectorIsNull();
@@ -50,10 +40,8 @@ public class SyncStockDataUseCase {
         int count = 0;
         for (Stock stock : targetStocks) {
             try {
-
-                rateLimiter.acquire();
                 // 2. KIS API 호출
-                String sectorName = KISClient.fetchSector(stock.getStockCode(), accessToken);
+                String sectorName = stockPort.fetchSector(stock.getStockCode());
 
                 // 3. 업데이트 (Dirty Checking)
                 if (sectorName != null && !sectorName.isEmpty()) {
@@ -85,7 +73,7 @@ public class SyncStockDataUseCase {
 
         try {
             // 1. ZIP 파일 다운로드
-            byte[] zipBytes = openDartClient.getCorpCodeZip();
+            byte[] zipBytes = stockPort.getCorpCodeZip();
             if (zipBytes == null) throw new RuntimeException("OpenDART 다운로드 실패");
 
             // 2. 압축 해제 (XML 문자열 획득)
