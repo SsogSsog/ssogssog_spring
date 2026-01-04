@@ -9,7 +9,7 @@ import org.project.ssogssog.application.service.stock.writer.DailyPriceWriter;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
-import org.project.ssogssog.infrastructure.client.ksi.KSIClient;
+import org.project.ssogssog.infrastructure.client.ksi.KISClient;
 
 import org.springframework.stereotype.Service;
 
@@ -27,14 +27,14 @@ public class CollectTodayPricesUseCase {
     // 1초에 10개 요청 제한 (KIS 제한: 초당 20건, 안전마진 확보)
     private final RateLimiter rateLimiter = RateLimiter.create(10.0);
 
-    private final KSIClient ksiClient;
+    private final KISClient KISClient;
 
     /**
      * 전 종목 시세 업데이트(당일 정보) (Batch용)
      */
     public void updateAllStockPrices() {
         // 1. 토큰 발급 (루프 시작 전 1회)
-        String accessToken = ksiClient.getAccessToken();
+        String accessToken = KISClient.getAccessToken();
         if (accessToken == null) {
             log.error("❌ 토큰 발급 실패로 작업을 중단합니다.");
             return;
@@ -78,7 +78,7 @@ public class CollectTodayPricesUseCase {
     private DailyPrice fetchPrice(String token, Stock stock, LocalDate date) {
 
         try {
-            JsonNode root = ksiClient.getPriceRoot(token, stock.getStockCode());
+            JsonNode root = KISClient.getPriceRoot(token, stock.getStockCode());
 
             // 에러코드 체크
             String rtCd = root.path("rt_cd").asText();
@@ -158,7 +158,7 @@ public class CollectTodayPricesUseCase {
         rateLimiter.acquire(); // 재시도도 RateLimiter 적용
 
         try {
-            JsonNode root = ksiClient.getPriceRoot(token, stock.getStockCode());
+            JsonNode root = KISClient.getPriceRoot(token, stock.getStockCode());
             JsonNode output = root.path("output");
 
             // 문자열 파싱 전 trim() 처리 & 값 확인

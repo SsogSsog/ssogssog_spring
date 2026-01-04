@@ -8,7 +8,7 @@ import org.project.ssogssog.application.service.stock.writer.StockFinancialWrite
 import org.project.ssogssog.application.service.stock.writer.StockWriter;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
-import org.project.ssogssog.infrastructure.client.ksi.KSIClient;
+import org.project.ssogssog.infrastructure.client.ksi.KISClient;
 import org.project.ssogssog.infrastructure.client.opendart.OpenDartClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +27,7 @@ public class SyncStockDataUseCase {
     private final StockRepository stockRepository;
     // 1초에 10개 요청 제한 (KIS 제한: 초당 20건, 안전마진 확보)
     private final RateLimiter rateLimiter = RateLimiter.create(10.0);
-    private final KSIClient ksiClient;
+    private final KISClient KISClient;
 
     private final StockFinancialWriter stockFinancialWriter;
     private final StockWriter stockWriter;
@@ -40,7 +40,7 @@ public class SyncStockDataUseCase {
     public void updateMissingSectors() {
 
         // 0. 토큰 발급 (루프 시작 전 1회)
-        String accessToken = ksiClient.getAccessToken();
+        String accessToken = KISClient.getAccessToken();
         if (accessToken == null) {
             log.error("❌ 토큰 발급 실패로 작업을 중단합니다.");
             return;
@@ -55,7 +55,7 @@ public class SyncStockDataUseCase {
 
                 rateLimiter.acquire();
                 // 2. KIS API 호출
-                String sectorName = ksiClient.fetchSector(stock.getStockCode(), accessToken);
+                String sectorName = KISClient.fetchSector(stock.getStockCode(), accessToken);
 
                 // 3. 업데이트 (Dirty Checking)
                 if (sectorName != null && !sectorName.isEmpty()) {

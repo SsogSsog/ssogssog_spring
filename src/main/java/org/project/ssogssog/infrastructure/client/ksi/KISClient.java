@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceResponse;
+import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -21,7 +21,7 @@ import java.util.Map;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class KSIClient {
+public class KISClient {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -128,7 +128,7 @@ public class KSIClient {
         return null;
     }
 
-    public HistoricalPriceResponse fetchPastPrices(String stockCode, String accessToken, String strStartDate, String strEndDate) {
+    public HistoricalPriceDTO fetchPastPrices(String stockCode, String accessToken, String strStartDate, String strEndDate) {
 
         // KIS API 호출 (국내주식 기간별 시세)
         final String path = "/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
@@ -154,11 +154,11 @@ public class KSIClient {
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
         try {
-            ResponseEntity<HistoricalPriceResponse> response = restTemplate.exchange(
-                    uri, HttpMethod.GET, requestEntity, HistoricalPriceResponse.class
+            ResponseEntity<HistoricalPriceDTO> response = restTemplate.exchange(
+                    uri, HttpMethod.GET, requestEntity, HistoricalPriceDTO.class
             );
 
-            HistoricalPriceResponse body = response.getBody();
+            HistoricalPriceDTO body = response.getBody();
             return body;
         }catch (Exception e) {
             log.error("과거 시세 수집 실패 [{}]: {}", stockCode, e.getMessage());

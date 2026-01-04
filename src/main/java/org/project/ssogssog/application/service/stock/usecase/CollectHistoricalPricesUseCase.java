@@ -4,11 +4,11 @@ import com.google.common.util.concurrent.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.utils.DateUtils;
-import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceResponse;
+import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceDTO;
 import org.project.ssogssog.application.service.stock.writer.DailyPriceWriter;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
-import org.project.ssogssog.infrastructure.client.ksi.KSIClient;
+import org.project.ssogssog.infrastructure.client.ksi.KISClient;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -27,7 +27,7 @@ public class CollectHistoricalPricesUseCase {
     // 1초에 10개 요청 제한 (KIS 제한: 초당 20건, 안전마진 확보)
     private final RateLimiter rateLimiter = RateLimiter.create(10.0);
 
-    private final KSIClient ksiClient;
+    private final KISClient KISClient;
 
     /**
      * 특정 종목의 과거 N개월치 데이터를 가져와 DB에 저장
@@ -35,7 +35,7 @@ public class CollectHistoricalPricesUseCase {
      */
     public void fetchAndSavePastPrices(int months) {
         // 0. 토큰 확보
-        String accessToken = ksiClient.getAccessToken(); // 기존에 만든 메소드 활용
+        String accessToken = KISClient.getAccessToken(); // 기존에 만든 메소드 활용
 
         if (accessToken == null) {
             log.error("❌ 토큰 발급 실패로 작업을 중단합니다.");
@@ -83,11 +83,11 @@ public class CollectHistoricalPricesUseCase {
                 // 느리면 알아서 기다줌. 따라서 sleep(100)처럼 무조건 기다리는 낭비 시간이 사라진다.
 
                 // 2. KIS API 호출 (국내주식 기간별 시세)
-                HistoricalPriceResponse historicalPriceResponse = ksiClient.fetchPastPrices(stock.getStockCode(), accessToken, strStartDate, strEndDate);
+                HistoricalPriceDTO historicalPriceDTO = KISClient.fetchPastPrices(stock.getStockCode(), accessToken, strStartDate, strEndDate);
 
                 // 3. DB 저장
-                if (historicalPriceResponse != null && historicalPriceResponse.getDailyItems() != null) {
-                    dailyPriceWriter.saveHistoricalPrices(stock.getStockCode(), historicalPriceResponse.getDailyItems());
+                if (historicalPriceDTO != null && historicalPriceDTO.getDailyItems() != null) {
+                    dailyPriceWriter.saveHistoricalPrices(stock.getStockCode(), historicalPriceDTO.getDailyItems());
                 }
 
                 // 4. 종료일을 '이번 시작일의 하루 전'으로 설정

@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class HistoricalPriceResponse {
+public class HistoricalPriceDTO {
     @JsonProperty("output1")
     private Output1 output1; // 대표 정보
 
