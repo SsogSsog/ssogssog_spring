@@ -61,7 +61,7 @@ public class DailyPriceAdapter implements DailyPricePort {
         }
 
         rateLimiter.acquire();
-        return kisClient.fetchPastPrices(accessToken, stockCode, strStartDate, strEndDate);
+        return kisClient.fetchPastPrices(stockCode, accessToken, strStartDate, strEndDate);
 
     }
 
