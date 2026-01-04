@@ -14,7 +14,7 @@ public class CacheConfig {
     public Cache<String, String> kisTokenCache() {
         return Caffeine.newBuilder()
                 .expireAfterWrite(Duration.ofHours(12))
-                .maximumSize(10)
+                .maximumSize(1)
                 .build();
     }
 }
