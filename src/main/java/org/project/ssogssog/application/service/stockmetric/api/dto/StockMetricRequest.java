@@ -23,9 +23,10 @@ public class StockMetricRequest {
          * 3. PER
          * 4. ROE
          * 5. 부채비율
-         * 6. 매출액 성장률
-         * 7. 순이익 성장률
-         * 8. 외국인 보유률
+         * 6. 영업이익률
+         * 7. 매출액 성장률
+         * 8. 순이익 성장률
+         * 9. 외국인 보유률
          * (배당 수익률, 주가 수익률의 경우는 데이터 부족으로 현재 반영x)
          */
 
@@ -43,6 +44,9 @@ public class StockMetricRequest {
 
         Double minDebtRatio; // 부채 비율
         Double maxDebtRatio;
+
+        Double minOperatingProfitRatio;
+        Double maxOperatingProfitRatio;
 
         Double minSalesGrowthRatio; // 매출액 성장률
         Double maxSalesGrowthRatio;

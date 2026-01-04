@@ -13,6 +13,7 @@ public record MetricValues(
         Double roe,
         Double netProfitMargin,
         Double debtRatio,
+        Double operatingProfitMargin,
 
         Double salesGrowthQoQ,
         Double salesGrowthYoY,

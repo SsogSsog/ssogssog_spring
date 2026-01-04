@@ -78,6 +78,13 @@ public class StockMetricRepositoryImpl implements StockMetricRepositoryCustom {
                         condition.maxDebtRatio()
                 );
 
+        BooleanExpression operatingProfitRatioCondition =
+                stockMetricPredicate.filterOperatingProfitRatio(
+                        qStockMetric,
+                        condition.minOperatingProfitRatio(),
+                        condition.maxOperatingProfitRatio()
+                );
+
         BooleanExpression dividendYieldCondition =
                 stockMetricPredicate.filterDividendYield(
                         qStockMetric,
@@ -97,7 +104,7 @@ public class StockMetricRepositoryImpl implements StockMetricRepositoryCustom {
         List<StockMetric> content =
                 jpaQueryFactory
                     .selectFrom(qStockMetric)
-                    .leftJoin(qStockMetric.stock).fetchJoin() // N+1 방지
+                    .leftJoin(qStockMetric.stock).fetchJoin()// N+1 방지
                     .where(currentPriceCondition)
                     .where(marketCapCondition)
                     .where(perCondition)
@@ -105,6 +112,7 @@ public class StockMetricRepositoryImpl implements StockMetricRepositoryCustom {
                     .where(salesGrowthRateCondition)
                     .where(netProfitGrowthRateCondition)
                     .where(debtRatioCondition)
+                    .where(operatingProfitRatioCondition) // 영업이익률 조건 추가
                     .where(dividendYieldCondition)
                     .where(foreignOwnershipRateCondition)
                     .orderBy(qStockMetric.currentPrice.desc()) // TODO: OrderSpecifier로 동적으로 정렬 조건 설정하도록 변경하기

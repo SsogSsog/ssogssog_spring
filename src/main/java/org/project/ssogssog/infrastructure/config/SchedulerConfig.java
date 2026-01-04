@@ -13,8 +13,8 @@ import javax.sql.DataSource;
 @Configuration
 @EnableScheduling
 @EnableSchedulerLock( // 전역적 설정 (짧게 두기)
-        defaultLockAtLeastFor = "PT10S",
-        defaultLockAtMostFor = "PT30S"
+        defaultLockAtLeastFor = "PT3M",
+        defaultLockAtMostFor = "PT3M"
 )
 public class SchedulerConfig {
 
