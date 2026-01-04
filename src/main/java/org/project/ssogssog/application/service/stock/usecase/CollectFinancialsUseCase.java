@@ -139,6 +139,90 @@ public class CollectFinancialsUseCase {
         }
     }
 
+    /**
+     * 특정 종목의 재무재표 세부 정보를 출력하는 디버깅 메서드
+     * @param stockId
+     * @param year
+     * @param reprtCode
+     */
+    public void debugOpenDartAccountNames(Long stockId, Integer year, String reprtCode) {
+        String quarter = ParserUtils.convertReportCodeToQuarter(reprtCode);
+
+        Stock stock = stockRepository.findById(stockId)
+                .orElseThrow(() -> new IllegalArgumentException("Stock not found: " + stockId));
+
+        if (stock.getCorpCode() == null || stock.getCorpCode().isBlank()) {
+            log.warn("[DART 디버그] corpCode 없음: {} ({})", stock.getCorpName(), stock.getStockCode());
+            return;
+        }
+
+        try {
+            String response = openDartClient.getFinancialInfo(stock.getCorpCode(), year, reprtCode);
+            JsonNode root = objectMapper.readTree(response);
+
+            String status = root.path("status").asText();
+            String message = root.path("message").asText();
+
+            if (!"000".equals(status)) {
+                log.warn("[DART 디버그] status!=000: {} ({}) year={}, quarter={}, reprtCode={}, status={}, msg={}",
+                        stock.getCorpName(), stock.getStockCode(), year, quarter, reprtCode, status, message);
+                return;
+            }
+
+            JsonNode listNode = root.path("list");
+            if (listNode.isMissingNode() || listNode.isEmpty()) {
+                log.warn("[DART 디버그] list 비어있음: {} ({}) year={}, quarter={}, reprtCode={}",
+                        stock.getCorpName(), stock.getStockCode(), year, quarter, reprtCode);
+                return;
+            }
+
+            int totalRows = listNode.size();
+            log.info("[DART 디버그] {} ({}) year={}, quarter={}, reprtCode={}, listRows={}",
+                    stock.getCorpName(), stock.getStockCode(), year, quarter, reprtCode, totalRows);
+
+            // fs_div(CFS/OFS) + sj_div(재무상태표/손익계산서 등) 단위로 account_nm 모아보기
+            Map<String, Set<String>> accountNamesByGroup = new LinkedHashMap<>();
+
+            // 실제로 어떤 row가 오는지 샘플도 보고 싶으면 최대 N개만 출력
+            int maxPrint = Math.min(totalRows, 200);
+
+            for (int i = 0; i < totalRows; i++) {
+                JsonNode item = listNode.get(i);
+
+                String fsDiv = item.path("fs_div").asText();      // CFS / OFS
+                String sjDiv = item.path("sj_div").asText();      // BS / IS / CF ...
+                String accountNm = item.path("account_nm").asText();
+                String amountStr = item.path("thstrm_amount").asText();
+
+                String groupKey = fsDiv + "|" + sjDiv;
+                accountNamesByGroup.computeIfAbsent(groupKey, k -> new LinkedHashSet<>()).add(accountNm);
+
+                // row 샘플 출력 (너무 많으면 maxPrint까지만)
+                if (i < maxPrint) {
+                    log.info("[DART row] {} ({}) fs_div={}, sj_div={}, account_nm={}, thstrm_amount={}",
+                            stock.getCorpName(), stock.getStockCode(), fsDiv, sjDiv, accountNm, amountStr);
+                }
+            }
+
+            // 그룹별로 어떤 account_nm들이 오는지 요약 출력 (너무 길면 50개까지만)
+            for (Map.Entry<String, Set<String>> entry : accountNamesByGroup.entrySet()) {
+                List<String> names = new ArrayList<>(entry.getValue());
+                int show = Math.min(names.size(), 50);
+
+                log.info("[DART account_nm 요약] group={} distinctAccountNm={} (show {}): {}",
+                        entry.getKey(),
+                        names.size(),
+                        show,
+                        String.join(", ", names.subList(0, show))
+                );
+            }
+
+        } catch (Exception e) {
+            log.error("[DART 디버그] 실패: {} ({}) year={}, reprtCode={}, err={}",
+                    stock.getCorpName(), stock.getStockCode(), year, reprtCode, e.getMessage(), e);
+        }
+    }
+
 
 
     // --- [내부 로직] API 호출 및 DTO 변환 ---
