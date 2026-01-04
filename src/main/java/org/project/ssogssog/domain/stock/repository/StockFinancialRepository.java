@@ -20,7 +20,7 @@ public interface StockFinancialRepository extends JpaRepository<StockFinancial, 
 
     // 특정 년도 + 특정 분기에 존재하는 재무제표 가져오기
     @Query("""
-           select sf.stock.id
+           select distinct sf.stock.id
            from StockFinancial sf
            where sf.year = :year
              and sf.quarter = :quarter
