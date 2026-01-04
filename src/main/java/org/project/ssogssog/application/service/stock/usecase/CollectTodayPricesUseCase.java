@@ -74,7 +74,7 @@ public class CollectTodayPricesUseCase {
     }
 
 
-    // --- [내부 2] 개별 종목 시세 조회 ---
+    // --- 개별 종목 시세 조회 ---
     private DailyPrice fetchPrice(String token, Stock stock, LocalDate date) {
 
         try {
@@ -152,7 +152,8 @@ public class CollectTodayPricesUseCase {
         }
     }
 
-
+    // TODO queue 방식으로 재시도 로직 리팩토링 하기
+    // TODO 공통 로직 private 메서드로 분리하기
     private DailyPrice retryFetchPriceOnce(String token, Stock stock, LocalDate date) {
         rateLimiter.acquire(); // 재시도도 RateLimiter 적용
 
