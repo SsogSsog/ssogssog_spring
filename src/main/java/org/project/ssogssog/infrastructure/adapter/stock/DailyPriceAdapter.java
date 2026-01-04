@@ -39,6 +39,49 @@ public class DailyPriceAdapter implements DailyPricePort {
     // 4. 중복 요청, 토큰 대기 시간 등 에러가 뜰 때 방어 로직이 필요하다 -> AOP로 설계??
     // 5. 꼭 넣어야 하는 방어 로직 -> 토큰 발급 에러의 경우 1분 이상 대기하도록 락 걸어 놓기
 
+    @Override
+    public JsonNode getPriceRoot(String stockCode) {
+
+        String accessToken = this.getValidAccessToken();
+
+        // KIS access token 발급 실패
+        if (accessToken == null) {
+            return null;
+        }
+
+        rateLimiter.acquire();
+        return kisClient.getPriceRoot(accessToken, stockCode);
+
+    }
+
+    @Override
+    public String fetchSector(String stockCode) {
+
+        String accessToken = this.getValidAccessToken();
+
+        // KIS access token 발급 실패
+        if (accessToken == null) {
+            return null;
+        }
+
+        rateLimiter.acquire();
+        return kisClient.fetchSector(accessToken, stockCode);
+
+    }
+
+    @Override
+    public HistoricalPriceDTO fetchPastPrices(String stockCode, String strStartDate, String strEndDate) {
+        String accessToken = this.getValidAccessToken();
+
+        // KIS access token 발급 실패
+        if (accessToken == null) {
+            return null;
+        }
+
+        rateLimiter.acquire();
+        return kisClient.fetchPastPrices(accessToken, stockCode, strStartDate, strEndDate);
+
+    }
 
     /**
      * TTL에 맞게 KIS 토큰 저장 및 필요 시 조회 메서드
