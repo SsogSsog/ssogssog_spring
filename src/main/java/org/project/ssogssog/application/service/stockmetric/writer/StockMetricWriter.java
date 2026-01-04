@@ -49,6 +49,7 @@ public class StockMetricWriter {
         if(latestStockFinancial == null){
             log.warn("❌ StockMetric 계산 불가 - 재무제표 정보 부족. stockId={}, code={}",
                     stock.getId(), stock.getStockCode());
+            return;
         }
 
         final int latestYear = latestStockFinancial.getYear();          // 최근 년도
