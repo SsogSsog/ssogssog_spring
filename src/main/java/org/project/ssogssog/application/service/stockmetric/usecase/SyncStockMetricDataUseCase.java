@@ -22,13 +22,29 @@ public class SyncStockMetricDataUseCase {
 
     /**
      * 전체 종목의 StockMetric 계산 (일별시세 수집 후 이어서 실행)
+     * 종목별 독립적인 업데이트를 의도했어서 해당 메서드에 @Transactional을 걸지 않음
      */
     public void refreshAllMetrics(){
 
         List<Stock> stocks = stockRepository.findAll();
+
+        log.info("총 {}개 종목 메트릭 갱신 시작...", stocks.size());
+        int success = 0;
+        int failed = 0;
+
         for (Stock stock : stocks) {
-            stockMetricWriter.refreshMetricForStock(stock);
+            try {
+                stockMetricWriter.refreshMetricForStock(stock);
+                success++;
+            } catch (Exception e) {
+                failed++;
+                log.error("메트릭 갱신 실패 - 종목: {}({}), 에러: {}",
+                        stock.getCorpName(), stock.getStockCode(), e.getMessage());
+                }
         }
+
+        log.info("✅ 메트릭 갱신 완료. 성공: {}, 실패: {}, 전체: {}", success, failed, stocks.size());
+
 
     }
 
