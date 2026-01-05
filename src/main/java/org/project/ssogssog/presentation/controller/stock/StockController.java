@@ -58,7 +58,10 @@ public class StockController {
             @NotBlank
             @RequestParam
             String theme,
-            @PageableDefault(size=10) Pageable pageable
+            @PageableDefault(
+                    size=10,
+                    sort="closePrice", direction=DESC
+            ) Pageable pageable
             ){
 
         PageDTO<StockResponse.StockItemResponseDTO> result = stockService.getStocksForTheme(theme, pageable);

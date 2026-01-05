@@ -1,6 +1,5 @@
 package org.project.ssogssog.infrastructure.client.opendart;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
