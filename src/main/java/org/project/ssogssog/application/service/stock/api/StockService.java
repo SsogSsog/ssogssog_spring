@@ -121,7 +121,7 @@ public class StockService {
 
         String corpCode = stock.getCorpCode();
         if(corpCode == null || corpCode.isBlank()){
-            return null;
+            return SliceDTO.of(Collections.emptyList(), page, NEWS_PAGE_SIZE, false);
         }
 
         List<DisclosureDTO> disclosures = stockIssuePort.searchDisclosures(corpCode, page);
@@ -137,6 +137,7 @@ public class StockService {
                         )
                         .collect(Collectors.toList());
 
+        // TODO: 현재 hasNext가 true여서 무한으로 공시 검색 할 수 있으므로 횟수 제한 적용하기
         return SliceDTO.of(disclosureItems, page, DISCLOSURE_PAGE_SIZE, true);
     }
 
