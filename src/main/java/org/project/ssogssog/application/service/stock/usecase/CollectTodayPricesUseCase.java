@@ -67,6 +67,11 @@ public class CollectTodayPricesUseCase {
         try {
             JsonNode root = dailyPricePort.getPriceRoot(stock.getStockCode());
 
+            if(root == null){
+                log.warn("root 노드가 존재하지 않습니다");
+                return null;
+            }
+
             // 에러코드 체크
             String rtCd = root.path("rt_cd").asText();
             String msgCd = root.path("msg_cd").asText();
@@ -145,6 +150,11 @@ public class CollectTodayPricesUseCase {
 
         try {
             JsonNode root = dailyPricePort.getPriceRoot(stock.getStockCode());
+            if(root == null){
+                log.warn("root 노드가 존재하지 않습니다");
+                return null;
+            }
+
             JsonNode output = root.path("output");
 
             // 문자열 파싱 전 trim() 처리 & 값 확인
