@@ -23,7 +23,7 @@ public class ThemeEmojiRegistry {
         m.put("금속", "⛓️");
         m.put("금융", "💰");
         m.put("기계·장비", "⚙️");
-        m.put("기타제조", "🏭");
+        m.put("기타제조", "⛏️");
         m.put("리츠", "🏢");
         m.put("보험", "🛡️");
         m.put("부동산", "🏠");
