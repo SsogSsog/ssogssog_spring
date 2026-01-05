@@ -22,7 +22,6 @@ public class DailyPriceAdapter implements DailyPricePort {
     // 주의!
     // @Qualifier 어노테이션 사용 시 생성자를 직접 만들어야 에러가 안 생긴다..
     public DailyPriceAdapter(KISClient kisClient,
-            Cache<String, String> kisTokenCache,
             @Qualifier("kisRateLimiter") RateLimiter rateLimiter) {
         this.kisClient = kisClient;
         this.rateLimiter = rateLimiter;
