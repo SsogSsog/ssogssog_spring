@@ -46,11 +46,11 @@ dependencies {
     implementation 'com.google.guava:guava:33.0.0-jre'
 
     // shed lock
-    implementation 'net.javacrumbs.shedlock:shedlock-spring:6.3.1'
-    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.3.1'
+    implementation 'net.javacrumbs.shedlock:shedlock-spring:7.5.0'
+    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.5.0'
 
     // caffeine(인메모리 캐시)
-    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.2.3'
 
 
     // test
