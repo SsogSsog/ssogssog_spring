@@ -45,7 +45,7 @@ public class NaverClient {
         URI uri = UriComponentsBuilder
                 .fromUriString("https://openapi.naver.com/v1/search/news.json")
                 .queryParam("query", query)
-                .queryParam("display", 10)
+                .queryParam("display", display)
                 .queryParam("start", start)
                 .queryParam("sort", "date")
                 .encode() // 인코딩 적용
