@@ -93,7 +93,7 @@ public class StockService {
 
         String keyword = stock.getCorpName();
         if(keyword == null || keyword.isBlank()){
-            return null;
+            return SliceDTO.of(Collections.emptyList(), page, NEWS_PAGE_SIZE, false);
         }
 
         List<NewsDTO> news = stockIssuePort.searchNews(keyword, page);
@@ -108,6 +108,7 @@ public class StockService {
                         )
                         .collect(Collectors.toList());
 
+        // TODO: 현재 hasNext가 true여서 무한으로 뉴스 검색 할 수 있으므로 횟수 제한 적용하기
         return SliceDTO.of(newsItems, page, NEWS_PAGE_SIZE, true);
 
     }
