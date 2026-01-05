@@ -69,9 +69,9 @@ public class StockResponse {
     @Builder
     public static class NewsResponseItemDTO {
 
-       String title;
-       String link;
-       String pubDate;
+       private String title;
+       private String link;
+       private String pubDate;
     }
 
     @Getter
