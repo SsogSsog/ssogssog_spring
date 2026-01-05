@@ -19,6 +19,9 @@ public record StockMetricScreenerCondition(
         Double minDebtRatio,     // 부채 비율
         Double maxDebtRatio,
 
+        Double minOperatingProfitRatio,
+        Double maxOperatingProfitRatio,
+
         Double minSalesGrowthRatio,              // 매출액 성장률
         Double maxSalesGrowthRatio,
         MetricBasePeriod salesGrowthMetricBasePeriod,

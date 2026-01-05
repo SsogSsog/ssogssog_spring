@@ -34,6 +34,7 @@ public class StockMetric {
     private Double per;           // PER (주가수익비율)
     private Double roe;           // ROE (자기자본이익률)
     private Double netProfitMargin; // 순이익률
+    private Double operatingProfitMargin; // 영업이익률
 
     // --- [안정성 지표] ---
     private Double debtRatio;     // 부채비율
@@ -79,6 +80,7 @@ public class StockMetric {
             Double roe,
             Double netProfitMargin,
             Double debtRatio,
+            Double operatingProfitMargin,
             Double salesGrowthQoQ,
             Double salesGrowthYoY,
             Double netProfitGrowthQoQ,
@@ -96,6 +98,7 @@ public class StockMetric {
         this.roe = roe;
         this.netProfitMargin = netProfitMargin;
         this.debtRatio = debtRatio;
+        this.operatingProfitMargin = operatingProfitMargin;
 
         this.salesGrowthQoQ = salesGrowthQoQ;
         this.salesGrowthYoY = salesGrowthYoY;

@@ -2,8 +2,8 @@ package org.project.ssogssog.application.service.stock.writer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.application.common.utils.DateUtils;
-import org.project.ssogssog.application.service.stock.collect.dto.KisHistoricalPriceResponse;
+import org.project.ssogssog.application.utils.DateUtils;
+import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceDTO;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.DailyPriceRepository;
@@ -13,13 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import static org.project.ssogssog.application.common.utils.NormalizeUtils.normalizeNumber;
-import static org.project.ssogssog.application.common.utils.ParserUtils.parseIntOrNull;
-import static org.project.ssogssog.application.common.utils.ParserUtils.parseLongOrNull;
+import static org.project.ssogssog.application.utils.NormalizeUtils.normalizeNumber;
+import static org.project.ssogssog.application.utils.ParserUtils.parseIntOrNull;
+import static org.project.ssogssog.application.utils.ParserUtils.parseLongOrNull;
 
 @RequiredArgsConstructor
 @Component
@@ -43,7 +41,7 @@ public class DailyPriceWriter {
     }
 
     @Transactional
-    public void saveHistoricalPrices(String stockCode, List<KisHistoricalPriceResponse.DailyItem> items) {
+    public void saveHistoricalPrices(String stockCode, List<HistoricalPriceDTO.DailyItem> items) {
 
         // 해당 주식 정보 가져오기
         Stock stock = stockRepository.findByStockCode(stockCode)
@@ -65,7 +63,7 @@ public class DailyPriceWriter {
         // 필드가 복잡하지 않고 단순한 타입(숫자, 날짜)들 뿐이라면, 굳이 클래스를 안 만들고 String Key를 만들기!
         // (ex 20251219_119291)
 
-        for (KisHistoricalPriceResponse.DailyItem item : items) {
+        for (HistoricalPriceDTO.DailyItem item : items) {
             // 데이터가 비어있는 휴장일 등은 패스
             if (item.getClosePrice() == null || item.getClosePrice().isEmpty()) continue;
 

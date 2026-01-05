@@ -45,11 +45,19 @@ dependencies {
     // Google Guava
     implementation 'com.google.guava:guava:33.0.0-jre'
 
+    // shed lock
+    implementation 'net.javacrumbs.shedlock:shedlock-spring:7.5.0'
+    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.5.0'
+
+    // caffeine(인메모리 캐시)
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.2.3'
+
+
     // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    //QueryDsl
+    // QueryDsl
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
     annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"

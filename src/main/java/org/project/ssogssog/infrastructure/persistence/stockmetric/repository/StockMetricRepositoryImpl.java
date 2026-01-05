@@ -8,6 +8,9 @@ import org.project.ssogssog.domain.stockmetric.entity.QStockMetric;
 import org.project.ssogssog.domain.stockmetric.entity.StockMetric;
 import org.project.ssogssog.domain.stockmetric.repository.StockMetricRepositoryCustom;
 import org.project.ssogssog.infrastructure.persistence.stockmetric.predicate.StockMetricPredicate;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -22,7 +25,7 @@ public class StockMetricRepositoryImpl implements StockMetricRepositoryCustom {
     private static final QStockMetric qStockMetric = QStockMetric.stockMetric;
 
     @Override
-    public List<StockMetric> getScreener(StockMetricScreenerCondition condition) {
+    public Slice<StockMetric> getScreener(StockMetricScreenerCondition condition, Pageable pageable) {
 
         BooleanExpression currentPriceCondition =
                 stockMetricPredicate.filterCurrentPrice(
@@ -75,6 +78,13 @@ public class StockMetricRepositoryImpl implements StockMetricRepositoryCustom {
                         condition.maxDebtRatio()
                 );
 
+        BooleanExpression operatingProfitRatioCondition =
+                stockMetricPredicate.filterOperatingProfitRatio(
+                        qStockMetric,
+                        condition.minOperatingProfitRatio(),
+                        condition.maxOperatingProfitRatio()
+                );
+
         BooleanExpression dividendYieldCondition =
                 stockMetricPredicate.filterDividendYield(
                         qStockMetric,
@@ -89,19 +99,33 @@ public class StockMetricRepositoryImpl implements StockMetricRepositoryCustom {
                         condition.maxForeignOwnershipRate()
                 );
 
-        return jpaQueryFactory
-                .selectFrom(qStockMetric)
-                .leftJoin(qStockMetric.stock).fetchJoin() // N+1 방지
-                .where(currentPriceCondition)
-                .where(marketCapCondition)
-                .where(perCondition)
-                .where(roeCondition)
-                .where(salesGrowthRateCondition)
-                .where(netProfitGrowthRateCondition)
-                .where(debtRatioCondition)
-                .where(dividendYieldCondition)
-                .where(foreignOwnershipRateCondition)
-                // TODO: orderBy 조건 추가
-                .fetch();
+        int size = pageable.getPageSize();
+
+        List<StockMetric> content =
+                jpaQueryFactory
+                    .selectFrom(qStockMetric)
+                    .leftJoin(qStockMetric.stock).fetchJoin()// N+1 방지
+                    .where(currentPriceCondition)
+                    .where(marketCapCondition)
+                    .where(perCondition)
+                    .where(roeCondition)
+                    .where(salesGrowthRateCondition)
+                    .where(netProfitGrowthRateCondition)
+                    .where(debtRatioCondition)
+                    .where(operatingProfitRatioCondition) // 영업이익률 조건 추가
+                    .where(dividendYieldCondition)
+                    .where(foreignOwnershipRateCondition)
+                    .orderBy(qStockMetric.currentPrice.desc()) // TODO: OrderSpecifier로 동적으로 정렬 조건 설정하도록 변경하기
+                    .offset(pageable.getOffset())
+                    .limit(size + 1L)
+                    .fetch();
+
+        // content 사이즈로 추가 데이터가 존재하는지 판단
+        boolean hasNext = content.size() > size;
+        if (hasNext) {
+            content.remove(size);
+        }
+
+        return new SliceImpl<>(content, pageable, hasNext);
     }
 }

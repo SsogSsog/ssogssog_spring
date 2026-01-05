@@ -37,6 +37,7 @@ public class StockMetricCalculator {
         // 가장 보고서의 재무 값 (연간/분기 구분 없이 "current" 기준)
         Long revenue = current.getRevenue();        // 매출액
         Long netIncome = current.getNetIncome();    // 당기순이익
+        Long operatingProfit = current.getOperatingProfit(); // 영업이익
         Long totalAssets = current.getTotalAssets();            // 자산총계
         Long totalLiabilities = current.getTotalLiabilities();  // 부채총계
         Long totalEquity = current.getTotalEquity();    // 자본총계
@@ -72,6 +73,10 @@ public class StockMetricCalculator {
 
         // (4) 부채비율(%) = totalLiabilities / totalEquity * 100
         Double debtRatio = safeDivideToPercent(totalLiabilities, totalEquity);
+
+        // (5) 영업이익률(%) = operatingProfit / revenue * 100
+        Double operatingProfitMargin = safeDivideToPercent(operatingProfit, revenue);
+
 
         // -----------------------
         // 3. 성장성 지표 (QoQ / YoY)
@@ -143,6 +148,7 @@ public class StockMetricCalculator {
                 roe,
                 netProfitMargin,
                 debtRatio,
+                operatingProfitMargin,
                 salesGrowthQoQ,
                 salesGrowthYoY,
                 netProfitGrowthQoQ,

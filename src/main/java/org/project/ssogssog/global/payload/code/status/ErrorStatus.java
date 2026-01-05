@@ -1,0 +1,59 @@
+package org.project.ssogssog.global.payload.code.status;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.project.ssogssog.global.payload.code.dto.ErrorReasonDTO;
+import org.project.ssogssog.global.payload.code.BaseErrorCode;
+import org.springframework.http.HttpStatus;
+
+@Getter
+@AllArgsConstructor
+public enum ErrorStatus implements BaseErrorCode {
+
+    // 가장 일반적인 응답
+    _INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON500", "서버 에러, 관리자에게 문의 바랍니다."),
+    _BAD_REQUEST(HttpStatus.BAD_REQUEST,"COMMON400","잘못된 요청입니다."),
+    _UNAUTHORIZED(HttpStatus.UNAUTHORIZED,"COMMON401","인증이 필요합니다."),
+    _FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON403", "금지된 요청입니다."),
+
+    // 유효성 검사 에러(메시지는 @interface의 message로 처리)
+    VALIDATOR_ERROR(HttpStatus.BAD_REQUEST,"VALID400",null),
+
+    // Stock 에러
+    NOT_FOUND_STOCK(HttpStatus.NOT_FOUND,"STOCK4000","해당 주식이 존재하지 않습니다"),
+
+    // StockMetric 에러
+    INVALID_METRIC_BASED_PERIOD(HttpStatus.BAD_REQUEST, "METRIC4100", "직전 분기 또는 작년 중 분기 선택이 필요합니다."),
+
+    // KIS 에러
+    BODY_NULL(HttpStatus.INTERNAL_SERVER_ERROR, "KIS4000", "KIS Body가 비어있습니다."),
+    FAIL_RT_CD(HttpStatus.INTERNAL_SERVER_ERROR, "KIS4001", "RT_CD 값을 받아오는 것에 실패했습니다"),
+    KIS_HTTP_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "KIS4100", "KIS HTTP 에러가 발생했습니다."),
+    KIS_OTHERS_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "KIS4200", "KIS unknown 에러가 발생했습니다."),
+
+
+    ;
+
+    private final HttpStatus httpStatus;
+    private final String code;
+    private final String message;
+
+    @Override
+    public ErrorReasonDTO getReason() {
+        return ErrorReasonDTO.builder()
+                .message(message)
+                .code(code)
+                .isSuccess(false)
+                .build();
+    }
+    @Override
+    public ErrorReasonDTO getReasonHttpStatus() {
+        return ErrorReasonDTO.builder()
+                .message(message)
+                .code(code)
+                .isSuccess(false)
+                .httpStatus(httpStatus)
+                .build()
+                ;
+    }
+}

@@ -2,12 +2,25 @@ package org.project.ssogssog.application.service.stock.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.domain.stock.vo.ThemeItemDTO;
+import org.project.ssogssog.application.service.stock.port.StockIssuePort;
+import org.project.ssogssog.application.service.stock.usecase.dto.DisclosureDTO;
+import org.project.ssogssog.application.service.stock.usecase.dto.NewsDTO;
+import org.project.ssogssog.domain.stock.entity.Stock;
+import org.project.ssogssog.domain.stock.policy.ThemeEmojiRegistry;
+import org.project.ssogssog.domain.stock.projection.StockItemDTO;
+import org.project.ssogssog.domain.stock.projection.ThemeItemDTO;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
-import org.project.ssogssog.presentation.controller.stock.dto.StockResponse;
+import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
+import org.project.ssogssog.global.paging.PageDTO;
+import org.project.ssogssog.global.paging.SliceDTO;
+import org.project.ssogssog.global.payload.code.status.ErrorStatus;
+import org.project.ssogssog.global.payload.exception.GeneralException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -15,6 +28,12 @@ import java.util.*;
 public class StockService {
 
     private final StockRepository stockRepository;
+    private final StockIssuePort stockIssuePort;
+
+    private final ThemeEmojiRegistry themeEmojiRegistry;
+
+    private static final int NEWS_PAGE_SIZE = 10;
+    private static final int DISCLOSURE_PAGE_SIZE = 20;
 
     public StockResponse.ThemeResponseDTO getThemeStockStats() {
 
@@ -55,6 +74,10 @@ public class StockService {
 
         List<StockResponse.ThemeCollectedItemDTO> collectedItems = new ArrayList<>(m.values());
 
+        for (var dto : collectedItems) {
+            dto.setEmoji(themeEmojiRegistry.getEmoji(dto.getThemeName()));
+        }
+
         // 4.
         Collections.sort(collectedItems);
 
@@ -64,4 +87,80 @@ public class StockService {
         );
     }
 
+    public SliceDTO<StockResponse.NewsResponseItemDTO> getStockNews(String stockCode, int page){
+        Stock stock = stockRepository.findByStockCode(stockCode)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
+
+        String keyword = stock.getCorpName();
+        if(keyword == null || keyword.isBlank()){
+            return SliceDTO.of(Collections.emptyList(), page, NEWS_PAGE_SIZE, false);
+        }
+
+        List<NewsDTO> news = stockIssuePort.searchNews(keyword, page);
+
+        List<StockResponse.NewsResponseItemDTO> newsItems =
+                news.stream()
+                        .map(n -> StockResponse.NewsResponseItemDTO.builder()
+                                .title(n.title())
+                                .link(n.link())
+                                .pubDate(n.pubDate())
+                                .build()
+                        )
+                        .collect(Collectors.toList());
+
+        // TODO: 현재 hasNext가 true여서 무한으로 뉴스 검색 할 수 있으므로 횟수 제한 적용하기
+        return SliceDTO.of(newsItems, page, NEWS_PAGE_SIZE, true);
+
+    }
+
+
+    public SliceDTO<StockResponse.DisclosureItemResponseDTO> getDisclosures(String stockCode, int page) {
+
+        Stock stock = stockRepository.findByStockCode(stockCode)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
+
+        String corpCode = stock.getCorpCode();
+        if(corpCode == null || corpCode.isBlank()){
+            return SliceDTO.of(Collections.emptyList(), page, NEWS_PAGE_SIZE, false);
+        }
+
+        List<DisclosureDTO> disclosures = stockIssuePort.searchDisclosures(corpCode, page);
+
+        List<StockResponse.DisclosureItemResponseDTO> disclosureItems =
+                disclosures.stream()
+                        .map(d -> StockResponse.DisclosureItemResponseDTO.builder()
+                                .reportName(d.reportName())
+                                .receiptNo(d.receiptNo())
+                                .submitter(d.submitter())
+                                .date(d.date())
+                                .build()
+                        )
+                        .collect(Collectors.toList());
+
+        // TODO: 현재 hasNext가 true여서 무한으로 공시 검색 할 수 있으므로 횟수 제한 적용하기
+        return SliceDTO.of(disclosureItems, page, DISCLOSURE_PAGE_SIZE, true);
+    }
+
+    public PageDTO<StockResponse.StockItemResponseDTO> getStocksForTheme(String theme, Pageable pageable) {
+
+        Page<StockItemDTO> stockItems =
+                stockRepository.getStocksForThemeOrderByClosePrice(theme, pageable);
+
+        Page<StockResponse.StockItemResponseDTO> stockItemsResponse =
+                stockItems.map(this::toStockItemDTO);
+
+        return PageDTO.from(stockItemsResponse);
+    }
+
+    private StockResponse.StockItemResponseDTO toStockItemDTO(StockItemDTO stockItemDTO) {
+
+        return StockResponse.StockItemResponseDTO.builder()
+                .stockId(stockItemDTO.stockId())
+                .corpName(stockItemDTO.corpName())
+                .stockCode(stockItemDTO.stockCode())
+                .closePrice(stockItemDTO.closePrice())
+                .volume(stockItemDTO.volume())
+                .changeRate(stockItemDTO.changeRate())
+                .build();
+    }
 }
