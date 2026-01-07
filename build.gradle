@@ -52,6 +52,12 @@ dependencies {
     // caffeine(인메모리 캐시)
     implementation 'com.github.ben-manes.caffeine:caffeine:3.2.3'
 
+    // actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
 
     // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
