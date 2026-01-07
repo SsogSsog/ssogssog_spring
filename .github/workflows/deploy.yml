@@ -1,0 +1,87 @@
+name: Deploy to GCP
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+    paths-ignore:
+      - "README.md"
+
+  pull_request:
+    branches: [ "main", "develop" ] # pull_request는 테스트 후 없애기
+    paths-ignore:
+      - "README.md"
+
+  workflow_dispatch: # 수동 실행 기능..
+
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GAR_LOCATION: asia-northeast3
+  REPOSITORY: ssogssog-repo
+  IMAGE: ssogssog-server
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: 코드 가져오기
+        uses: actions/checkout@v4
+
+      - name: Java 21 설치
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: 📝 application.yml 생성
+        run: |
+          mkdir -p ./src/main/resources
+          cat > ./src/main/resources/application.yml <<'EOF'
+          ${{ secrets.APPLICATION_YML }}
+          EOF
+
+      - name: 🔨 Gradle 빌드
+        run: ./gradlew clean bootJar
+
+      - name: 🔐 GCP 인증
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
+          token_format: access_token # 여기서 토큰 생성
+
+      - name: 🐳 Docker 로그인
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.GAR_LOCATION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }} # 위에서 만든 토큰 적용
+
+      - name: Docker 이미지 빌드 & 푸시
+        run: |
+          IMAGE_TAG="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}"
+          LATEST_TAG="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:latest"
+          
+          docker build -t $IMAGE_TAG -t $LATEST_TAG .
+          docker push $IMAGE_TAG
+          docker push $LATEST_TAG
+
+      - name: 🎯 GCE 서버에 배포
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.GCE_HOST }}
+          username: ${{ secrets.GCE_USER }}
+          key: ${{ secrets.GCE_SSH_KEY }}
+          script: |
+            # .env 파일 생성 (민감 정보)
+            echo "${{ secrets.ENV_FILE }}" > /home/${{ secrets.GCE_USER }}/.env
+            
+            # 배포 스크립트 실행
+            sh /home/${{ secrets.GCE_USER }}/deploy.sh
+
