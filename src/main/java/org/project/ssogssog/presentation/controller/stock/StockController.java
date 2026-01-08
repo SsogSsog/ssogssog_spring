@@ -25,6 +25,14 @@ public class StockController {
 
     private final StockService stockService;
 
+    @GetMapping("")
+    public ApiResponse<StockResponse.StockOverviewResponseDTO> getStockOverview(@RequestParam Long stockId){
+
+        StockResponse.StockOverviewResponseDTO result = stockService.getStockOverview(stockId);
+        return ApiResponse.onSuccess(result);
+    }
+
+
     @GetMapping("/themes/stats")
     @Operation(
             summary = "테마별 주식 개수 + 변동률 평균 목록 조회",
