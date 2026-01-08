@@ -99,7 +99,10 @@ public class StockResponse {
         private Double changeRate;
     }
 
-
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
     public static class StockOverviewResponseDTO {
 
         private String stockName;           // 주식명
@@ -162,8 +165,8 @@ public class StockResponse {
         public static class CompanyInfo {
             private String sector;           // 분야
             private String market;           // 시장구분 (KOSDAQ, KOSPI)
-            private Double marginRate;       // 부채비율
-            private Double interestRate;     // 순이익률
+            private Double debtRate;       // 부채비율
+            private Double netProfitMargin;     // 순이익률
         }
 
     }

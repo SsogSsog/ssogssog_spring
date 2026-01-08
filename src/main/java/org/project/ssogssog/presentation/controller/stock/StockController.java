@@ -26,9 +26,9 @@ public class StockController {
     private final StockService stockService;
 
     @GetMapping("")
-    public ApiResponse<StockResponse.StockOverviewResponseDTO> getStockOverview(@RequestParam Long stockId){
+    public ApiResponse<StockResponse.StockOverviewResponseDTO> getStockOverview(@RequestParam String stockCode){
 
-        StockResponse.StockOverviewResponseDTO result = stockService.getStockOverview(stockId);
+        StockResponse.StockOverviewResponseDTO result = stockService.getStockOverview(stockCode);
         return ApiResponse.onSuccess(result);
     }
 
