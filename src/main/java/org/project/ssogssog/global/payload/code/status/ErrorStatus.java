@@ -25,6 +25,9 @@ public enum ErrorStatus implements BaseErrorCode {
     // StockMetric 에러
     INVALID_METRIC_BASED_PERIOD(HttpStatus.BAD_REQUEST, "METRIC4100", "직전 분기 또는 작년 중 분기 선택이 필요합니다."),
 
+    // DailyPrice 에러
+    NOT_FOUND_DAILY_PRICE(HttpStatus.NOT_FOUND, "DAILY_PRICE4000", "해당 주식의 일별시세가 존재하지 않습니다"),
+
     // KIS 에러
     BODY_NULL(HttpStatus.INTERNAL_SERVER_ERROR, "KIS4000", "KIS Body가 비어있습니다."),
     FAIL_RT_CD(HttpStatus.INTERNAL_SERVER_ERROR, "KIS4001", "RT_CD 값을 받아오는 것에 실패했습니다"),
