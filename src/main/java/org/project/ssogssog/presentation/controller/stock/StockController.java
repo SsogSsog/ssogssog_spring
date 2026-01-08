@@ -25,6 +25,41 @@ public class StockController {
 
     private final StockService stockService;
 
+    @GetMapping("/{stockCode}/overview")
+    @Operation(
+            summary = "종목 상세 개요 조회",
+            description = """
+            특정 종목(stockCode)의 상세 개요 정보를 반환합니다.
+
+            - 가격 정보(PriceInfo)
+                - currentPrice: 가장 최근 거래일의 종가(DailyPrice.closePrice)
+                - changeAmount/changeRate: 가장 최근 거래일(latest)과 직전 거래일(prev)을 비교해 계산합니다.
+                (주말/공휴일/휴장일을 감안하여 '어제'가 아니라 '직전 거래일' 기준)
+                - previousClose: 직전 거래일 종가
+
+            - 차트 데이터(ChartData)
+                - 최근 3개월 구간의 일별 종가(priceHistory) 및 거래량(volumeHistory)을 반환합니다.
+
+            - 기본/재무 지표(FinancialInfo)
+                - marketCap, per, roe, dividendYield 등은 StockMetric(1:1) 기준 값을 우선 사용합니다.
+                - StockMetric 데이터가 없는 경우 해당 필드는 null이 될 수 있습니다.
+                - 52주 저가/고가는 DailyPrice의 w52LowPrice/w52HighPrice를 반환합니다.
+
+            - 기업 정보(CompanyInfo)
+                - sector, marketType(코스피/코스닥 등)을 반환합니다.
+                - marginRate(부채비율), interestRate(순이익률)은 StockMetric 기반 값을 반환합니다.
+
+            - 데이터가 충분하지 않은 신규/미수집 종목의 경우
+                - 직전 거래일(prev) 데이터가 없으면 previousClose/changeAmount/changeRate 관련 값이 null이 될 수 있습니다.
+            """
+    )
+    public ApiResponse<StockResponse.StockOverviewResponseDTO> getStockOverview(@PathVariable String stockCode){
+
+        StockResponse.StockOverviewResponseDTO result = stockService.getStockOverview(stockCode);
+        return ApiResponse.onSuccess(result);
+    }
+
+
     @GetMapping("/themes/stats")
     @Operation(
             summary = "테마별 주식 개수 + 변동률 평균 목록 조회",

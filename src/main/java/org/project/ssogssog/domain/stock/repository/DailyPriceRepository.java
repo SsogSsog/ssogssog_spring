@@ -19,7 +19,12 @@ public interface DailyPriceRepository extends JpaRepository<DailyPrice, Long> {
     // 가장 최신 KIS 데이터 조회
     Optional<DailyPrice> findTopByStockOrderByDateDesc(Stock stock);
 
-    Boolean existsByStockAndDate(Stock stock, LocalDate date);
+    // latestDate보다 과거 중 가장 최신 = 직전 거래일
+    Optional<DailyPrice> findTopByStockAndDateLessThanOrderByDateDesc(Stock stock, LocalDate date);
+
+    // 해당 기간 동안 주식의 stock 가져오기
+    List<DailyPrice> findByStockAndDateBetweenOrderByDateAsc(Stock stock, LocalDate from, LocalDate to);
+
 
     // 엔티티 전체가 아니라 '날짜'만 조회하는 쿼리 (가볍고 빠름)
     @Query("SELECT d.date FROM DailyPrice d WHERE d.stock = :stock")
