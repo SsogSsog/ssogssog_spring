@@ -53,7 +53,7 @@ public class StockController {
                 - 직전 거래일(prev) 데이터가 없으면 previousClose/changeAmount/changeRate 관련 값이 null이 될 수 있습니다.
             """
     )
-    public ApiResponse<StockResponse.StockOverviewResponseDTO> getStockOverview(@RequestParam String stockCode){
+    public ApiResponse<StockResponse.StockOverviewResponseDTO> getStockOverview(@PathVariable String stockCode){
 
         StockResponse.StockOverviewResponseDTO result = stockService.getStockOverview(stockCode);
         return ApiResponse.onSuccess(result);
