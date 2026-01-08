@@ -52,4 +52,29 @@ public class DailyPrice {
     private Integer w52HighPrice;     // 52주 최고가
     private Integer w52LowPrice;      // 52주 최저가
     private Double pbr;               // PBR (주가순자산비율)
+
+    /**
+     * 비즈니스 로직
+     */
+    public void updateFrom(DailyPrice dailyPrice) {
+        this.closePrice = dailyPrice.closePrice;
+        this.openPrice = dailyPrice.openPrice;
+        this.highPrice = dailyPrice.highPrice;
+        this.lowPrice = dailyPrice.lowPrice;
+
+        this.volume = dailyPrice.volume;
+        this.marketCap = dailyPrice.marketCap;
+
+        this.changePrice = dailyPrice.changePrice;
+        this.changeRate = dailyPrice.changeRate;
+        this.prevClosePrice = dailyPrice.prevClosePrice;
+
+        this.listedShares = dailyPrice.listedShares;
+        this.foreignHeldShares = dailyPrice.foreignHeldShares;
+
+        this.w52HighPrice = dailyPrice.w52HighPrice;
+        this.w52LowPrice = dailyPrice.w52LowPrice;
+        this.pbr = dailyPrice.pbr;
+
+    }
 }
