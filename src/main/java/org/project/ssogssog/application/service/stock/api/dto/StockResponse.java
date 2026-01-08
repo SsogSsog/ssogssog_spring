@@ -116,17 +116,17 @@ public class StockResponse {
         @Getter
         @Builder
         public static class PriceInfo {
-            private Integer currentPrice;     // 전일 대비 가격
+            private Integer currentPrice;     // 현재가 (최근 거래일 종가)
             private Integer changeAmount;     // 전일 대비 가격 변동
-            private Double changeRate;        // 전일 거래가
-            private Long previousClose;       // 전일 거래량
+            private Double changeRate;        // 전일 대비 변동률
+            private Long previousClose;       // 전일 종가
         }
 
         @Getter
         @Builder
         public static class ChartData {
-            private List<PricePoint> priceHistory;  // 최근 3개월 거래량
-            private List<VolumePoint> volumeHistory; // 최근 3개월 거래가
+            private List<PricePoint> priceHistory;  // 최근 3개월 거래가
+            private List<VolumePoint> volumeHistory; // 최근 3개월 거래량
         }
 
         @Getter
