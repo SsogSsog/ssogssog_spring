@@ -36,7 +36,7 @@ public class MemberService {
         if (existingMember.isPresent()) {
             // 이미 있는 회원이면 -> FCM 토큰만 최신으로 업데이트
             member = existingMember.get();
-            if (fcmToken != null) {
+            if (fcmToken != null && !fcmToken.isBlank()) {
                 member.updateFcmToken(fcmToken);
                 memberRepository.save(member);
             }
