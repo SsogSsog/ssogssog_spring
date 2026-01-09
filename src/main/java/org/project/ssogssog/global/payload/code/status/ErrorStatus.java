@@ -28,6 +28,13 @@ public enum ErrorStatus implements BaseErrorCode {
     // DailyPrice 에러
     NOT_FOUND_DAILY_PRICE(HttpStatus.NOT_FOUND, "DAILY_PRICE4000", "해당 주식의 일별시세가 존재하지 않습니다"),
 
+    // Member 에러
+    NOT_EMPTY_UUID(HttpStatus.BAD_REQUEST, "MEMBER4100", "로그인 요청 형식이 잘못됐습니다"),
+    INVALID_UUID(HttpStatus.BAD_REQUEST, "MEMBER4101", "UUID 형식이 잘못 되었습니다"),
+
+    // Auth 에러
+    INVALID_AUTH_HEADER(HttpStatus.UNAUTHORIZED, "AUTH4000", "인증 헤더가 잘못되었습니다"),
+
     // KIS 에러
     BODY_NULL(HttpStatus.INTERNAL_SERVER_ERROR, "KIS4000", "KIS Body가 비어있습니다."),
     FAIL_RT_CD(HttpStatus.INTERNAL_SERVER_ERROR, "KIS4001", "RT_CD 값을 받아오는 것에 실패했습니다"),
