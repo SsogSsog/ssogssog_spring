@@ -28,6 +28,9 @@ public class UuidInterceptor implements HandlerInterceptor {
             return false;
         }
 
+        // 검증된 UUID를 request attribute에 저장하여 다운스트림에서 사용 가능하도록 함
+        request.setAttribute("memberId", uuid);
+
         return true;
     }
 
