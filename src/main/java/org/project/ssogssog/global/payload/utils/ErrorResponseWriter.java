@@ -7,20 +7,21 @@ import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 
 import java.io.IOException;
 
+
 public class ErrorResponseWriter {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     public static void setErrorResponse(HttpServletResponse response, ErrorStatus errorStatus) throws IOException {
 
         try{
-            // HTTP 상태 코드 설정
-            response.setStatus(errorStatus.getHttpStatus().value()); // 또는 e.getStatusCode()
+            response.setStatus(errorStatus.getHttpStatus().value());
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
 
             ApiResponse<Object> apiResponse = ApiResponse.onFailure(errorStatus, null);
 
-            ObjectMapper objectMapper = new ObjectMapper();
-            String jsonResponse = objectMapper.writeValueAsString(apiResponse);
+            String jsonResponse = OBJECT_MAPPER.writeValueAsString(apiResponse);
 
             // 응답 출력
             response.getWriter().write(jsonResponse);
