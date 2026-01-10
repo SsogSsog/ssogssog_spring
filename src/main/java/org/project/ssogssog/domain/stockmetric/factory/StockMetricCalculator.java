@@ -5,6 +5,9 @@ import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.entity.StockFinancial;
 import org.project.ssogssog.domain.stockmetric.vo.MetricValues;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 /**
  * 순수 도메인 계산용 클래스.
  * - 외부 IO/리포지토리 접근 없음
@@ -112,11 +115,11 @@ public class StockMetricCalculator {
 
 
         // -----------------------
-        // 4. 배당수익률 (현재는 데이터 소스 없으므로 null 처리)
+        // 4. 배당수익률
         // -----------------------
         // ex) dividendYield(%) = DPS / currentPrice * 100
-        // StockFinancial에 dividendPerShare 등이 생기면 여기서 계산
-        Double dividendYield = null;
+        Double dividendYield = calcDividendYield(currentPrice, stock.getLastDps());
+
 
         // -----------------------
         // 5. 외국인 보유율
@@ -161,6 +164,19 @@ public class StockMetricCalculator {
         );
     }
 
+
+    // 배당 수익률 계산 로직
+    private static Double calcDividendYield(Integer currentPrice, Integer lastDps) {
+        if (currentPrice == null || currentPrice <= 0) return null;     // 가격 데이터 이상/없음
+        if (lastDps == null) return null;                                // DPS 미수집
+        if (lastDps <= 0) return 0.0;                                    // 배당 없음
+
+        double raw = (lastDps * 100.0) / currentPrice;                   // (%)
+        return BigDecimal.valueOf(raw)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
+    }
+
     // -----------------------
     // 헬퍼 메서드들
     // -----------------------
@@ -186,4 +202,5 @@ public class StockMetricCalculator {
         }
         return ((double) current / previous - 1.0) * 100.0;
     }
+
 }

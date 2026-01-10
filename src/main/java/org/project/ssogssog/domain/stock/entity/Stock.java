@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import org.project.ssogssog.domain.stock.enums.Country;
 import org.project.ssogssog.domain.stock.enums.MarketType;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "stock") // 테이블 이름
 @Getter
@@ -36,6 +38,9 @@ public class Stock {
     // 추후 KIS API 등을 통해 업데이트할 섹터 정보 (초기엔 null)
     private String sector;
 
+    private Integer lastDps; // 최근 배당금
+    // private LocalDate lastDpsUpdatedAt; // TODO 배당금 최신 일자 깔끔히 기록할 방법 생각해보기
+
     // --- [데이터 갱신용 메소드] --
     // 이미 존재하는 종목이라면 이름이나 고유번호가 바뀌었을 때 업데이트
     public void updateCorpInfo(String corpCode, String corpName) {
@@ -45,5 +50,8 @@ public class Stock {
 
     public void updateSector(String sector) {
         this.sector = sector;
+    }
+    public void updateLastDps(Integer lastDps) {
+        this.lastDps = lastDps;
     }
 }

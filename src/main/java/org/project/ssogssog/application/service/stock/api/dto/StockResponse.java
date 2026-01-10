@@ -86,6 +86,7 @@ public class StockResponse {
         private String date;       // 접수일자 (YYYYMMDD)
     }
 
+
     @Getter
     @AllArgsConstructor
     @NoArgsConstructor

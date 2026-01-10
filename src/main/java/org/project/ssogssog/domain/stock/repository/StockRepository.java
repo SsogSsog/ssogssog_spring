@@ -10,5 +10,6 @@ public interface StockRepository extends JpaRepository<Stock, Long>, StockReposi
     Optional<Stock> findByStockCode(String stockCode);
 
     List<Stock> findBySectorIsNull();
+    List<Stock> findByLastDpsIsNull();
 
 }

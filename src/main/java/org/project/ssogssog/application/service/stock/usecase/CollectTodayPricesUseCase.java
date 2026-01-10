@@ -13,6 +13,7 @@ import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Slf4j
@@ -29,10 +30,16 @@ public class CollectTodayPricesUseCase {
      * 전 종목 시세 업데이트(당일 정보) (Batch용)
      */
     public void updateAllStockPrices() {
+
+        LocalDate today = LocalDate.now();
+        if(!dailyPricePort.isMarketOpen(today)){
+            log.info("오늘은 휴장일입니다...");
+            return;
+        }
+
         List<Stock> stocks = stockRepository.findAll();
 
         log.info("총 {}개 종목 시세 수집 시작...", stocks.size());
-        LocalDate today = LocalDate.now();
 
         int success = 0;
         int index = 0;
@@ -99,7 +106,7 @@ public class CollectTodayPricesUseCase {
                 actualDate = date;
             } else {
                 // "20240105" -> LocalDate 변환
-                actualDate = LocalDate.parse(businessDateStr);
+                actualDate = LocalDate.parse(businessDateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
             }
 
             // "stck_prpr"가 현재가가 아닐 수도 있으니 로그 확인 필요

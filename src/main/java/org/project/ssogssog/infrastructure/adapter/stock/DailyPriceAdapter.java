@@ -11,6 +11,8 @@ import org.project.ssogssog.infrastructure.client.ksi.KISClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+
 @Component
 @Slf4j
 public class DailyPriceAdapter implements DailyPricePort {
@@ -34,6 +36,11 @@ public class DailyPriceAdapter implements DailyPricePort {
     // 4. 중복 요청, 토큰 대기 시간 등 에러가 뜰 때 방어 로직이 필요하다 -> AOP로 설계??
     // 5. 꼭 넣어야 하는 방어 로직 -> 토큰 발급 에러의 경우 1분 이상 대기하도록 락 걸어 놓기
 
+    /**
+     * 오늘의 일별시세 정보 제공
+     * @param stockCode
+     * @return
+     */
     @Override
     public JsonNode getPriceRoot(String stockCode) {
 
@@ -62,6 +69,12 @@ public class DailyPriceAdapter implements DailyPricePort {
         rateLimiter.acquire();
         return kisClient.fetchPastPrices(stockCode, accessToken, strStartDate, strEndDate);
 
+    }
+
+    @Override
+    public boolean isMarketOpen(LocalDate date){
+
+        return kisClient.isMarketOpen(date);
     }
 
 
