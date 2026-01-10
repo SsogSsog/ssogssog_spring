@@ -51,5 +51,7 @@ public class Stock {
     public void updateSector(String sector) {
         this.sector = sector;
     }
-    public void updateLastDps(Integer lastDps) {}
+    public void updateLastDps(Integer lastDps) {
+        this.lastDps = lastDps;
+    }
 }

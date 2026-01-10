@@ -103,7 +103,7 @@ public class SyncStockDataUseCase {
         for (Stock stock : targetStocks) {
             try {
                 // 2. KIS API 호출
-                Integer lastDps = stockPort.fetchLastDps(stock.getStockCode(), year);
+                Integer lastDps = stockPort.fetchLastDps(stock.getCorpCode(), year);
 
                 // 3. 업데이트 (Dirty Checking)
                 if (lastDps != null) {
