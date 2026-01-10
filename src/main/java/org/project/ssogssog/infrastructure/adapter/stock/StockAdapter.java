@@ -50,4 +50,11 @@ public class StockAdapter implements StockPort {
         return openDartClient.getCorpCodeZip();
     }
 
+    @Override
+    public Integer fetchLastDps(String corpCode, String year){
+
+        openDartRateLimiter.acquire();
+        return openDartClient.fetchLastYearDps(corpCode, year);
+    }
+
 }
