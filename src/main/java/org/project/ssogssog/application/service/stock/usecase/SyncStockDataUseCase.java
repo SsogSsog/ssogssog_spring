@@ -103,18 +103,15 @@ public class SyncStockDataUseCase {
         for (Stock stock : targetStocks) {
             try {
                 // 2. KIS API 호출
-                int lastDps = stockPort.getLastDps(stock.getStockCode(), year);
+                Integer lastDps = stockPort.fetchLastDps(stock.getStockCode(), year);
 
                 // 3. 업데이트 (Dirty Checking)
-                if (sectorName != null && !sectorName.isEmpty()) {
-                    stock.updateSector(sectorName);
+                if (lastDps != null) {
+                    stock.updateLastDps(lastDps);
                     stockRepository.save(stock);
                     count++;
-                    log.info("[{}] 섹터 업데이트 완료: {}", stock.getCorpName(), sectorName);
+                    log.info("[{}] dps 업데이트 완료: {}", stock.getCorpName(), lastDps);
                 }
-
-                // 3. 업데이트
-                stock.up
 
                 // API 호출 빈도 조절 (초당 제한 방지, 필요시 조절)
                 Thread.sleep(100);
@@ -126,11 +123,6 @@ public class SyncStockDataUseCase {
         log.info("총 {}개 종목 섹터 업데이트 완료", count);
 
 
-
-
-
     }
-
-
 
 }
