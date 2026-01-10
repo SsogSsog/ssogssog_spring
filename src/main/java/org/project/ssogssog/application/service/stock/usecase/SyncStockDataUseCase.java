@@ -90,6 +90,47 @@ public class SyncStockDataUseCase {
         }
     }
 
+    /***
+     * Stock에 lastDps 정보가 없는 종목들을 찾아 lastDps 업데이트
+     * @param year 수집할 년도
+     */
+    public void updateMissingLastDps(String year){
+
+        // 1. 섹터가 null인 종목 조회
+        List<Stock> targetStocks = stockRepository.findByLastDpsIsNull();
+
+        int count = 0;
+        for (Stock stock : targetStocks) {
+            try {
+                // 2. KIS API 호출
+                int lastDps = stockPort.getLastDps(stock.getStockCode(), year);
+
+                // 3. 업데이트 (Dirty Checking)
+                if (sectorName != null && !sectorName.isEmpty()) {
+                    stock.updateSector(sectorName);
+                    stockRepository.save(stock);
+                    count++;
+                    log.info("[{}] 섹터 업데이트 완료: {}", stock.getCorpName(), sectorName);
+                }
+
+                // 3. 업데이트
+                stock.up
+
+                // API 호출 빈도 조절 (초당 제한 방지, 필요시 조절)
+                Thread.sleep(100);
+
+            } catch (Exception e) {
+                log.error("[{}] 업데이트 실패: {}", stock.getCorpName(), e.getMessage());
+            }
+        }
+        log.info("총 {}개 종목 섹터 업데이트 완료", count);
+
+
+
+
+
+    }
+
 
 
 }
