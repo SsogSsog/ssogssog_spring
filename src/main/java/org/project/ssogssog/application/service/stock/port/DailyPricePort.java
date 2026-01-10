@@ -2,6 +2,9 @@ package org.project.ssogssog.application.service.stock.port;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceDTO;
+
+import java.time.LocalDate;
+
 /**
  * 일별시세 정보를 담당하는 interface
  */
@@ -11,4 +14,7 @@ public interface DailyPricePort {
 
     // 시작날~과거날까지의 과거 일별시세 정보 가져오기(정보 제한적)
     HistoricalPriceDTO fetchPastPrices(String stockCode, String strStartDate, String strEndDate);
+
+    // 오늘 휴장일인지 체크
+    boolean isMarketOpen(LocalDate date);
 }
