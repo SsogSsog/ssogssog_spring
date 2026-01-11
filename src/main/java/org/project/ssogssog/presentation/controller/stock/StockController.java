@@ -166,4 +166,35 @@ public class StockController {
         return ApiResponse.onSuccess(result);
     }
 
+
+    @Operation(
+            summary = "급상승 종목 TOP 5 조회",
+            description = "현재 시장에서 상승률 상위 5개 종목을 조회합니다."
+    )
+    @GetMapping("/rising")
+    public ApiResponse<StockResponse.RankingResponseDTO> getRisingStocks() {
+        StockResponse.RankingResponseDTO result = stockService.getRisingStocks();
+        return ApiResponse.onSuccess(result);
+    }
+
+    @Operation(
+            summary = "급하락 종목 TOP 5 조회",
+            description = "현재 시장에서 하락률 상위 5개 종목을 조회합니다."
+    )
+    @GetMapping("/falling")
+    public ApiResponse<StockResponse.RankingResponseDTO> getFallingStocks() {
+        StockResponse.RankingResponseDTO result = stockService.getFallingStocks();
+        return ApiResponse.onSuccess(result);
+    }
+
+    @Operation(
+            summary = "거래량 TOP 5 조회",
+            description = "현재 시장에서 거래량 상위 5개 종목을 조회합니다."
+    )
+    @GetMapping("/volume")
+    public ApiResponse<StockResponse.RankingResponseDTO> getTopVolumeStocks() {
+        StockResponse.RankingResponseDTO result = stockService.getTopVolumeStocks();
+        return ApiResponse.onSuccess(result);
+    }
+
 }
