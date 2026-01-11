@@ -19,6 +19,7 @@ import org.project.ssogssog.global.paging.PageDTO;
 import org.project.ssogssog.global.paging.SliceDTO;
 import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -294,8 +295,71 @@ public class StockService {
 
     }
 
-
     private Long longValue(Integer v) {
         return v == null ? null : v.longValue();
+    }
+
+    /**
+     * 급상승 종목 TOP 5 조회
+     */
+    @Cacheable(
+            value = "stockRanking",
+            key = "'rising'"
+    )
+    public StockResponse.RankingResponseDTO getRisingStocks() {
+
+        List<DailyPrice> dailyPrices = dailyPriceRepository.findTop5RisingStocks();
+        return convertToRankingDTO(dailyPrices);
+    }
+
+    /**
+     * 급하락 종목 TOP 5 조회
+     */
+    @Cacheable(
+            value = "stockRanking",
+            key = "'falling'"
+    )
+    public StockResponse.RankingResponseDTO getFallingStocks() {
+
+        List<DailyPrice> dailyPrices = dailyPriceRepository.findTop5FallingStocks();
+        return convertToRankingDTO(dailyPrices);
+    }
+
+    /**
+     * 거래량 TOP 5 조회
+     */
+    @Cacheable(
+            value = "stockRanking",
+            key = "'volume'"
+    )
+    public StockResponse.RankingResponseDTO getTopVolumeStocks() {
+
+        List<DailyPrice> dailyPrices = dailyPriceRepository.findTop5VolumeStocks();
+        return convertToRankingDTO(dailyPrices);
+    }
+
+    /**
+     * DailyPrice → RankingItemDTO 변환
+     */
+    private StockResponse.RankingResponseDTO convertToRankingDTO(
+            List<DailyPrice> dailyPrices
+    ) {
+        List<StockResponse.RankingItemDTO> items = dailyPrices.stream()
+                .map(dp -> StockResponse.RankingItemDTO.builder()
+                        .rank(dailyPrices.indexOf(dp) + 1)  // 1부터 시작
+                        .stockCode(dp.getStock().getStockCode())
+                        .corpName(dp.getStock().getCorpName())
+                        .currentPrice(dp.getClosePrice().longValue())  // 종가 = 현재가
+                        .changeRate(dp.getChangeRate())
+                        .tradingVolume(dp.getVolume())
+                        .build())
+                .collect(Collectors.toList());
+
+        int totalCount = items.size();
+
+        return StockResponse.RankingResponseDTO.builder()
+                .items(items)
+                .totalCount(totalCount)
+                .build();
     }
 }
