@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.project.ssogssog.application.service.stock.api.StockService;
+import org.project.ssogssog.presentation.controller.stock.enums.RankingType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
@@ -47,15 +48,15 @@ class CachePerformanceTest {
         log.info("🔥 급상승 - 캐시 없이 {}번 실행...", repeat);
         long withoutCache = measure(() -> {
             cacheManager.getCache("stockRanking").clear(); // 매번 캐시 비움
-            stockService.getRisingStocks();
+            stockService.getRanking(RankingType.RISING);
         }, repeat);
 
         // When - 캐시 있고 (첫 번째만 DB, 나머지 캐시)
         log.info("🔥 급상승 - 캐시 적용 후 {}번 실행...", repeat);
         cacheManager.getCache("stockRanking").clear();
-        stockService.getRisingStocks(); // 워밍업
+        stockService.getRanking(RankingType.RISING);
         long withCache = measure(() ->
-                stockService.getRisingStocks(), repeat
+                stockService.getRanking(RankingType.RISING), repeat
         );
 
         // Then
@@ -85,14 +86,14 @@ class CachePerformanceTest {
         log.info("💧 급하락 - 캐시 없이 {}번 실행...", repeat);
         long withoutCache = measure(() -> {
             cacheManager.getCache("stockRanking").evict("falling");
-            stockService.getFallingStocks();
+            stockService.getRanking(RankingType.FALLING);
         }, repeat);
 
         log.info("💧 급하락 - 캐시 적용 후 {}번 실행...", repeat);
         cacheManager.getCache("stockRanking").clear();
-        stockService.getFallingStocks();
+        stockService.getRanking(RankingType.FALLING);
         long withCache = measure(() ->
-                stockService.getFallingStocks(), repeat
+                stockService.getRanking(RankingType.FALLING), repeat
         );
 
         // Then
@@ -120,14 +121,14 @@ class CachePerformanceTest {
         log.info("📊 거래량 - 캐시 없이 {}번 실행...", repeat);
         long withoutCache = measure(() -> {
             cacheManager.getCache("stockRanking").evict("volume");
-            stockService.getTopVolumeStocks();
+            stockService.getRanking(RankingType.VOLUME);
         }, repeat);
 
         log.info("📊 거래량 - 캐시 적용 후 {}번 실행...", repeat);
         cacheManager.getCache("stockRanking").clear();
-        stockService.getTopVolumeStocks();
+        stockService.getRanking(RankingType.VOLUME);
         long withCache = measure(() ->
-                stockService.getTopVolumeStocks(), repeat
+                stockService.getRanking(RankingType.VOLUME), repeat
         );
 
         // Then
@@ -153,34 +154,34 @@ class CachePerformanceTest {
         cacheManager.getCache("stockRanking").clear();
         long rising1 = measure(() -> {
             cacheManager.getCache("stockRanking").evict("rising");
-            stockService.getRisingStocks();
+            stockService.getRanking(RankingType.RISING);
         }, repeat);
 
         cacheManager.getCache("stockRanking").clear();
-        stockService.getRisingStocks();
-        long rising2 = measure(() -> stockService.getRisingStocks(), repeat);
+        stockService.getRanking(RankingType.RISING);
+        long rising2 = measure(() -> stockService.getRanking(RankingType.RISING), repeat);
 
         // 급하락
         cacheManager.getCache("stockRanking").clear();
         long falling1 = measure(() -> {
             cacheManager.getCache("stockRanking").evict("falling");
-            stockService.getFallingStocks();
+            stockService.getRanking(RankingType.FALLING);
         }, repeat);
 
         cacheManager.getCache("stockRanking").clear();
-        stockService.getFallingStocks();
-        long falling2 = measure(() -> stockService.getFallingStocks(), repeat);
+        stockService.getRanking(RankingType.FALLING);
+        long falling2 = measure(() -> stockService.getRanking(RankingType.FALLING), repeat);
 
         // 거래량
         cacheManager.getCache("stockRanking").clear();
         long volume1 = measure(() -> {
             cacheManager.getCache("stockRanking").evict("volume");
-            stockService.getTopVolumeStocks();
+            stockService.getRanking(RankingType.VOLUME);
         }, repeat);
 
         cacheManager.getCache("stockRanking").clear();
-        stockService.getTopVolumeStocks();
-        long volume2 = measure(() -> stockService.getTopVolumeStocks(), repeat);
+        stockService.getRanking(RankingType.VOLUME);
+        long volume2 = measure(() -> stockService.getRanking(RankingType.VOLUME), repeat);
 
         // 결과
         log.info("┌─────────────────────────────────────────────────────────┐");
