@@ -344,22 +344,23 @@ public class StockService {
     private StockResponse.RankingResponseDTO convertToRankingDTO(
             List<DailyPrice> dailyPrices
     ) {
-        List<StockResponse.RankingItemDTO> items = dailyPrices.stream()
-                .map(dp -> StockResponse.RankingItemDTO.builder()
-                        .rank(dailyPrices.indexOf(dp) + 1)  // 1부터 시작
-                        .stockCode(dp.getStock().getStockCode())
-                        .corpName(dp.getStock().getCorpName())
-                        .currentPrice(dp.getClosePrice().longValue())  // 종가 = 현재가
-                        .changeRate(dp.getChangeRate())
-                        .tradingVolume(dp.getVolume())
-                        .build())
-                .collect(Collectors.toList());
+        List<StockResponse.RankingItemDTO> items = new ArrayList<>();
 
-        int totalCount = items.size();
+        for (int i = 0; i < dailyPrices.size(); i++) {
+            DailyPrice dp = dailyPrices.get(i);
+            items.add(StockResponse.RankingItemDTO.builder()
+                    .rank(i + 1)  // 인덱스 기반 순위
+                    .stockCode(dp.getStock().getStockCode())
+                    .corpName(dp.getStock().getCorpName())
+                    .currentPrice(dp.getClosePrice().longValue())
+                    .changeRate(dp.getChangeRate())
+                    .tradingVolume(dp.getVolume())
+                    .build());
+        }
 
         return StockResponse.RankingResponseDTO.builder()
                 .items(items)
-                .totalCount(totalCount)
+                .totalCount(items.size())
                 .build();
     }
 }
