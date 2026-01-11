@@ -3,6 +3,9 @@ package org.project.ssogssog.presentation.controller.stock.enums;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 비즈니스 로직 관리
+ */
 @Getter
 @RequiredArgsConstructor
 public enum RankingType {
@@ -11,8 +14,5 @@ public enum RankingType {
     VOLUME("volume");
 
     private final String cacheKey;
-
-    // 캐시 이름 (모든 랭킹이 공유)
-    public static final String CACHE_NAME = "stockRanking";
 
 }
