@@ -19,6 +19,7 @@ import org.project.ssogssog.global.paging.PageDTO;
 import org.project.ssogssog.global.paging.SliceDTO;
 import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
+import org.project.ssogssog.infrastructure.config.cache.CacheType;
 import org.project.ssogssog.presentation.controller.stock.enums.RankingType;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -301,9 +302,13 @@ public class StockService {
     }
 
 
-    // TODO RankingType으로 공통 로직 리팩토링 하기
+    /**
+     * 랭킹 top 5 조회
+     * @param type: 급상승, 급하락, 거래량 중 관련 RankingType 대입
+     * @return
+     */
     @Cacheable(
-            value = RankingType.CACHE_NAME,
+            value = CacheType.Names.STOCK_RANKING,
             key = "#type.getCacheKey()"
     )
     public StockResponse.RankingResponseDTO getRanking(RankingType type) {
@@ -312,49 +317,6 @@ public class StockService {
             case FALLING -> dailyPriceRepository.findTop5FallingStocks();
             case VOLUME -> dailyPriceRepository.findTop5VolumeStocks();
         };
-        return convertToRankingDTO(dailyPrices);
-    }
-
-
-    /**
-     * 급상승 종목 TOP 5 조회
-     */
-    @Cacheable(
-            value = "stockRanking",
-            key = "'rising'"
-    )
-    @Transactional(readOnly = true)
-    public StockResponse.RankingResponseDTO getRisingStocks() {
-
-        List<DailyPrice> dailyPrices = dailyPriceRepository.findTop5RisingStocks();
-        return convertToRankingDTO(dailyPrices);
-    }
-
-    /**
-     * 급하락 종목 TOP 5 조회
-     */
-    @Cacheable(
-            value = "stockRanking",
-            key = "'falling'"
-    )
-    @Transactional(readOnly = true)
-    public StockResponse.RankingResponseDTO getFallingStocks() {
-
-        List<DailyPrice> dailyPrices = dailyPriceRepository.findTop5FallingStocks();
-        return convertToRankingDTO(dailyPrices);
-    }
-
-    /**
-     * 거래량 TOP 5 조회
-     */
-    @Cacheable(
-            value = "stockRanking",
-            key = "'volume'"
-    )
-    @Transactional(readOnly = true)
-    public StockResponse.RankingResponseDTO getTopVolumeStocks() {
-
-        List<DailyPrice> dailyPrices = dailyPriceRepository.findTop5VolumeStocks();
         return convertToRankingDTO(dailyPrices);
     }
 
