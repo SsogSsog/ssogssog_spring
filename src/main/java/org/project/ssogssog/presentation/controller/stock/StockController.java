@@ -10,6 +10,7 @@ import org.project.ssogssog.global.paging.PageDTO;
 import org.project.ssogssog.global.paging.SliceDTO;
 import org.project.ssogssog.global.payload.ApiResponse;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
+import org.project.ssogssog.presentation.controller.stock.enums.RankingType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.validation.annotation.Validated;
@@ -173,7 +174,7 @@ public class StockController {
     )
     @GetMapping("/rising")
     public ApiResponse<StockResponse.RankingResponseDTO> getRisingStocks() {
-        StockResponse.RankingResponseDTO result = stockService.getRisingStocks();
+        StockResponse.RankingResponseDTO result = stockService.getRanking(RankingType.RISING);
         return ApiResponse.onSuccess(result);
     }
 
@@ -183,7 +184,7 @@ public class StockController {
     )
     @GetMapping("/falling")
     public ApiResponse<StockResponse.RankingResponseDTO> getFallingStocks() {
-        StockResponse.RankingResponseDTO result = stockService.getFallingStocks();
+        StockResponse.RankingResponseDTO result = stockService.getRanking(RankingType.FALLING);
         return ApiResponse.onSuccess(result);
     }
 
@@ -193,7 +194,7 @@ public class StockController {
     )
     @GetMapping("/volume")
     public ApiResponse<StockResponse.RankingResponseDTO> getTopVolumeStocks() {
-        StockResponse.RankingResponseDTO result = stockService.getTopVolumeStocks();
+        StockResponse.RankingResponseDTO result = stockService.getRanking(RankingType.VOLUME);
         return ApiResponse.onSuccess(result);
     }
 

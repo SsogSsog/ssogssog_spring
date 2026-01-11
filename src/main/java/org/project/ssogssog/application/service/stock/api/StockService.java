@@ -19,6 +19,7 @@ import org.project.ssogssog.global.paging.PageDTO;
 import org.project.ssogssog.global.paging.SliceDTO;
 import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
+import org.project.ssogssog.presentation.controller.stock.enums.RankingType;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -301,6 +302,20 @@ public class StockService {
 
 
     // TODO RankingType으로 공통 로직 리팩토링 하기
+    @Cacheable(
+            value = RankingType.CACHE_NAME,
+            key = "#type.getCacheKey()"
+    )
+    public StockResponse.RankingResponseDTO getRanking(RankingType type) {
+        List<DailyPrice> dailyPrices = switch (type) {
+            case RISING -> dailyPriceRepository.findTop5RisingStocks();
+            case FALLING -> dailyPriceRepository.findTop5FallingStocks();
+            case VOLUME -> dailyPriceRepository.findTop5VolumeStocks();
+        };
+        return convertToRankingDTO(dailyPrices);
+    }
+
+
     /**
      * 급상승 종목 TOP 5 조회
      */
