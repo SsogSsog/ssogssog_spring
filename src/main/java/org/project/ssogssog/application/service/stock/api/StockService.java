@@ -299,6 +299,8 @@ public class StockService {
         return v == null ? null : v.longValue();
     }
 
+
+    // TODO RankingType으로 공통 로직 리팩토링 하기
     /**
      * 급상승 종목 TOP 5 조회
      */
@@ -306,6 +308,7 @@ public class StockService {
             value = "stockRanking",
             key = "'rising'"
     )
+    @Transactional(readOnly = true)
     public StockResponse.RankingResponseDTO getRisingStocks() {
 
         List<DailyPrice> dailyPrices = dailyPriceRepository.findTop5RisingStocks();
@@ -319,6 +322,7 @@ public class StockService {
             value = "stockRanking",
             key = "'falling'"
     )
+    @Transactional(readOnly = true)
     public StockResponse.RankingResponseDTO getFallingStocks() {
 
         List<DailyPrice> dailyPrices = dailyPriceRepository.findTop5FallingStocks();
@@ -332,6 +336,7 @@ public class StockService {
             value = "stockRanking",
             key = "'volume'"
     )
+    @Transactional(readOnly = true)
     public StockResponse.RankingResponseDTO getTopVolumeStocks() {
 
         List<DailyPrice> dailyPrices = dailyPriceRepository.findTop5VolumeStocks();
@@ -352,7 +357,7 @@ public class StockService {
                     .rank(i + 1)  // 인덱스 기반 순위
                     .stockCode(dp.getStock().getStockCode())
                     .corpName(dp.getStock().getCorpName())
-                    .currentPrice(dp.getClosePrice().longValue())
+                    .currentPrice(dp.getClosePrice() != null ? dp.getClosePrice().longValue() : null) // NPE 문제 처리
                     .changeRate(dp.getChangeRate())
                     .tradingVolume(dp.getVolume())
                     .build());
