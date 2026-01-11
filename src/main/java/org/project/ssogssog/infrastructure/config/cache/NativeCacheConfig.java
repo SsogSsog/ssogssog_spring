@@ -1,4 +1,4 @@
-package org.project.ssogssog.infrastructure.config;
+package org.project.ssogssog.infrastructure.config.cache;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
