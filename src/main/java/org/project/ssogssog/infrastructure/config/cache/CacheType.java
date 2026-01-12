@@ -3,8 +3,6 @@ package org.project.ssogssog.infrastructure.config.cache;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -20,7 +18,7 @@ public enum CacheType {
      * - 크기: 100개 (rising, falling, volume 정도만)
      */
     STOCK_RANKING(
-            Names.STOCK_RANKING,
+            Values.STOCK_RANKING,
             1, TimeUnit.HOURS,
             50,
             "주식 랭킹 캐시"
@@ -33,7 +31,7 @@ public enum CacheType {
      * - 키 형식: {stockCode}:{page}
      */
     STOCK_NEWS(
-            Names.STOCK_NEWS,
+            Values.STOCK_NEWS,
             8, TimeUnit.HOURS,
             300_000,
             "주식 뉴스 캐시"
@@ -46,7 +44,7 @@ public enum CacheType {
      * - 키 형식: {stockCode}:{page}
      */
     STOCK_DISCLOSURES(
-            Names.STOCK_DISCLOSURES,
+            Values.STOCK_DISCLOSURES,
             8, TimeUnit.HOURS,
             300_000,
             "주식 공시 캐시"
@@ -60,32 +58,22 @@ public enum CacheType {
 
     /**
      * ✨ @Cacheable의 value에서 사용할 상수들
-     * 컴파일 타임 상수이므로 어노테이션에서 사용 가능!
      */
-    public static class Names {
+    public static class Values {
         public static final String STOCK_RANKING = "stockRanking";
         public static final String STOCK_NEWS = "stockNews";
         public static final String STOCK_DISCLOSURES = "stockDisclosures";
 
-        private Names() {} // 인스턴스화 방지
+        private Values() {} // 인스턴스화 방지
     }
 
     /**
-     * 복합 키 생성 헬퍼
-     * 예: generateKey("005930", 1) -> "005930:1"
+     * ✨ @Cacheable의 key에서 사용할 상수들
      */
-    public String generateKey(Object... params) { // 가변인자 사용
-        if (params.length == 0) {
-            return cacheName;
-        }
+    public static class Keys{
+        public static final String STOCK_RANKING = "#type.cacheKey";
+        public static final String STOCK_NEWS = "#stockCode + ':' + #page";
+        public static final String STOCK_DISCLOSURE = "#stockCode + ':' + #page";
 
-        // Object들을 String으로 변환하여 리스트에 담기
-        List<String> parts = new ArrayList<>();
-        for (Object param : params) {
-            parts.add(String.valueOf(param));
-        }
-
-        // ":" 로 연결
-        return String.join(":", parts);
     }
 }
