@@ -99,6 +99,11 @@ public class StockService {
         );
     }
 
+    @Transactional(readOnly = true)
+    @Cacheable(
+            value = CacheType.Values.STOCK_NEWS,
+            key = CacheType.Keys.STOCK_NEWS
+    )
     public SliceDTO<StockResponse.NewsResponseItemDTO> getStockNews(String stockCode, int page){
         Stock stock = stockRepository.findByStockCode(stockCode)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
@@ -126,6 +131,11 @@ public class StockService {
     }
 
 
+    @Transactional(readOnly = true)
+    @Cacheable(
+            value = CacheType.Values.STOCK_DISCLOSURES,
+            key = CacheType.Keys.STOCK_DISCLOSURE
+    )
     public SliceDTO<StockResponse.DisclosureItemResponseDTO> getDisclosures(String stockCode, int page) {
 
         Stock stock = stockRepository.findByStockCode(stockCode)
@@ -308,8 +318,8 @@ public class StockService {
      * @return
      */
     @Cacheable(
-            value = CacheType.Names.STOCK_RANKING,
-            key = "#type.getCacheKey()"
+            value = CacheType.Values.STOCK_RANKING,
+            key = CacheType.Keys.STOCK_RANKING
     )
     public StockResponse.RankingResponseDTO getRanking(RankingType type) {
         List<DailyPrice> dailyPrices = switch (type) {
