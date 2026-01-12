@@ -1,5 +1,6 @@
 package org.project.ssogssog.application.service.stock.api.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -171,4 +172,39 @@ public class StockResponse {
         }
 
     }
+
+
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class RankingItemDTO{
+        @Schema(description = "순위", example = "1")
+        int rank;
+
+        @Schema(description = "종목 코드", example = "005930")
+        String stockCode;
+
+        @Schema(description = "종목명", example = "삼성전자")
+        String corpName;
+
+        @Schema(description = "현재가", example = "72500")
+        Long currentPrice;
+
+        @Schema(description = "등락률 (%)", example = "2.5")
+        Double changeRate;
+
+        @Schema(description = "거래량", example = "15000000")
+        Long tradingVolume;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class RankingResponseDTO{
+        private List<StockResponse.RankingItemDTO> items;
+        private int totalCount;
+    }
+
 }

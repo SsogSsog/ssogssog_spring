@@ -1,4 +1,4 @@
-package org.project.ssogssog.infrastructure.config;
+package org.project.ssogssog.infrastructure.config.cache;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import java.time.Duration;
 
 @Configuration
-public class CacheConfig {
+public class NativeCacheConfig {
 
     @Bean
     public Cache<String, String> kisTokenCache() {

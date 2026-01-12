@@ -19,6 +19,9 @@ import org.project.ssogssog.global.paging.PageDTO;
 import org.project.ssogssog.global.paging.SliceDTO;
 import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
+import org.project.ssogssog.infrastructure.config.cache.CacheType;
+import org.project.ssogssog.presentation.controller.stock.enums.RankingType;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -96,6 +99,11 @@ public class StockService {
         );
     }
 
+    @Transactional(readOnly = true)
+    @Cacheable(
+            value = CacheType.Values.STOCK_NEWS,
+            key = CacheType.Keys.STOCK_NEWS
+    )
     public SliceDTO<StockResponse.NewsResponseItemDTO> getStockNews(String stockCode, int page){
         Stock stock = stockRepository.findByStockCode(stockCode)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
@@ -123,6 +131,11 @@ public class StockService {
     }
 
 
+    @Transactional(readOnly = true)
+    @Cacheable(
+            value = CacheType.Values.STOCK_DISCLOSURES,
+            key = CacheType.Keys.STOCK_DISCLOSURE
+    )
     public SliceDTO<StockResponse.DisclosureItemResponseDTO> getDisclosures(String stockCode, int page) {
 
         Stock stock = stockRepository.findByStockCode(stockCode)
@@ -294,8 +307,52 @@ public class StockService {
 
     }
 
-
     private Long longValue(Integer v) {
         return v == null ? null : v.longValue();
+    }
+
+
+    /**
+     * 랭킹 top 5 조회
+     * @param type: 급상승, 급하락, 거래량 중 관련 RankingType 대입
+     * @return
+     */
+    @Cacheable(
+            value = CacheType.Values.STOCK_RANKING,
+            key = CacheType.Keys.STOCK_RANKING
+    )
+    public StockResponse.RankingResponseDTO getRanking(RankingType type) {
+        List<DailyPrice> dailyPrices = switch (type) {
+            case RISING -> dailyPriceRepository.findTop5RisingStocks();
+            case FALLING -> dailyPriceRepository.findTop5FallingStocks();
+            case VOLUME -> dailyPriceRepository.findTop5VolumeStocks();
+        };
+        return convertToRankingDTO(dailyPrices);
+    }
+
+    /**
+     * DailyPrice → RankingItemDTO 변환
+     */
+    private StockResponse.RankingResponseDTO convertToRankingDTO(
+            List<DailyPrice> dailyPrices
+    ) {
+        List<StockResponse.RankingItemDTO> items = new ArrayList<>();
+
+        for (int i = 0; i < dailyPrices.size(); i++) {
+            DailyPrice dp = dailyPrices.get(i);
+            items.add(StockResponse.RankingItemDTO.builder()
+                    .rank(i + 1)  // 인덱스 기반 순위
+                    .stockCode(dp.getStock().getStockCode())
+                    .corpName(dp.getStock().getCorpName())
+                    .currentPrice(dp.getClosePrice() != null ? dp.getClosePrice().longValue() : null) // NPE 문제 처리
+                    .changeRate(dp.getChangeRate())
+                    .tradingVolume(dp.getVolume())
+                    .build());
+        }
+
+        return StockResponse.RankingResponseDTO.builder()
+                .items(items)
+                .totalCount(items.size())
+                .build();
     }
 }

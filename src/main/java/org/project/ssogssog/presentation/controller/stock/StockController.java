@@ -10,6 +10,7 @@ import org.project.ssogssog.global.paging.PageDTO;
 import org.project.ssogssog.global.paging.SliceDTO;
 import org.project.ssogssog.global.payload.ApiResponse;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
+import org.project.ssogssog.presentation.controller.stock.enums.RankingType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.validation.annotation.Validated;
@@ -163,6 +164,37 @@ public class StockController {
     ){
 
         SliceDTO<StockResponse.DisclosureItemResponseDTO> result = stockService.getDisclosures(stockCode, page);
+        return ApiResponse.onSuccess(result);
+    }
+
+
+    @Operation(
+            summary = "급상승 종목 TOP 5 조회",
+            description = "현재 시장에서 상승률 상위 5개 종목을 조회합니다."
+    )
+    @GetMapping("/rising")
+    public ApiResponse<StockResponse.RankingResponseDTO> getRisingStocks() {
+        StockResponse.RankingResponseDTO result = stockService.getRanking(RankingType.RISING);
+        return ApiResponse.onSuccess(result);
+    }
+
+    @Operation(
+            summary = "급하락 종목 TOP 5 조회",
+            description = "현재 시장에서 하락률 상위 5개 종목을 조회합니다."
+    )
+    @GetMapping("/falling")
+    public ApiResponse<StockResponse.RankingResponseDTO> getFallingStocks() {
+        StockResponse.RankingResponseDTO result = stockService.getRanking(RankingType.FALLING);
+        return ApiResponse.onSuccess(result);
+    }
+
+    @Operation(
+            summary = "거래량 TOP 5 조회",
+            description = "현재 시장에서 거래량 상위 5개 종목을 조회합니다."
+    )
+    @GetMapping("/volume")
+    public ApiResponse<StockResponse.RankingResponseDTO> getTopVolumeStocks() {
+        StockResponse.RankingResponseDTO result = stockService.getRanking(RankingType.VOLUME);
         return ApiResponse.onSuccess(result);
     }
 
