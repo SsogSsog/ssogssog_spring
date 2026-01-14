@@ -8,6 +8,7 @@ import org.project.ssogssog.application.service.member.api.dto.MemberRequest;
 import org.project.ssogssog.application.service.member.api.dto.MemberResponse;
 import org.project.ssogssog.global.payload.ApiResponse;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,7 +50,25 @@ public class MemberController {
 
     }
 
+    @PostMapping("/strategies")
+    @Operation(
+            summary = "투자 전략 저장",
+            description = """
+            회원의 투자 전략을 저장합니다.
 
+            - 헤더의 X-User-ID로 회원을 식별합니다
+            - 전략 이름은 자동 생성됩니다 (전략1, 전략2, ...)
+            - 회원당 최대 5개의 전략을 생성할 수 있습니다
+            - 각 조건은 선택적이며, 설정하지 않은 조건은 필터링에서 제외됩니다
+            """
+    )
+    public ApiResponse<MemberResponse.StrategyResponse> saveStrategy(
+            HttpServletRequest httpRequest,
+            @RequestBody MemberRequest.StrategyRequest request
+    ) {
+        String uuid = (String) httpRequest.getAttribute("memberUuId");
+        return ApiResponse.onSuccess(memberService.saveStrategy(uuid, request));
+    }
 
 
 
