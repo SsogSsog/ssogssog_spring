@@ -21,7 +21,8 @@ public class StockMetricPredicate {
      * 6. 영업이익률
      * 7. 매출액 성장률
      * 8. 순이익 성장률
-     * 9. 외국인 보유률
+     * 9. 배당 수익률
+     * 10. 외국인 보유률
      * (배당 수익률, 주가 수익률의 경우는 데이터 부족으로 현재 반영x)
      */
     public BooleanExpression filterCurrentPrice(QStockMetric qStockMetric, Integer minCurrentPrice, Integer maxCurrentPrice) {

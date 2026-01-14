@@ -10,7 +10,7 @@ import org.project.ssogssog.application.service.stock.usecase.CollectTodayPrices
 import org.project.ssogssog.application.service.stock.writer.DailyPriceWriter;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
-import org.project.ssogssog.infrastructure.client.ksi.KSIClient;
+import org.project.ssogssog.infrastructure.client.ksi.KISClient;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ class CollectTodayPricesUseCaseTest {
 
     @Mock private StockRepository stockRepository;
     @Mock private DailyPriceWriter dailyPriceWriter;
-    @Mock private KSIClient ksiClient;
+    @Mock private KISClient kisClient;
 
     @InjectMocks private CollectTodayPricesUseCase collectTodayPricesUseCase;
 
@@ -36,7 +36,7 @@ class CollectTodayPricesUseCaseTest {
         when(stock.getStockCode()).thenReturn("005930");
         when(stockRepository.findAll()).thenReturn(List.of(stock));
 
-        when(ksiClient.getAccessToken()).thenReturn("token");
+        when(kisClient.getAccessToken()).thenReturn("token");
 
         String json =
                 """
@@ -60,7 +60,7 @@ class CollectTodayPricesUseCaseTest {
                 """;
         JsonNode root = om.readTree(json);
 
-        when(ksiClient.getPriceRoot(anyString(), eq("005930"))).thenReturn(root);
+        when(kisClient.getPriceRoot(anyString(), eq("005930"))).thenReturn(root);
 
         // when
         collectTodayPricesUseCase.updateAllStockPrices();
