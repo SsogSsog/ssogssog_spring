@@ -2,6 +2,9 @@ package org.project.ssogssog.application.service.stockmetric.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.project.ssogssog.application.common.dto.condition.GrowthConditionDTO;
+import org.project.ssogssog.application.common.dto.condition.RangeConditionDTO;
+import org.project.ssogssog.domain.stockmetric.enums.MetricBasePeriod;
 import org.project.ssogssog.domain.stockmetric.vo.StockMetricScreenerCondition;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stockmetric.entity.StockMetric;
@@ -15,8 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Slf4j
 @Service
@@ -85,31 +86,51 @@ public class StockMetricService {
                 MarketCapBucket.minPrice(dto.getMarketCapBucket()),
                 MarketCapBucket.maxPrice(dto.getMarketCapBucket()),
 
-                dto.getPer() != null ? dto.getPer().getMin() : null,
-                dto.getPer() != null ? dto.getPer().getMax() : null,
+                min(dto.getPer()),
+                max(dto.getPer()),
 
-                dto.getRoe() != null ? dto.getRoe().getMin() : null,
-                dto.getRoe() != null ? dto.getRoe().getMax() : null,
+                min(dto.getRoe()),
+                max(dto.getRoe()),
 
-                dto.getDebtRatio() != null ? dto.getDebtRatio().getMin() : null,
-                dto.getDebtRatio() != null ? dto.getDebtRatio().getMax() : null,
+                min(dto.getDebtRatio()),
+                max(dto.getDebtRatio()),
 
-                dto.getOperatingProfitRatio() != null ? dto.getOperatingProfitRatio().getMin() : null,
-                dto.getOperatingProfitRatio() != null ? dto.getOperatingProfitRatio().getMax() : null,
+                min(dto.getOperatingProfitRatio()),
+                max(dto.getOperatingProfitRatio()),
 
-                dto.getSalesGrowthRatio() != null ? dto.getSalesGrowthRatio().getMin() : null,
-                dto.getSalesGrowthRatio() != null ? dto.getSalesGrowthRatio().getMax() : null,
-                dto.getSalesGrowthRatio() != null ? dto.getSalesGrowthRatio().getBasePeriod() : null,
+                min(dto.getSalesGrowthRatio()),
+                max(dto.getSalesGrowthRatio()),
+                basePeriod(dto.getSalesGrowthRatio()),
 
-                dto.getNetProfitGrowthRatio() != null ? dto.getNetProfitGrowthRatio().getMin() : null,
-                dto.getNetProfitGrowthRatio() != null ? dto.getNetProfitGrowthRatio().getMax() : null,
-                dto.getNetProfitGrowthRatio() != null ? dto.getNetProfitGrowthRatio().getBasePeriod() : null,
+                min(dto.getNetProfitGrowthRatio()),
+                max(dto.getNetProfitGrowthRatio()),
+                basePeriod(dto.getNetProfitGrowthRatio()),
 
-                dto.getDividendYieldRatio() != null ? dto.getDividendYieldRatio().getMin() : null,
-                dto.getDividendYieldRatio() != null ? dto.getDividendYieldRatio().getMax() : null,
+                min(dto.getDividendYieldRatio()),
+                max(dto.getDividendYieldRatio()),
 
-                dto.getForeignOwnershipRate() != null ? dto.getForeignOwnershipRate().getMin() : null,
-                dto.getForeignOwnershipRate() != null ? dto.getForeignOwnershipRate().getMax() : null
+                min(dto.getForeignOwnershipRate()),
+                max(dto.getForeignOwnershipRate())
         );
+    }
+
+    private Double min(RangeConditionDTO dto) {
+        return dto != null ? dto.getMin() : null;
+    }
+
+    private Double max(RangeConditionDTO dto) {
+        return dto != null ? dto.getMax() : null;
+    }
+
+    private Double min(GrowthConditionDTO dto) {
+        return dto != null ? dto.getMin() : null;
+    }
+
+    private Double max(GrowthConditionDTO dto) {
+        return dto != null ? dto.getMax() : null;
+    }
+
+    private MetricBasePeriod basePeriod(GrowthConditionDTO dto) {
+        return dto != null ? dto.getBasePeriod() : null;
     }
 }
