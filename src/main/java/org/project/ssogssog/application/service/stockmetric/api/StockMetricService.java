@@ -74,7 +74,7 @@ public class StockMetricService {
     }
 
     /**
-     * presentation 계층의 DTO를 application 계층의 DTO로 변환해주는 메서드
+     * presentation 계층의 DTO를 domain 계층의 VO로 변환해주는 메서드
      */
     private StockMetricScreenerCondition toCondition(StockMetricRequest.ScreenerRequestDTO dto) {
         return new StockMetricScreenerCondition(
@@ -85,31 +85,31 @@ public class StockMetricService {
                 MarketCapBucket.minPrice(dto.getMarketCapBucket()),
                 MarketCapBucket.maxPrice(dto.getMarketCapBucket()),
 
-                dto.getMinPer(),
-                dto.getMaxPer(),
+                dto.getPer() != null ? dto.getPer().getMin() : null,
+                dto.getPer() != null ? dto.getPer().getMax() : null,
 
-                dto.getMinRoe(),
-                dto.getMaxRoe(),
+                dto.getRoe() != null ? dto.getRoe().getMin() : null,
+                dto.getRoe() != null ? dto.getRoe().getMax() : null,
 
-                dto.getMinDebtRatio(),
-                dto.getMaxDebtRatio(),
+                dto.getDebtRatio() != null ? dto.getDebtRatio().getMin() : null,
+                dto.getDebtRatio() != null ? dto.getDebtRatio().getMax() : null,
 
-                dto.getMinOperatingProfitRatio(),
-                dto.getMaxOperatingProfitRatio(),
+                dto.getOperatingProfitRatio() != null ? dto.getOperatingProfitRatio().getMin() : null,
+                dto.getOperatingProfitRatio() != null ? dto.getOperatingProfitRatio().getMax() : null,
 
-                dto.getMinSalesGrowthRatio(),
-                dto.getMaxSalesGrowthRatio(),
-                dto.getSalesGrowthMetricBasePeriod(),
+                dto.getSalesGrowthRatio() != null ? dto.getSalesGrowthRatio().getMin() : null,
+                dto.getSalesGrowthRatio() != null ? dto.getSalesGrowthRatio().getMax() : null,
+                dto.getSalesGrowthRatio() != null ? dto.getSalesGrowthRatio().getBasePeriod() : null,
 
-                dto.getMinNetProfitGrowthRatio(),
-                dto.getMaxNetProfitGrowthRatio(),
-                dto.getNetProfitGrowthMetricBasePeriod(),
+                dto.getNetProfitGrowthRatio() != null ? dto.getNetProfitGrowthRatio().getMin() : null,
+                dto.getNetProfitGrowthRatio() != null ? dto.getNetProfitGrowthRatio().getMax() : null,
+                dto.getNetProfitGrowthRatio() != null ? dto.getNetProfitGrowthRatio().getBasePeriod() : null,
 
-                dto.getMinDividendYieldRatio(),
-                dto.getMaxDividendYieldRatio(),
+                dto.getDividendYieldRatio() != null ? dto.getDividendYieldRatio().getMin() : null,
+                dto.getDividendYieldRatio() != null ? dto.getDividendYieldRatio().getMax() : null,
 
-                dto.getMinForeignOwnershipRate(),
-                dto.getMaxForeignOwnershipRate()
+                dto.getForeignOwnershipRate() != null ? dto.getForeignOwnershipRate().getMin() : null,
+                dto.getForeignOwnershipRate() != null ? dto.getForeignOwnershipRate().getMax() : null
         );
     }
 }
