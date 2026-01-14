@@ -10,6 +10,7 @@ import org.project.ssogssog.domain.member.entity.Member;
 import org.project.ssogssog.domain.member.entity.Strategy;
 import org.project.ssogssog.domain.member.entity.range.GrowthRangeCondition;
 import org.project.ssogssog.domain.member.entity.range.RangeCondition;
+import org.project.ssogssog.domain.member.factory.StrategyFactory;
 import org.project.ssogssog.domain.member.repository.MemberRepository;
 import org.project.ssogssog.domain.member.repository.StrategyRepository;
 import org.project.ssogssog.domain.stockmetric.enums.MetricBasePeriod;
@@ -69,30 +70,18 @@ public class MemberService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_MEMBER));
 
         int currentStrategyCount = strategyRepository.countByMember(member);
+        //TODO 동시 요청 고려하기
         if (currentStrategyCount >= MAX_STRATEGY_COUNT) {
             throw new GeneralException(ErrorStatus.STRATEGY_LIMIT_EXCEEDED);
         }
 
         String strategyName = STRATEGY_NAME + (currentStrategyCount + 1);
 
-        Strategy strategy = Strategy.builder()
-                .member(member)
-                .strategyName(strategyName)
-                .stockPriceRange(request.getStockPriceRange())
-                .marketCapBucket(request.getMarketCapBucket())
-                .per(toRangeCondition(request.getPer()))
-                .roe(toRangeCondition(request.getRoe()))
-                .debtRatio(toRangeCondition(request.getDebtRatio()))
-                .operatingProfitMargin(toRangeCondition(request.getOperatingProfitRatio()))
-                .salesGrowthQoQ(toGrowthRangeCondition(request.getSalesGrowthRatio(), MetricBasePeriod.PREV_QUARTER))
-                .salesGrowthYoY(toGrowthRangeCondition(request.getSalesGrowthRatio(), MetricBasePeriod.PREV_YEAR))
-                .netProfitGrowthQoQ(toGrowthRangeCondition(request.getNetProfitGrowthRatio(), MetricBasePeriod.PREV_YEAR))
-                .netProfitGrowthYoY(toGrowthRangeCondition(request.getNetProfitGrowthRatio(), MetricBasePeriod.PREV_YEAR))
-                .dividendYield(toRangeCondition(request.getDividendYieldRatio()))
-                .foreignOwnershipRate(toRangeCondition(request.getForeignOwnershipRate()))
-                .build();
+        // 생성
+        Strategy savedStrategy = StrategyFactory.createFrom(member, strategyName, request);
 
-        Strategy savedStrategy = strategyRepository.save(strategy);
+        // 저장
+        strategyRepository.save(savedStrategy);
 
         return MemberResponse.StrategyResponse.builder()
                 .strategyId(savedStrategy.getId())
@@ -100,24 +89,4 @@ public class MemberService {
                 .build();
     }
 
-    private RangeCondition toRangeCondition(RangeConditionDTO dto) {
-        if (dto == null) {
-            return null;
-        }
-        return RangeCondition.of(dto.getMin(), dto.getMax());
-    }
-
-    private GrowthRangeCondition toGrowthRangeCondition(
-            GrowthConditionDTO dto,
-            MetricBasePeriod expectedPeriod
-    ) {
-        if (dto == null || dto.getBasePeriod() != expectedPeriod) {
-            return null;
-        }
-        return GrowthRangeCondition.builder()
-                .min(dto.getMin())
-                .max(dto.getMax())
-                .basePeriod(dto.getBasePeriod())
-                .build();
-    }
 }

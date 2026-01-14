@@ -30,6 +30,8 @@ public class MemberRequest {
     @Builder
     public static class StrategyRequest {
 
+        // TODO Valid 고려하기
+
         StockPriceRange stockPriceRange; // 현재가
         MarketCapBucket marketCapBucket; // 시가 총액
 
