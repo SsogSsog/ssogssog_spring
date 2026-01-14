@@ -2,10 +2,17 @@ package org.project.ssogssog.application.service.member.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.project.ssogssog.application.common.dto.condition.GrowthConditionDTO;
+import org.project.ssogssog.application.common.dto.condition.RangeConditionDTO;
 import org.project.ssogssog.application.service.member.api.dto.MemberRequest;
 import org.project.ssogssog.application.service.member.api.dto.MemberResponse;
 import org.project.ssogssog.domain.member.entity.Member;
+import org.project.ssogssog.domain.member.entity.Strategy;
+import org.project.ssogssog.domain.member.entity.range.GrowthRangeCondition;
+import org.project.ssogssog.domain.member.entity.range.RangeCondition;
 import org.project.ssogssog.domain.member.repository.MemberRepository;
+import org.project.ssogssog.domain.member.repository.StrategyRepository;
+import org.project.ssogssog.domain.stockmetric.enums.MetricBasePeriod;
 import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
 import org.springframework.stereotype.Service;
@@ -19,6 +26,7 @@ import java.util.Optional;
 public class MemberService {
 
     private final MemberRepository memberRepository;
+    private final StrategyRepository strategyRepository;
 
     @Transactional
     public MemberResponse.RegisterResponse register(MemberRequest.RegisterRequest request) {
@@ -51,4 +59,73 @@ public class MemberService {
                 .build();
     }
 
+    private static final int MAX_STRATEGY_COUNT = 5;
+    private static final String STRATEGY_NAME = "전략";
+
+    @Transactional
+    public MemberResponse.StrategyResponse saveStrategy(String uuid, MemberRequest.StrategyRequest request) {
+
+        Member member = memberRepository.findByUuid(uuid)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_MEMBER));
+
+        int currentStrategyCount = strategyRepository.countByMember(member);
+        if (currentStrategyCount >= MAX_STRATEGY_COUNT) {
+            throw new GeneralException(ErrorStatus.STRATEGY_LIMIT_EXCEEDED);
+        }
+
+        String strategyName = STRATEGY_NAME + (currentStrategyCount + 1);
+
+        Strategy strategy = Strategy.builder()
+                .member(member)
+                .strategyName(strategyName)
+                .stockPriceRange(request.getStockPriceRange())
+                .marketCapBucket(request.getMarketCapBucket())
+                .per(toRangeCondition(request.getPer()))
+                .roe(toRangeCondition(request.getRoe()))
+                .debtRatio(toRangeCondition(request.getDebtRatio()))
+                .operatingProfitMargin(toRangeCondition(request.getOperatingProfitRatio()))
+                .salesGrowthQoQ(toGrowthRangeConditionIfQoQ(request.getSalesGrowthRatio()))
+                .salesGrowthYoY(toGrowthRangeConditionIfYoY(request.getSalesGrowthRatio()))
+                .netProfitGrowthQoQ(toGrowthRangeConditionIfQoQ(request.getNetProfitGrowthRatio()))
+                .netProfitGrowthYoY(toGrowthRangeConditionIfYoY(request.getNetProfitGrowthRatio()))
+                .dividendYield(toRangeCondition(request.getDividendYieldRatio()))
+                .foreignOwnershipRate(toRangeCondition(request.getForeignOwnershipRate()))
+                .build();
+
+        Strategy savedStrategy = strategyRepository.save(strategy);
+
+        return MemberResponse.StrategyResponse.builder()
+                .strategyId(savedStrategy.getId())
+                .strategyName(savedStrategy.getStrategyName())
+                .build();
+    }
+
+    private RangeCondition toRangeCondition(RangeConditionDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+        return RangeCondition.of(dto.getMin(), dto.getMax());
+    }
+
+    private GrowthRangeCondition toGrowthRangeConditionIfQoQ(GrowthConditionDTO dto) {
+        if (dto == null || dto.getBasePeriod() != MetricBasePeriod.PREV_QUARTER) {
+            return null;
+        }
+        return GrowthRangeCondition.builder()
+                .min(dto.getMin())
+                .max(dto.getMax())
+                .basePeriod(dto.getBasePeriod())
+                .build();
+    }
+
+    private GrowthRangeCondition toGrowthRangeConditionIfYoY(GrowthConditionDTO dto) {
+        if (dto == null || dto.getBasePeriod() != MetricBasePeriod.PREV_YEAR) {
+            return null;
+        }
+        return GrowthRangeCondition.builder()
+                .min(dto.getMin())
+                .max(dto.getMax())
+                .basePeriod(dto.getBasePeriod())
+                .build();
+    }
 }
