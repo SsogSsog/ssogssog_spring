@@ -8,9 +8,11 @@ import lombok.NoArgsConstructor;
 import org.project.ssogssog.domain.member.entity.range.GrowthRangeCondition;
 import org.project.ssogssog.domain.member.entity.range.RangeCondition;
 import org.project.ssogssog.domain.stockmetric.entity.StockMetric;
+import org.project.ssogssog.presentation.controller.stockmetric.enums.MarketCapBucket;
+import org.project.ssogssog.presentation.controller.stockmetric.enums.StockPriceRange;
 
 @Entity
-@Table(name = "staregy")
+@Table(name = "strategy")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -29,19 +31,11 @@ public class Strategy {
     private String strategyName; // 전략 이름
 
 
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "min", column = @Column(name = "min_current_price")),
-            @AttributeOverride(name = "max", column = @Column(name = "max_current_price"))
-    })
-    private RangeCondition currentPrice; // 현재가
+    @Enumerated(EnumType.STRING)
+    private StockPriceRange stockPriceRange; // 현재가
 
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "min", column = @Column(name = "min_market_cap")),
-            @AttributeOverride(name = "max", column = @Column(name = "max_market_cap"))
-    })
-    private RangeCondition marketCap; // 시가총액
+    @Enumerated(EnumType.STRING)
+    private MarketCapBucket marketCapBucket; // 시가총액
 
 
     @Embedded
@@ -136,8 +130,8 @@ public class Strategy {
     public int getAppliedConditionsCount() {
         int count = 0;
 
-        if (currentPrice != null && currentPrice.isApplied()) count++;
-        if (marketCap != null && marketCap.isApplied()) count++;
+        if (stockPriceRange != null) count++;
+        if (marketCapBucket != null) count++;
         if (per != null && per.isApplied()) count++;
         if (roe != null && roe.isApplied()) count++;
         if (netProfitMargin != null && netProfitMargin.isApplied()) count++;
@@ -160,8 +154,8 @@ public class Strategy {
     public boolean matchesStock(StockMetric stock) {
 
         try{
-            if (currentPrice != null && !currentPrice.matches(Double.valueOf(stock.getCurrentPrice()))) return false;
-            if (marketCap != null && !marketCap.matches(Double.valueOf(stock.getMarketCap()))) return false;
+            if (stockPriceRange != null && !matchesStockPriceRange(stock.getCurrentPrice())) return false;
+            if (marketCapBucket != null && !matchesMarketCapBucket(stock.getMarketCap())) return false;
             if (per != null && !per.matches(stock.getPer())) return false;
             if (roe != null && !roe.matches(stock.getRoe())) return false;
             if (netProfitMargin != null && !netProfitMargin.matches(stock.getNetProfitMargin())) return false;
@@ -177,6 +171,24 @@ public class Strategy {
             return false;
         }
 
+        return true;
+    }
+
+    private boolean matchesStockPriceRange(Integer currentPrice) {
+        if (currentPrice == null) return false;
+        Integer min = StockPriceRange.minPrice(stockPriceRange);
+        Integer max = StockPriceRange.maxPrice(stockPriceRange);
+        if (min != null && currentPrice < min) return false;
+        if (max != null && currentPrice > max) return false;
+        return true;
+    }
+
+    private boolean matchesMarketCapBucket(Long marketCap) {
+        if (marketCap == null) return false;
+        Long min = MarketCapBucket.minPrice(marketCapBucket);
+        Long max = MarketCapBucket.maxPrice(marketCapBucket);
+        if (min != null && marketCap < min) return false;
+        if (max != null && marketCap > max) return false;
         return true;
     }
 
