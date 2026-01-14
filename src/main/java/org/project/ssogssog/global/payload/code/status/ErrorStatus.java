@@ -31,6 +31,10 @@ public enum ErrorStatus implements BaseErrorCode {
     // Member 에러
     NOT_EMPTY_UUID(HttpStatus.BAD_REQUEST, "MEMBER4100", "로그인 요청 형식이 잘못됐습니다"),
     INVALID_UUID(HttpStatus.BAD_REQUEST, "MEMBER4101", "UUID 형식이 잘못 되었습니다"),
+    NOT_FOUND_MEMBER(HttpStatus.NOT_FOUND, "MEMBER4102", "해당 회원이 존재하지 않습니다"),
+
+    // Strategy 에러
+    STRATEGY_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "STRATEGY4100", "전략은 최대 5개까지 생성할 수 있습니다"),
 
     // Auth 에러
     INVALID_AUTH_HEADER(HttpStatus.UNAUTHORIZED, "AUTH4000", "인증 헤더가 잘못되었습니다"),
