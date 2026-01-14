@@ -150,26 +150,40 @@ public class Strategy {
     /**
      * 주식이 이 전략의 모든 조건을 만족하는지 확인
      */
-    // TODO NPE 검사
-    public boolean matchesStock(StockMetric stock) {
+    public boolean matchesStock(StockMetric stockMetric) {
 
-        try{
-            if (stockPriceRange != null && !matchesStockPriceRange(stock.getCurrentPrice())) return false;
-            if (marketCapBucket != null && !matchesMarketCapBucket(stock.getMarketCap())) return false;
-            if (per != null && !per.matches(stock.getPer())) return false;
-            if (roe != null && !roe.matches(stock.getRoe())) return false;
-            if (netProfitMargin != null && !netProfitMargin.matches(stock.getNetProfitMargin())) return false;
-            if (operatingProfitMargin != null && !operatingProfitMargin.matches(stock.getOperatingProfitMargin())) return false;
-            if (debtRatio != null && !debtRatio.matches(stock.getDebtRatio())) return false;
-            if (salesGrowthQoQ != null && !salesGrowthQoQ.matches(stock.getSalesGrowthQoQ())) return false;
-            if (salesGrowthYoY != null && !salesGrowthYoY.matches(stock.getSalesGrowthYoY())) return false;
-            if (netProfitGrowthQoQ != null && !netProfitGrowthQoQ.matches(stock.getNetProfitGrowthQoQ())) return false;
-            if (netProfitGrowthYoY != null && !netProfitGrowthYoY.matches(stock.getNetProfitGrowthYoY())) return false;
-            if (dividendYield != null && !dividendYield.matches(stock.getDividendYield())) return false;
-            if (foreignOwnershipRate != null && !foreignOwnershipRate.matches(stock.getForeignOwnershipRate())) return false;
-        }catch(Exception e){
+        if (stockMetric == null) {
             return false;
         }
+
+        // 각 조건별로 null-safe 체크
+        if (stockPriceRange != null) {
+            Integer currentPrice = stockMetric.getCurrentPrice();
+            if (currentPrice == null || !matchesStockPriceRange(currentPrice)) {
+                return false;
+            }
+        }
+
+        if (marketCapBucket != null) {
+            Long marketCap = stockMetric.getMarketCap();
+            if (marketCap == null || !matchesMarketCapBucket(marketCap)) {
+                return false;
+            }
+        }
+
+
+        if (per != null && !per.matches(stockMetric.getPer())) return false;
+        if (roe != null && !roe.matches(stockMetric.getRoe())) return false;
+        if (netProfitMargin != null && !netProfitMargin.matches(stockMetric.getNetProfitMargin())) return false;
+        if (operatingProfitMargin != null && !operatingProfitMargin.matches(stockMetric.getOperatingProfitMargin())) return false;
+        if (debtRatio != null && !debtRatio.matches(stockMetric.getDebtRatio())) return false;
+        if (salesGrowthQoQ != null && !salesGrowthQoQ.matches(stockMetric.getSalesGrowthQoQ())) return false;
+        if (salesGrowthYoY != null && !salesGrowthYoY.matches(stockMetric.getSalesGrowthYoY())) return false;
+        if (netProfitGrowthQoQ != null && !netProfitGrowthQoQ.matches(stockMetric.getNetProfitGrowthQoQ())) return false;
+        if (netProfitGrowthYoY != null && !netProfitGrowthYoY.matches(stockMetric.getNetProfitGrowthYoY())) return false;
+        if (dividendYield != null && !dividendYield.matches(stockMetric.getDividendYield())) return false;
+        if (foreignOwnershipRate != null && !foreignOwnershipRate.matches(stockMetric.getForeignOwnershipRate())) return false;
+
 
         return true;
     }
