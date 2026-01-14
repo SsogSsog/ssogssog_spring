@@ -14,4 +14,13 @@ public class MemberResponse {
     public static class RegisterResponse{
         private Long memberId;
     }
+
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class StrategyResponse {
+        private Long strategyId;
+        private String strategyName;
+    }
 }
