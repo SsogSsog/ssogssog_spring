@@ -84,10 +84,10 @@ public class MemberService {
                 .roe(toRangeCondition(request.getRoe()))
                 .debtRatio(toRangeCondition(request.getDebtRatio()))
                 .operatingProfitMargin(toRangeCondition(request.getOperatingProfitRatio()))
-                .salesGrowthQoQ(toGrowthRangeConditionIfQoQ(request.getSalesGrowthRatio()))
-                .salesGrowthYoY(toGrowthRangeConditionIfYoY(request.getSalesGrowthRatio()))
-                .netProfitGrowthQoQ(toGrowthRangeConditionIfQoQ(request.getNetProfitGrowthRatio()))
-                .netProfitGrowthYoY(toGrowthRangeConditionIfYoY(request.getNetProfitGrowthRatio()))
+                .salesGrowthQoQ(toGrowthRangeCondition(request.getSalesGrowthRatio(), MetricBasePeriod.PREV_QUARTER))
+                .salesGrowthYoY(toGrowthRangeCondition(request.getSalesGrowthRatio(), MetricBasePeriod.PREV_YEAR))
+                .netProfitGrowthQoQ(toGrowthRangeCondition(request.getNetProfitGrowthRatio(), MetricBasePeriod.PREV_YEAR))
+                .netProfitGrowthYoY(toGrowthRangeCondition(request.getNetProfitGrowthRatio(), MetricBasePeriod.PREV_YEAR))
                 .dividendYield(toRangeCondition(request.getDividendYieldRatio()))
                 .foreignOwnershipRate(toRangeCondition(request.getForeignOwnershipRate()))
                 .build();
@@ -107,19 +107,11 @@ public class MemberService {
         return RangeCondition.of(dto.getMin(), dto.getMax());
     }
 
-    private GrowthRangeCondition toGrowthRangeConditionIfQoQ(GrowthConditionDTO dto) {
-        if (dto == null || dto.getBasePeriod() != MetricBasePeriod.PREV_QUARTER) {
-            return null;
-        }
-        return GrowthRangeCondition.builder()
-                .min(dto.getMin())
-                .max(dto.getMax())
-                .basePeriod(dto.getBasePeriod())
-                .build();
-    }
-
-    private GrowthRangeCondition toGrowthRangeConditionIfYoY(GrowthConditionDTO dto) {
-        if (dto == null || dto.getBasePeriod() != MetricBasePeriod.PREV_YEAR) {
+    private GrowthRangeCondition toGrowthRangeCondition(
+            GrowthConditionDTO dto,
+            MetricBasePeriod expectedPeriod
+    ) {
+        if (dto == null || dto.getBasePeriod() != expectedPeriod) {
             return null;
         }
         return GrowthRangeCondition.builder()
