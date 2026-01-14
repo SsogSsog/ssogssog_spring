@@ -1,6 +1,8 @@
 package org.project.ssogssog.presentation.controller.member;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.project.ssogssog.application.service.member.api.MemberService;
@@ -60,7 +62,15 @@ public class MemberController {
             - 전략 이름은 자동 생성됩니다 (전략1, 전략2, ...)
             - 회원당 최대 5개의 전략을 생성할 수 있습니다
             - 각 조건은 선택적이며, 설정하지 않은 조건은 필터링에서 제외됩니다
-            """
+            """,
+            parameters = {
+                    @Parameter(
+                            name = "X-User-ID",
+                            description = "회원 UUID (예: 550e8400-e29b-41d4-a716-446655440000)",
+                            in = ParameterIn.HEADER,
+                            required = true
+                    )
+            }
     )
     public ApiResponse<MemberResponse.StrategyResponse> saveStrategy(
             HttpServletRequest httpRequest,
