@@ -11,7 +11,9 @@ import org.project.ssogssog.application.service.member.api.dto.MemberResponse;
 import org.project.ssogssog.global.payload.ApiResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -106,7 +108,38 @@ public class MemberController {
         return ApiResponse.onSuccess(memberService.getStrategies(uuid));
     }
 
+    @DeleteMapping("/strategies/{strategyId}")
+    @Operation(
+            summary = "투자 전략 삭제",
+            description = """
+            회원의 투자 전략을 삭제합니다.
 
+            - 헤더의 X-User-ID로 회원을 식별합니다
+            - 본인의 전략만 삭제할 수 있습니다
+            """,
+            parameters = {
+                    @Parameter(
+                            name = "X-User-ID",
+                            description = "회원 UUID (예: 550e8400-e29b-41d4-a716-446655440000)",
+                            in = ParameterIn.HEADER,
+                            required = true
+                    ),
+                    @Parameter(
+                            name = "strategyId",
+                            description = "삭제할 전략 ID",
+                            in = ParameterIn.PATH,
+                            required = true
+                    )
+            }
+    )
+    public ApiResponse<Void> deleteStrategy(
+            HttpServletRequest httpRequest,
+            @PathVariable Long strategyId
+    ) {
+        String uuid = (String) httpRequest.getAttribute("memberUuId");
+        memberService.deleteStrategy(uuid, strategyId);
+        return ApiResponse.onSuccess(null);
+    }
 
 
 
