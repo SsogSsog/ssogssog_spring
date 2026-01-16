@@ -2,24 +2,22 @@ package org.project.ssogssog.application.service.member.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.application.common.dto.condition.GrowthConditionDTO;
-import org.project.ssogssog.application.common.dto.condition.RangeConditionDTO;
 import org.project.ssogssog.application.service.member.api.dto.MemberRequest;
 import org.project.ssogssog.application.service.member.api.dto.MemberResponse;
 import org.project.ssogssog.domain.member.entity.Member;
 import org.project.ssogssog.domain.member.entity.Strategy;
-import org.project.ssogssog.domain.member.entity.range.GrowthRangeCondition;
-import org.project.ssogssog.domain.member.entity.range.RangeCondition;
+import org.project.ssogssog.application.service.member.api.converter.StrategyConverter;
 import org.project.ssogssog.domain.member.factory.StrategyFactory;
 import org.project.ssogssog.domain.member.repository.MemberRepository;
 import org.project.ssogssog.domain.member.repository.StrategyRepository;
-import org.project.ssogssog.domain.stockmetric.enums.MetricBasePeriod;
 import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -86,6 +84,23 @@ public class MemberService {
         return MemberResponse.StrategyResponse.builder()
                 .strategyId(savedStrategy.getId())
                 .strategyName(savedStrategy.getStrategyName())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public MemberResponse.StrategiesResponse getStrategies(String uuid) {
+
+        Member member = memberRepository.findByUuid(uuid)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_MEMBER));
+
+        List<Strategy> strategies = strategyRepository.findAllByMember(member);
+
+        List<MemberResponse.StrategyDetailResponse> strategyDetails = strategies.stream()
+                .map(StrategyConverter::toDetailResponse)
+                .collect(Collectors.toList());
+
+        return MemberResponse.StrategiesResponse.builder()
+                .strategies(strategyDetails)
                 .build();
     }
 
