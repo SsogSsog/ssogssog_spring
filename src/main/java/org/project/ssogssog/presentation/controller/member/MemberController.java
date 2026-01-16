@@ -173,7 +173,29 @@ public class MemberController {
         return ApiResponse.onSuccess(memberService.toggleLike(uuid, stockId));
     }
 
+    @GetMapping("/likes")
+    @Operation(
+            summary = "내가 좋아요한 주식 목록 조회",
+            description = """
+            회원이 좋아요한 모든 주식을 조회합니다.
 
+            - 헤더의 X-User-ID로 회원을 식별합니다
+            """,
+            parameters = {
+                    @Parameter(
+                            name = "X-User-ID",
+                            description = "회원 UUID (예: 550e8400-e29b-41d4-a716-446655440000)",
+                            in = ParameterIn.HEADER,
+                            required = true
+                    )
+            }
+    )
+    public ApiResponse<MemberResponse.LikedStocksResponse> getLikedStocks(
+            HttpServletRequest httpRequest
+    ) {
+        String uuid = (String) httpRequest.getAttribute("memberUuId");
+        return ApiResponse.onSuccess(memberService.getLikedStocks(uuid));
+    }
 
 
 
