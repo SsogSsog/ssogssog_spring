@@ -141,6 +141,37 @@ public class MemberController {
         return ApiResponse.onSuccess(null);
     }
 
+    @PostMapping("/likes/{stockId}")
+    @Operation(
+            summary = "주식 좋아요 설정/해제",
+            description = """
+            특정 주식의 좋아요를 토글합니다.
+
+            - 좋아요가 없으면 설정, 있으면 해제됩니다
+            - 헤더의 X-User-ID로 회원을 식별합니다
+            """,
+            parameters = {
+                    @Parameter(
+                            name = "X-User-ID",
+                            description = "회원 UUID (예: 550e8400-e29b-41d4-a716-446655440000)",
+                            in = ParameterIn.HEADER,
+                            required = true
+                    ),
+                    @Parameter(
+                            name = "stockId",
+                            description = "좋아요할 주식 ID",
+                            in = ParameterIn.PATH,
+                            required = true
+                    )
+            }
+    )
+    public ApiResponse<MemberResponse.LikeResponse> toggleLike(
+            HttpServletRequest httpRequest,
+            @PathVariable Long stockId
+    ) {
+        String uuid = (String) httpRequest.getAttribute("memberUuId");
+        return ApiResponse.onSuccess(memberService.toggleLike(uuid, stockId));
+    }
 
 
 
