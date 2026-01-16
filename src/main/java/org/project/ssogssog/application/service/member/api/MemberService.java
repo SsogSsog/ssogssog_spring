@@ -67,13 +67,18 @@ public class MemberService {
         Member member = memberRepository.findByUuid(uuid)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_MEMBER));
 
-        int currentStrategyCount = strategyRepository.countByMember(member);
+        List<Strategy> strategies = strategyRepository.findAllByMember(member);
         //TODO 동시 요청 고려하기
-        if (currentStrategyCount >= MAX_STRATEGY_COUNT) {
+        if (strategies.size() >= MAX_STRATEGY_COUNT) {
             throw new GeneralException(ErrorStatus.STRATEGY_LIMIT_EXCEEDED);
         }
 
-        String strategyName = STRATEGY_NAME + (currentStrategyCount + 1);
+        int maxNumber = strategies.stream()
+                .map(s -> extractNumber(s.getStrategyName()))
+                .max(Integer::compareTo)
+                .orElse(0);
+
+        String strategyName = STRATEGY_NAME + (maxNumber + 1);
 
         // 생성
         Strategy savedStrategy = StrategyFactory.createFrom(member, strategyName, request);
@@ -102,6 +107,26 @@ public class MemberService {
         return MemberResponse.StrategiesResponse.builder()
                 .strategies(strategyDetails)
                 .build();
+    }
+
+    @Transactional
+    public void deleteStrategy(String uuid, Long strategyId) {
+
+        Member member = memberRepository.findByUuid(uuid)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_MEMBER));
+
+        Strategy strategy = strategyRepository.findByIdAndMember(strategyId, member)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STRATEGY));
+
+        strategyRepository.delete(strategy);
+    }
+
+    private int extractNumber(String strategyName) {
+        try {
+            return Integer.parseInt(strategyName.replace(STRATEGY_NAME, ""));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
 }
