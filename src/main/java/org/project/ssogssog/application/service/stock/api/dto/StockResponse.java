@@ -207,4 +207,17 @@ public class StockResponse {
         private int totalCount;
     }
 
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class StockPriceInfo {
+        private Long stockId;
+        private String stockCode;
+        private String corpName;
+        private String sector;
+        private Integer closePrice;
+        private Double changeRate;
+    }
+
 }

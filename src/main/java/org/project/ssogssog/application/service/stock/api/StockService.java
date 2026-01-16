@@ -311,6 +311,31 @@ public class StockService {
         return v == null ? null : v.longValue();
     }
 
+    /**
+     * 주식 리스트의 기본정보(이름, 종목코드, 분야, 최근 가격, 최근 등락률)을 가져오는 메서드
+     * @param stocks
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public List<StockResponse.StockPriceInfo> getStockPriceInfos(List<Stock> stocks) {
+        return stocks.stream()
+                .map(stock -> {
+                    DailyPrice latestPrice = dailyPriceRepository
+                            .findTopByStockOrderByDateDesc(stock)
+                            .orElse(null);
+
+                    return StockResponse.StockPriceInfo.builder()
+                            .stockId(stock.getId())
+                            .stockCode(stock.getStockCode())
+                            .corpName(stock.getCorpName())
+                            .sector(stock.getSector())
+                            .closePrice(latestPrice != null ? latestPrice.getClosePrice() : null)
+                            .changeRate(latestPrice != null ? latestPrice.getChangeRate() : null)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
 
     /**
      * 랭킹 top 5 조회
