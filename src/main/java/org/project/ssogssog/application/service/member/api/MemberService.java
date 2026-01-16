@@ -7,7 +7,6 @@ import org.project.ssogssog.application.service.member.api.dto.MemberResponse;
 import org.project.ssogssog.domain.member.entity.Member;
 import org.project.ssogssog.domain.member.entity.StockLike;
 import org.project.ssogssog.domain.member.entity.Strategy;
-import org.project.ssogssog.application.service.member.api.converter.StrategyConverter;
 import org.project.ssogssog.domain.member.factory.StrategyFactory;
 import org.project.ssogssog.domain.member.repository.StockLikeRepository;
 import org.project.ssogssog.domain.member.repository.MemberRepository;
@@ -35,6 +34,7 @@ public class MemberService {
     private final StockLikeRepository stockLikeRepository;
     private final StockRepository stockRepository;
     private final StockService stockService;
+    private final MemberCacheService memberCacheService;
 
     @Transactional
     public MemberResponse.RegisterResponse register(MemberRequest.RegisterRequest request) {
@@ -95,6 +95,9 @@ public class MemberService {
         // 저장
         strategyRepository.save(savedStrategy);
 
+        // 캐시 무효화
+        memberCacheService.evictStrategies(uuid);
+
         return MemberResponse.StrategyResponse.builder()
                 .strategyId(savedStrategy.getId())
                 .strategyName(savedStrategy.getStrategyName())
@@ -103,15 +106,9 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public MemberResponse.StrategiesResponse getStrategies(String uuid) {
-
-        Member member = memberRepository.findByUuid(uuid)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_MEMBER));
-
-        List<Strategy> strategies = strategyRepository.findAllByMember(member);
-
-        List<MemberResponse.StrategyDetailResponse> strategyDetails = strategies.stream()
-                .map(StrategyConverter::toDetailResponse)
-                .collect(Collectors.toList());
+        // 캐시된 전략 목록 조회
+        List<MemberResponse.StrategyDetailResponse> strategyDetails =
+                memberCacheService.getStrategies(uuid);
 
         return MemberResponse.StrategiesResponse.builder()
                 .strategies(strategyDetails)
@@ -128,6 +125,9 @@ public class MemberService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STRATEGY));
 
         strategyRepository.delete(strategy);
+
+        // 캐시 무효화
+        memberCacheService.evictStrategies(uuid);
     }
 
     private int extractNumber(String strategyName) {
@@ -158,6 +158,9 @@ public class MemberService {
             liked = true;
         }
 
+        // 캐시 무효화
+        memberCacheService.evictLikedStocks(uuid);
+
         return MemberResponse.LikeResponse.builder()
                 .stockId(stockId)
                 .liked(liked)
@@ -166,16 +169,19 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public MemberResponse.LikedStocksResponse getLikedStocks(String uuid) {
+        // 캐시된 Stock ID 목록 조회
+        List<Long> stockIds = memberCacheService.getLikedStockIds(uuid);
 
-        Member member = memberRepository.findByUuid(uuid)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_MEMBER));
+        if (stockIds.isEmpty()) {
+            return MemberResponse.LikedStocksResponse.builder()
+                    .stocks(List.of())
+                    .build();
+        }
 
-        List<StockLike> likes = stockLikeRepository.findAllByMember(member);
+        // Stock 엔티티 조회
+        List<Stock> stocks = stockRepository.findAllById(stockIds);
 
-        List<Stock> stocks = likes.stream()
-                .map(StockLike::getStock)
-                .collect(Collectors.toList());
-
+        // 최신 가격 정보 조회 (매번 조회)
         List<StockResponse.StockPriceInfo> priceInfos = stockService.getStockPriceInfos(stocks);
 
         List<MemberResponse.LikedStockDetail> stockDetails = priceInfos.stream()
