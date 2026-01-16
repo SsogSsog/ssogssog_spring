@@ -39,7 +39,6 @@ public class StockCacheReader {
     /**
      * 종목별 뉴스 조회 (캐시)
      */
-    @Transactional(readOnly = true)
     @Cacheable(
             value = CacheType.Values.STOCK_NEWS,
             key = CacheType.Keys.STOCK_NEWS
@@ -72,7 +71,6 @@ public class StockCacheReader {
     /**
      * 종목별 공시 조회 (캐시)
      */
-    @Transactional(readOnly = true)
     @Cacheable(
             value = CacheType.Values.STOCK_DISCLOSURES,
             key = CacheType.Keys.STOCK_DISCLOSURE

@@ -34,7 +34,6 @@ public class MemberCacheReader {
             value = CacheType.Values.MEMBER_LIKED_STOCKS,
             key = CacheType.Keys.MEMBER_UUID
     )
-    @Transactional(readOnly = true)
     public List<Long> getLikedStockIds(String uuid) {
         return stockLikeRepository.findStockIdsByMemberUuid(uuid);
     }
@@ -57,7 +56,6 @@ public class MemberCacheReader {
             value = CacheType.Values.MEMBER_STRATEGIES,
             key = CacheType.Keys.MEMBER_UUID
     )
-    @Transactional(readOnly = true)
     public List<MemberResponse.StrategyDetailResponse> getStrategies(String uuid) {
         Member member = memberRepository.findByUuid(uuid)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_MEMBER));

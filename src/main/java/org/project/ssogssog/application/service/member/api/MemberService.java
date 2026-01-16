@@ -105,6 +105,9 @@ public class MemberService {
                 .build();
     }
 
+    /**
+     * 전략 목록 조회
+     */
     @Transactional(readOnly = true)
     public MemberResponse.StrategiesResponse getStrategies(String uuid) {
         // 캐시된 전략 목록 조회
@@ -168,6 +171,10 @@ public class MemberService {
                 .build();
     }
 
+
+    /**
+     * 좋아요한 Stock ID 목록 조회
+     */
     @Transactional(readOnly = true)
     public MemberResponse.LikedStocksResponse getLikedStocks(String uuid) {
         // 캐시된 Stock ID 목록 조회

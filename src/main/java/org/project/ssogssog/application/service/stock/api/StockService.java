@@ -92,10 +92,18 @@ public class StockService {
         );
     }
 
+    /**
+     * 종목별 뉴스 조회
+     */
+    @Transactional(readOnly = true)
     public SliceDTO<StockResponse.NewsResponseItemDTO> getStockNews(String stockCode, int page) {
         return stockCacheReader.getStockNews(stockCode, page);
     }
 
+    /**
+     * 종목별 공시 조회
+     */
+    @Transactional(readOnly = true)
     public SliceDTO<StockResponse.DisclosureItemResponseDTO> getDisclosures(String stockCode, int page) {
         return stockCacheReader.getDisclosures(stockCode, page);
     }
@@ -279,6 +287,7 @@ public class StockService {
      * @param type: 급상승, 급하락, 거래량 중 관련 RankingType 대입
      * @return
      */
+    @Transactional(readOnly = true)
     public StockResponse.RankingResponseDTO getRanking(RankingType type) {
         return stockCacheReader.getRanking(type);
     }
