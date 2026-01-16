@@ -5,11 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.member.api.dto.MemberRequest;
 import org.project.ssogssog.application.service.member.api.dto.MemberResponse;
 import org.project.ssogssog.domain.member.entity.Member;
+import org.project.ssogssog.domain.member.entity.StockLike;
 import org.project.ssogssog.domain.member.entity.Strategy;
 import org.project.ssogssog.application.service.member.api.converter.StrategyConverter;
 import org.project.ssogssog.domain.member.factory.StrategyFactory;
+import org.project.ssogssog.domain.member.repository.StockLikeRepository;
 import org.project.ssogssog.domain.member.repository.MemberRepository;
 import org.project.ssogssog.domain.member.repository.StrategyRepository;
+import org.project.ssogssog.domain.stock.entity.Stock;
+import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
 import org.springframework.stereotype.Service;
@@ -26,6 +30,8 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final StrategyRepository strategyRepository;
+    private final StockLikeRepository stockLikeRepository;
+    private final StockRepository stockRepository;
 
     @Transactional
     public MemberResponse.RegisterResponse register(MemberRequest.RegisterRequest request) {
@@ -127,6 +133,32 @@ public class MemberService {
         } catch (NumberFormatException e) {
             return 0;
         }
+    }
+
+    @Transactional
+    public MemberResponse.LikeResponse toggleLike(String uuid, Long stockId) {
+
+        Member member = memberRepository.findByUuid(uuid)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_MEMBER));
+
+        Stock stock = stockRepository.findById(stockId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
+
+        Optional<StockLike> existingLike = stockLikeRepository.findByMemberAndStock(member, stock);
+
+        boolean liked;
+        if (existingLike.isPresent()) {
+            stockLikeRepository.delete(existingLike.get());
+            liked = false;
+        } else {
+            stockLikeRepository.save(StockLike.of(member, stock));
+            liked = true;
+        }
+
+        return MemberResponse.LikeResponse.builder()
+                .stockId(stockId)
+                .liked(liked)
+                .build();
     }
 
 }
