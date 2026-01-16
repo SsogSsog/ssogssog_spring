@@ -63,4 +63,15 @@ public class MemberResponse {
         private RangeConditionDTO dividendYield;
         private RangeConditionDTO foreignOwnershipRate;
     }
+
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class LikeResponse {
+        private Long stockId;
+        private boolean liked;
+    }
+
+
 }
