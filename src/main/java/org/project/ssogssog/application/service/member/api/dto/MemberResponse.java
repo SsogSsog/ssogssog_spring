@@ -73,5 +73,24 @@ public class MemberResponse {
         private boolean liked;
     }
 
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class LikedStocksResponse {
+        private List<LikedStockDetail> stocks;
+    }
 
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class LikedStockDetail {
+        private Long stockId;
+        private String stockCode;
+        private String corpName;
+        private String sector;
+        private Integer closePrice;
+        private Double changeRate;
+    }
 }
