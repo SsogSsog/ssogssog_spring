@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class MemberCacheService {
+public class MemberCacheReader {
 
     private final StockLikeRepository stockLikeRepository;
     private final StrategyRepository strategyRepository;

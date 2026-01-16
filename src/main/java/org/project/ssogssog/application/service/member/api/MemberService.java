@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.member.api.dto.MemberRequest;
 import org.project.ssogssog.application.service.member.api.dto.MemberResponse;
-import org.project.ssogssog.application.service.member.reader.MemberCacheService;
+import org.project.ssogssog.application.service.member.reader.MemberCacheReader;
 import org.project.ssogssog.domain.member.entity.Member;
 import org.project.ssogssog.domain.member.entity.StockLike;
 import org.project.ssogssog.domain.member.entity.Strategy;
@@ -35,7 +35,7 @@ public class MemberService {
     private final StockLikeRepository stockLikeRepository;
     private final StockRepository stockRepository;
     private final StockService stockService;
-    private final MemberCacheService memberCacheService;
+    private final MemberCacheReader memberCacheReader;
 
     @Transactional
     public MemberResponse.RegisterResponse register(MemberRequest.RegisterRequest request) {
@@ -97,7 +97,7 @@ public class MemberService {
         strategyRepository.save(savedStrategy);
 
         // 캐시 무효화
-        memberCacheService.evictStrategies(uuid);
+        memberCacheReader.evictStrategies(uuid);
 
         return MemberResponse.StrategyResponse.builder()
                 .strategyId(savedStrategy.getId())
@@ -109,7 +109,7 @@ public class MemberService {
     public MemberResponse.StrategiesResponse getStrategies(String uuid) {
         // 캐시된 전략 목록 조회
         List<MemberResponse.StrategyDetailResponse> strategyDetails =
-                memberCacheService.getStrategies(uuid);
+                memberCacheReader.getStrategies(uuid);
 
         return MemberResponse.StrategiesResponse.builder()
                 .strategies(strategyDetails)
@@ -128,7 +128,7 @@ public class MemberService {
         strategyRepository.delete(strategy);
 
         // 캐시 무효화
-        memberCacheService.evictStrategies(uuid);
+        memberCacheReader.evictStrategies(uuid);
     }
 
     private int extractNumber(String strategyName) {
@@ -160,7 +160,7 @@ public class MemberService {
         }
 
         // 캐시 무효화
-        memberCacheService.evictLikedStocks(uuid);
+        memberCacheReader.evictLikedStocks(uuid);
 
         return MemberResponse.LikeResponse.builder()
                 .stockId(stockId)
@@ -171,7 +171,7 @@ public class MemberService {
     @Transactional(readOnly = true)
     public MemberResponse.LikedStocksResponse getLikedStocks(String uuid) {
         // 캐시된 Stock ID 목록 조회
-        List<Long> stockIds = memberCacheService.getLikedStockIds(uuid);
+        List<Long> stockIds = memberCacheReader.getLikedStockIds(uuid);
 
         if (stockIds.isEmpty()) {
             return MemberResponse.LikedStocksResponse.builder()
