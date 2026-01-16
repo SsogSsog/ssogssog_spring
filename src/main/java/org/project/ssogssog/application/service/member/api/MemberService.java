@@ -12,6 +12,8 @@ import org.project.ssogssog.domain.member.factory.StrategyFactory;
 import org.project.ssogssog.domain.member.repository.StockLikeRepository;
 import org.project.ssogssog.domain.member.repository.MemberRepository;
 import org.project.ssogssog.domain.member.repository.StrategyRepository;
+import org.project.ssogssog.application.service.stock.api.StockService;
+import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.global.payload.code.status.ErrorStatus;
@@ -32,6 +34,7 @@ public class MemberService {
     private final StrategyRepository strategyRepository;
     private final StockLikeRepository stockLikeRepository;
     private final StockRepository stockRepository;
+    private final StockService stockService;
 
     @Transactional
     public MemberResponse.RegisterResponse register(MemberRequest.RegisterRequest request) {
@@ -158,6 +161,36 @@ public class MemberService {
         return MemberResponse.LikeResponse.builder()
                 .stockId(stockId)
                 .liked(liked)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public MemberResponse.LikedStocksResponse getLikedStocks(String uuid) {
+
+        Member member = memberRepository.findByUuid(uuid)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_MEMBER));
+
+        List<StockLike> likes = stockLikeRepository.findAllByMember(member);
+
+        List<Stock> stocks = likes.stream()
+                .map(StockLike::getStock)
+                .collect(Collectors.toList());
+
+        List<StockResponse.StockPriceInfo> priceInfos = stockService.getStockPriceInfos(stocks);
+
+        List<MemberResponse.LikedStockDetail> stockDetails = priceInfos.stream()
+                .map(info -> MemberResponse.LikedStockDetail.builder()
+                        .stockId(info.getStockId())
+                        .stockCode(info.getStockCode())
+                        .corpName(info.getCorpName())
+                        .sector(info.getSector())
+                        .closePrice(info.getClosePrice())
+                        .changeRate(info.getChangeRate())
+                        .build())
+                .collect(Collectors.toList());
+
+        return MemberResponse.LikedStocksResponse.builder()
+                .stocks(stockDetails)
                 .build();
     }
 
