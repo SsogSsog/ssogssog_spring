@@ -23,25 +23,25 @@ public class UuidInterceptor implements HandlerInterceptor {
 
 
         // UUID 형식 검증
-        if (!isValidUUID(uuid)) {
+/*        if (!isValidUUID(uuid)) {
             ErrorResponseWriter.setErrorResponse(response, ErrorStatus.INVALID_UUID);
             return false;
-        }
+        }*/
 
         // 검증된 UUID를 request attribute에 저장하여 다운스트림에서 사용 가능하도록 함
-        request.setAttribute("memberId", uuid);
+        request.setAttribute("memberUuId", uuid);
 
         return true;
     }
 
     // TODO pattern 도입하기
     // UUID 형식 검증 로직
-    private boolean isValidUUID(String uuid) {
+/*    private boolean isValidUUID(String uuid) {
         try {
             java.util.UUID.fromString(uuid);
             return true;
         } catch (IllegalArgumentException e) {
             return false;
         }
-    }
+    }*/
 }

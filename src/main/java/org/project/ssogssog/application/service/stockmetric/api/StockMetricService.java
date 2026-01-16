@@ -2,6 +2,9 @@ package org.project.ssogssog.application.service.stockmetric.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.project.ssogssog.application.common.dto.condition.GrowthConditionDTO;
+import org.project.ssogssog.application.common.dto.condition.RangeConditionDTO;
+import org.project.ssogssog.domain.stockmetric.enums.MetricBasePeriod;
 import org.project.ssogssog.domain.stockmetric.vo.StockMetricScreenerCondition;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stockmetric.entity.StockMetric;
@@ -15,8 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Slf4j
 @Service
@@ -74,7 +75,7 @@ public class StockMetricService {
     }
 
     /**
-     * presentation 계층의 DTO를 application 계층의 DTO로 변환해주는 메서드
+     * presentation 계층의 DTO를 domain 계층의 VO로 변환해주는 메서드
      */
     private StockMetricScreenerCondition toCondition(StockMetricRequest.ScreenerRequestDTO dto) {
         return new StockMetricScreenerCondition(
@@ -85,31 +86,51 @@ public class StockMetricService {
                 MarketCapBucket.minPrice(dto.getMarketCapBucket()),
                 MarketCapBucket.maxPrice(dto.getMarketCapBucket()),
 
-                dto.getMinPer(),
-                dto.getMaxPer(),
+                min(dto.getPer()),
+                max(dto.getPer()),
 
-                dto.getMinRoe(),
-                dto.getMaxRoe(),
+                min(dto.getRoe()),
+                max(dto.getRoe()),
 
-                dto.getMinDebtRatio(),
-                dto.getMaxDebtRatio(),
+                min(dto.getDebtRatio()),
+                max(dto.getDebtRatio()),
 
-                dto.getMinOperatingProfitRatio(),
-                dto.getMaxOperatingProfitRatio(),
+                min(dto.getOperatingProfitRatio()),
+                max(dto.getOperatingProfitRatio()),
 
-                dto.getMinSalesGrowthRatio(),
-                dto.getMaxSalesGrowthRatio(),
-                dto.getSalesGrowthMetricBasePeriod(),
+                min(dto.getSalesGrowthRatio()),
+                max(dto.getSalesGrowthRatio()),
+                basePeriod(dto.getSalesGrowthRatio()),
 
-                dto.getMinNetProfitGrowthRatio(),
-                dto.getMaxNetProfitGrowthRatio(),
-                dto.getNetProfitGrowthMetricBasePeriod(),
+                min(dto.getNetProfitGrowthRatio()),
+                max(dto.getNetProfitGrowthRatio()),
+                basePeriod(dto.getNetProfitGrowthRatio()),
 
-                dto.getMinDividendYieldRatio(),
-                dto.getMaxDividendYieldRatio(),
+                min(dto.getDividendYieldRatio()),
+                max(dto.getDividendYieldRatio()),
 
-                dto.getMinForeignOwnershipRate(),
-                dto.getMaxForeignOwnershipRate()
+                min(dto.getForeignOwnershipRate()),
+                max(dto.getForeignOwnershipRate())
         );
+    }
+
+    private Double min(RangeConditionDTO dto) {
+        return dto != null ? dto.getMin() : null;
+    }
+
+    private Double max(RangeConditionDTO dto) {
+        return dto != null ? dto.getMax() : null;
+    }
+
+    private Double min(GrowthConditionDTO dto) {
+        return dto != null ? dto.getMin() : null;
+    }
+
+    private Double max(GrowthConditionDTO dto) {
+        return dto != null ? dto.getMax() : null;
+    }
+
+    private MetricBasePeriod basePeriod(GrowthConditionDTO dto) {
+        return dto != null ? dto.getBasePeriod() : null;
     }
 }

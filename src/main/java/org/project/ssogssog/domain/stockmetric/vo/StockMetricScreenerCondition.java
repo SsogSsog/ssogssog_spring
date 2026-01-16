@@ -2,6 +2,7 @@ package org.project.ssogssog.domain.stockmetric.vo;
 
 import org.project.ssogssog.domain.stockmetric.enums.MetricBasePeriod;
 
+// 내부 구현은 자유도를 높이기 위해 굳이 공통 Class로 묶지 않음, 대신 필요할 때 리팩토링 고려
 public record StockMetricScreenerCondition(
 
         Integer minCurrentPrice, // 현재가
