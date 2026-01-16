@@ -34,6 +34,7 @@ public enum ErrorStatus implements BaseErrorCode {
     NOT_FOUND_MEMBER(HttpStatus.NOT_FOUND, "MEMBER4102", "해당 회원이 존재하지 않습니다"),
 
     // Strategy 에러
+    NOT_FOUND_STRATEGY(HttpStatus.NOT_FOUND, "STRATEGY4000", "해당 전략이 존재하지 않습니다"),
     STRATEGY_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "STRATEGY4100", "전략은 최대 5개까지 생성할 수 있습니다"),
 
     // Auth 에러

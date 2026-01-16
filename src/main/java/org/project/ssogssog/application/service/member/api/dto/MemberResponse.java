@@ -4,6 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.project.ssogssog.application.common.dto.condition.GrowthConditionDTO;
+import org.project.ssogssog.application.common.dto.condition.RangeConditionDTO;
+import org.project.ssogssog.presentation.controller.stockmetric.enums.MarketCapBucket;
+import org.project.ssogssog.presentation.controller.stockmetric.enums.StockPriceRange;
+
+import java.util.List;
 
 public class MemberResponse {
 
@@ -22,5 +28,39 @@ public class MemberResponse {
     public static class StrategyResponse {
         private Long strategyId;
         private String strategyName;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class StrategiesResponse {
+        private List<StrategyDetailResponse> strategies;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class StrategyDetailResponse {
+        private Long strategyId;
+        private String strategyName;
+
+        private StockPriceRange stockPriceRange;
+        private MarketCapBucket marketCapBucket;
+
+        private RangeConditionDTO per;
+        private RangeConditionDTO roe;
+        private RangeConditionDTO debtRatio;
+        private RangeConditionDTO operatingProfitMargin;
+        private RangeConditionDTO netProfitMargin;
+
+        private GrowthConditionDTO salesGrowthQoQ;
+        private GrowthConditionDTO salesGrowthYoY;
+        private GrowthConditionDTO netProfitGrowthQoQ;
+        private GrowthConditionDTO netProfitGrowthYoY;
+
+        private RangeConditionDTO dividendYield;
+        private RangeConditionDTO foreignOwnershipRate;
     }
 }
