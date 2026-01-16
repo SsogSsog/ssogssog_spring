@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.service.member.api;
+package org.project.ssogssog.application.service.member.reader;
 
 import lombok.RequiredArgsConstructor;
 import org.project.ssogssog.application.service.member.api.converter.StrategyConverter;
