@@ -81,7 +81,7 @@ public class StockCacheReader {
 
         String corpCode = stock.getCorpCode();
         if (corpCode == null || corpCode.isBlank()) {
-            return SliceDTO.of(Collections.emptyList(), page, NEWS_PAGE_SIZE, false);
+            return SliceDTO.of(Collections.emptyList(), page, DISCLOSURE_PAGE_SIZE, false);
         }
 
         List<DisclosureDTO> disclosures = stockIssuePort.searchDisclosures(corpCode, page);
