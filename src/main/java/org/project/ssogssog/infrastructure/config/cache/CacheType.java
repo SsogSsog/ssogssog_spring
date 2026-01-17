@@ -48,6 +48,30 @@ public enum CacheType {
             8, TimeUnit.HOURS,
             300_000,
             "주식 공시 캐시"
+    ),
+
+    /**
+     * 회원별 좋아요한 주식 목록
+     * - TTL: 24시간 (변경 시 CacheEvict로 무효화)
+     * - 키 형식: {uuid}
+     */
+    MEMBER_LIKED_STOCKS(
+            Values.MEMBER_LIKED_STOCKS,
+            1, TimeUnit.HOURS,
+            10_000,
+            "회원 좋아요 주식 캐시"
+    ),
+
+    /**
+     * 회원별 저장한 전략 목록
+     * - TTL: 24시간 (변경 시 CacheEvict로 무효화)
+     * - 키 형식: {uuid}
+     */
+    MEMBER_STRATEGIES(
+            Values.MEMBER_STRATEGIES,
+            1, TimeUnit.HOURS,
+            100,
+            "회원 전략 캐시"
     );
 
     private final String cacheName;
@@ -63,6 +87,8 @@ public enum CacheType {
         public static final String STOCK_RANKING = "stockRanking";
         public static final String STOCK_NEWS = "stockNews";
         public static final String STOCK_DISCLOSURES = "stockDisclosures";
+        public static final String MEMBER_LIKED_STOCKS = "memberLikedStocks";
+        public static final String MEMBER_STRATEGIES = "memberStrategies";
 
         private Values() {} // 인스턴스화 방지
     }
@@ -74,6 +100,6 @@ public enum CacheType {
         public static final String STOCK_RANKING = "#type.cacheKey";
         public static final String STOCK_NEWS = "#stockCode + ':' + #page";
         public static final String STOCK_DISCLOSURE = "#stockCode + ':' + #page";
-
+        public static final String MEMBER_UUID = "#uuid";
     }
 }

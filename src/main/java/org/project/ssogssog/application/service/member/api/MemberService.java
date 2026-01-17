@@ -4,12 +4,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.member.api.dto.MemberRequest;
 import org.project.ssogssog.application.service.member.api.dto.MemberResponse;
+import org.project.ssogssog.application.service.member.reader.MemberCacheReader;
 import org.project.ssogssog.domain.member.entity.Member;
+import org.project.ssogssog.domain.member.entity.StockLike;
 import org.project.ssogssog.domain.member.entity.Strategy;
-import org.project.ssogssog.application.service.member.api.converter.StrategyConverter;
 import org.project.ssogssog.domain.member.factory.StrategyFactory;
+import org.project.ssogssog.domain.member.repository.StockLikeRepository;
 import org.project.ssogssog.domain.member.repository.MemberRepository;
 import org.project.ssogssog.domain.member.repository.StrategyRepository;
+import org.project.ssogssog.application.service.stock.api.StockService;
+import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
+import org.project.ssogssog.domain.stock.entity.Stock;
+import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
 import org.springframework.stereotype.Service;
@@ -26,6 +32,10 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final StrategyRepository strategyRepository;
+    private final StockLikeRepository stockLikeRepository;
+    private final StockRepository stockRepository;
+    private final StockService stockService;
+    private final MemberCacheReader memberCacheReader;
 
     @Transactional
     public MemberResponse.RegisterResponse register(MemberRequest.RegisterRequest request) {
@@ -86,23 +96,23 @@ public class MemberService {
         // 저장
         strategyRepository.save(savedStrategy);
 
+        // 캐시 무효화
+        memberCacheReader.evictStrategies(uuid);
+
         return MemberResponse.StrategyResponse.builder()
                 .strategyId(savedStrategy.getId())
                 .strategyName(savedStrategy.getStrategyName())
                 .build();
     }
 
+    /**
+     * 전략 목록 조회
+     */
     @Transactional(readOnly = true)
     public MemberResponse.StrategiesResponse getStrategies(String uuid) {
-
-        Member member = memberRepository.findByUuid(uuid)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_MEMBER));
-
-        List<Strategy> strategies = strategyRepository.findAllByMember(member);
-
-        List<MemberResponse.StrategyDetailResponse> strategyDetails = strategies.stream()
-                .map(StrategyConverter::toDetailResponse)
-                .collect(Collectors.toList());
+        // 캐시된 전략 목록 조회
+        List<MemberResponse.StrategyDetailResponse> strategyDetails =
+                memberCacheReader.getStrategies(uuid);
 
         return MemberResponse.StrategiesResponse.builder()
                 .strategies(strategyDetails)
@@ -119,6 +129,9 @@ public class MemberService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STRATEGY));
 
         strategyRepository.delete(strategy);
+
+        // 캐시 무효화
+        memberCacheReader.evictStrategies(uuid);
     }
 
     private int extractNumber(String strategyName) {
@@ -127,6 +140,72 @@ public class MemberService {
         } catch (NumberFormatException e) {
             return 0;
         }
+    }
+
+    @Transactional
+    public MemberResponse.LikeResponse toggleLike(String uuid, Long stockId) {
+
+        Member member = memberRepository.findByUuid(uuid)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_MEMBER));
+
+        Stock stock = stockRepository.findById(stockId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
+
+        Optional<StockLike> existingLike = stockLikeRepository.findByMemberAndStock(member, stock);
+
+        boolean liked;
+        if (existingLike.isPresent()) {
+            stockLikeRepository.delete(existingLike.get());
+            liked = false;
+        } else {
+            stockLikeRepository.save(StockLike.of(member, stock));
+            liked = true;
+        }
+
+        // 캐시 무효화
+        memberCacheReader.evictLikedStocks(uuid);
+
+        return MemberResponse.LikeResponse.builder()
+                .stockId(stockId)
+                .liked(liked)
+                .build();
+    }
+
+
+    /**
+     * 좋아요한 Stock ID 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public MemberResponse.LikedStocksResponse getLikedStocks(String uuid) {
+        // 캐시된 Stock ID 목록 조회
+        List<Long> stockIds = memberCacheReader.getLikedStockIds(uuid);
+
+        if (stockIds.isEmpty()) {
+            return MemberResponse.LikedStocksResponse.builder()
+                    .stocks(List.of())
+                    .build();
+        }
+
+        // Stock 엔티티 조회
+        List<Stock> stocks = stockRepository.findAllById(stockIds);
+
+        // 최신 가격 정보 조회 (매번 조회)
+        List<StockResponse.StockPriceInfo> priceInfos = stockService.getStockPriceInfos(stocks);
+
+        List<MemberResponse.LikedStockDetail> stockDetails = priceInfos.stream()
+                .map(info -> MemberResponse.LikedStockDetail.builder()
+                        .stockId(info.getStockId())
+                        .stockCode(info.getStockCode())
+                        .corpName(info.getCorpName())
+                        .sector(info.getSector())
+                        .closePrice(info.getClosePrice())
+                        .changeRate(info.getChangeRate())
+                        .build())
+                .collect(Collectors.toList());
+
+        return MemberResponse.LikedStocksResponse.builder()
+                .stocks(stockDetails)
+                .build();
     }
 
 }
