@@ -74,6 +74,7 @@ public class DailyPriceAdapter implements DailyPricePort {
     @Override
     public boolean isMarketOpen(LocalDate date){
 
+        rateLimiter.acquire();
         return kisClient.isMarketOpen(date);
     }
 

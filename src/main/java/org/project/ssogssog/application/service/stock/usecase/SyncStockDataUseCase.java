@@ -96,13 +96,12 @@ public class SyncStockDataUseCase {
      */
     public void updateMissingLastDps(String year){
 
-        // 1. 섹터가 null인 종목 조회
+        // 1. lastOps가 null인 종목 조회
         List<Stock> targetStocks = stockRepository.findByLastDpsIsNull();
 
         int count = 0;
         for (Stock stock : targetStocks) {
             try {
-                // 2. KIS API 호출
                 Integer lastDps = stockPort.fetchLastDps(stock.getCorpCode(), year);
 
                 // 3. 업데이트 (Dirty Checking)
@@ -120,7 +119,7 @@ public class SyncStockDataUseCase {
                 log.error("[{}] 업데이트 실패: {}", stock.getCorpName(), e.getMessage());
             }
         }
-        log.info("총 {}개 종목 섹터 업데이트 완료", count);
+        log.info("총 {}개 종목 lastDps 업데이트 완료", count);
 
 
     }

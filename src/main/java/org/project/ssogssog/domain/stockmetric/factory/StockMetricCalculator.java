@@ -118,8 +118,7 @@ public class StockMetricCalculator {
         // 4. 배당수익률
         // -----------------------
         // ex) dividendYield(%) = DPS / currentPrice * 100
-        Double dividendYield = calcDividendYield(currentPrice, stock.getLastDps());
-
+        Double dividendYield = calcDividendYield(currentPrice, stock != null ? stock.getLastDps() : null);
 
         // -----------------------
         // 5. 외국인 보유율
