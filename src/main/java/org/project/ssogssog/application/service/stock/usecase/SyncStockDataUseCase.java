@@ -96,7 +96,7 @@ public class SyncStockDataUseCase {
      */
     public void updateMissingLastDps(String year){
 
-        // 1. 섹터가 null인 종목 조회
+        // 1. lastOps가 null인 종목 조회
         List<Stock> targetStocks = stockRepository.findByLastDpsIsNull();
 
         int count = 0;
