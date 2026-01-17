@@ -23,7 +23,7 @@ public class StrategyFactory {
                 .operatingProfitMargin(toRangeCondition(request.getOperatingProfitRatio()))
                 .salesGrowthQoQ(toGrowthRangeCondition(request.getSalesGrowthRatio(), MetricBasePeriod.PREV_QUARTER))
                 .salesGrowthYoY(toGrowthRangeCondition(request.getSalesGrowthRatio(), MetricBasePeriod.PREV_YEAR))
-                .netProfitGrowthQoQ(toGrowthRangeCondition(request.getNetProfitGrowthRatio(), MetricBasePeriod.PREV_YEAR))
+                .netProfitGrowthQoQ(toGrowthRangeCondition(request.getNetProfitGrowthRatio(), MetricBasePeriod.PREV_QUARTER))
                 .netProfitGrowthYoY(toGrowthRangeCondition(request.getNetProfitGrowthRatio(), MetricBasePeriod.PREV_YEAR))
                 .dividendYield(toRangeCondition(request.getDividendYieldRatio()))
                 .foreignOwnershipRate(toRangeCondition(request.getForeignOwnershipRate()))
