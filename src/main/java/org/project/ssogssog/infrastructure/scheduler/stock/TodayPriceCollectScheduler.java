@@ -26,7 +26,7 @@ public class TodayPriceCollectScheduler {
     // 스케쥴러가 빈에 등록됐는지 여부 검사
     @PostConstruct
     public void init() {
-        log.info("[TodayPriceCollectScheduler] 로드 완료");
+        log.info("[TodayPriceCollectScheduler] 로드 완료!!!");
     }
 
 

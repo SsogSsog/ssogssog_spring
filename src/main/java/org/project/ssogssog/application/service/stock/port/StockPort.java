@@ -9,4 +9,6 @@ public interface StockPort {
 
     // OpenDart 에서 가져온 전체 corpCode XML 데이터 전달
     byte[] getCorpCodeZip();
+
+    Integer fetchLastDps(String corpCode, String year);
 }

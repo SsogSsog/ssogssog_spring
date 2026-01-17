@@ -5,8 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceDTO;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +15,10 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -165,6 +167,7 @@ public class KISClient {
         return null;
     }
 
+    // TODO: application DTO를 값을 가져올 때 사용하는 건 리팩토링이 필요해보임
     public HistoricalPriceDTO fetchPastPrices(String stockCode, String accessToken, String strStartDate, String strEndDate) {
 
         // KIS API 호출 (국내주식 기간별 시세)
@@ -203,6 +206,75 @@ public class KISClient {
         }
     }
 
+    public boolean isMarketOpen(LocalDate date) {
+        String dateStr = date.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+        // 1. KIS 휴장일 조회 API 호출
+        // WebClient나 RestTemplate 사용 (기존에 쓰시던 방식 그대로)
+        KisHolidayResponse response = this.checkHoliday(dateStr);
+
+        if (response == null || response.getOutput() == null || response.getOutput().isEmpty()) {
+            log.error("휴장일 정보를 가져오지 못했습니다. 보수적으로 '휴장'으로 처리합니다.");
+            return false;
+        }
+
+        // 2. 결과 확인
+        // 보통 요청한 날짜가 리스트의 첫 번째 혹은 해당 날짜로 옴
+        KisHolidayResponse.HolidayInfo info = response.getOutput().stream()
+                .filter(i -> i.getBaseDate().equals(dateStr))
+                .findFirst()
+                .orElse(response.getOutput().get(0));
+
+        log.info("날짜: {}, 요일: {}, 개장여부: {}", info.getBaseDate(), info.getDayName(), info.getOpenYn());
+
+        return "Y".equals(info.getOpenYn()); // Y이면 true(개장), N이면 false(휴장)
+    }
+
+
+    private KisHolidayResponse checkHoliday(String dateStr) {
+        String accessToken = this.getValidAccessToken(); // 토큰 가져오기
+
+        // 1. 헤더 설정 (필수값들)
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("authorization", "Bearer " + accessToken);
+        headers.set("appkey", appKey);
+        headers.set("appsecret", appSecret);
+        headers.set("tr_id", "CTCA0903R"); // ★ 중요: 휴장일 조회용 ID
+        headers.set("tr_cont", "");        // 연속 거래 여부 (없음)
+        headers.set("custtype", "P");      // 개인
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        // 2. URL 및 파라미터 생성
+        // 결과 예시: https://.../chk-holiday?BASS_DT=20260110&CTX_AREA_NK=&CTX_AREA_FK=
+        URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl)
+                .path("/uapi/domestic-stock/v1/quotations/chk-holiday")
+                .queryParam("BASS_DT", dateStr) // 기준일자 (YYYYMMDD)
+                .queryParam("CTX_AREA_NK", "")  // 필수지만 빈 값
+                .queryParam("CTX_AREA_FK", "")  // 필수지만 빈 값
+                .build()
+                .toUri();
+
+        try {
+            log.info("휴장일 확인 요청 URI: {}", uri);
+
+            // 3. API 호출 (GET)
+            ResponseEntity<KisHolidayResponse> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.GET,
+                    entity,
+                    KisHolidayResponse.class
+            );
+
+            return response.getBody();
+
+        } catch (Exception e) {
+            log.error("❌ KIS 휴장일 조회 API 호출 실패: {}", e.getMessage());
+            return null; // 실패 시 null 반환 (호출부에서 처리)
+        }
+    }
+
     // --- 내부 DTO 클래스 (응답 매핑용) ---
     @Data
     static class KisPriceResponse {
@@ -221,5 +293,32 @@ public class KISClient {
     }
 
 
+    @Getter
+    @NoArgsConstructor
+    @ToString
+    public static class KisHolidayResponse {
 
+        @JsonProperty("ctx_area_nk")
+        private String ctxAreaNk;
+
+        @JsonProperty("ctx_area_fk")
+        private String ctxAreaFk;
+
+        @JsonProperty("output")
+        private List<HolidayInfo> output;
+
+        @Getter
+        @NoArgsConstructor
+        @ToString
+        public static class HolidayInfo {
+            @JsonProperty("bass_dt")
+            private String baseDate; // 기준일자 (20260110)
+
+            @JsonProperty("opnd_yn")
+            private String openYn;   // Y:개장, N:휴장
+
+            @JsonProperty("wday_dvsn_cd_name")
+            private String dayName;  // 요일명 (토요일)
+        }
+    }
 }

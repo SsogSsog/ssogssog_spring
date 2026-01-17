@@ -113,7 +113,7 @@ public class StockMetricRepositoryImpl implements StockMetricRepositoryCustom {
                     .where(netProfitGrowthRateCondition)
                     .where(debtRatioCondition)
                     .where(operatingProfitRatioCondition) // 영업이익률 조건 추가
-                    .where(dividendYieldCondition)
+                    .where(dividendYieldCondition) // 배당 수익률 조건 추가
                     .where(foreignOwnershipRateCondition)
                     .orderBy(qStockMetric.currentPrice.desc()) // TODO: OrderSpecifier로 동적으로 정렬 조건 설정하도록 변경하기
                     .offset(pageable.getOffset())

@@ -30,13 +30,16 @@ public class DailyPriceWriter {
     @Transactional
     // --- 저장 (중복 방지) ---
     public void saveDailyPrice(DailyPrice newPrice) {
-        Optional<DailyPrice> existing = dailyPriceRepository.findByStockIdAndDate(
-                newPrice.getStock().getId(), newPrice.getDate());
 
-        if (existing.isEmpty()) {
+        DailyPrice oldDailyPrice = dailyPriceRepository.findByStockIdAndDate(
+                newPrice.getStock().getId(), newPrice.getDate())
+                .orElse(null);
+
+        if (oldDailyPrice == null) {
             dailyPriceRepository.save(newPrice);
         } else {
-            // 이미 있으면 업데이트 로직 (필요시 구현)
+            // 이미 있으면 업데이트 로직
+            oldDailyPrice.updateFrom(newPrice);
         }
     }
 

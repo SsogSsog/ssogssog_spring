@@ -50,7 +50,14 @@ dependencies {
     implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.5.0'
 
     // caffeine(인메모리 캐시)
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'com.github.ben-manes.caffeine:caffeine:3.2.3'
+
+    // actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 
     // test

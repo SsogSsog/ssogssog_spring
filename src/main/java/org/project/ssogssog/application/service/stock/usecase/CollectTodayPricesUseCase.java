@@ -13,6 +13,7 @@ import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Slf4j
@@ -29,10 +30,16 @@ public class CollectTodayPricesUseCase {
      * 전 종목 시세 업데이트(당일 정보) (Batch용)
      */
     public void updateAllStockPrices() {
+
+        LocalDate today = LocalDate.now();
+        if(!dailyPricePort.isMarketOpen(today)){
+            log.info("오늘은 휴장일입니다...");
+            return;
+        }
+
         List<Stock> stocks = stockRepository.findAll();
 
         log.info("총 {}개 종목 시세 수집 시작...", stocks.size());
-        LocalDate today = LocalDate.now();
 
         int success = 0;
         int index = 0;
@@ -90,6 +97,17 @@ public class CollectTodayPricesUseCase {
                 return null;
             }
 
+            String businessDateStr = output.path("stck_bsop_date").asText().trim();
+            LocalDate actualDate;
+
+            if (businessDateStr.isEmpty()) {
+                // 만약 API가 날짜를 안 주면(그럴 리 없지만), 요청 날짜로 fallback 하거나 에러 처리
+                log.warn("영업일자(stck_bsop_date)가 비어있습니다. 요청 날짜로 대체합니다. 종목: {}", stock.getStockCode());
+                actualDate = date;
+            } else {
+                // "20240105" -> LocalDate 변환
+                actualDate = LocalDate.parse(businessDateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
+            }
 
             // "stck_prpr"가 현재가가 아닐 수도 있으니 로그 확인 필요
             String closeStr = output.path("stck_prpr").asText().trim();
@@ -120,7 +138,7 @@ public class CollectTodayPricesUseCase {
 
             return DailyPrice.builder()
                     .stock(stock)
-                    .date(date)
+                    .date(actualDate)
                     .closePrice(closePrice)
                     .openPrice(openPrice)
                     .highPrice(highPrice)
