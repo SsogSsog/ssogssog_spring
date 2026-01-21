@@ -8,6 +8,7 @@ import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.policy.ThemeEmojiRegistry;
 import org.project.ssogssog.domain.stock.projection.StockItemDTO;
 import org.project.ssogssog.domain.stock.projection.ThemeItemDTO;
+import org.project.ssogssog.domain.stock.projection.ThemeCountProjection;
 import org.project.ssogssog.domain.stock.repository.DailyPriceRepository;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
@@ -290,5 +291,21 @@ public class StockService {
     @Transactional(readOnly = true)
     public StockResponse.RankingResponseDTO getRanking(RankingType type) {
         return stockCacheReader.getRanking(type);
+    }
+
+    /**
+     * 테마별 주식 요약 조회 (총 개수, 상승 개수, 하락 개수)
+     * @param theme 테마명 (sector)
+     * @return ThemeCountDTO
+     */
+    @Transactional(readOnly = true)
+    public StockResponse.ThemeCountDTO getThemeCount(String theme) {
+        ThemeCountProjection projection = stockRepository.getThemeCount(theme);
+
+        return StockResponse.ThemeCountDTO.builder()
+                .totalCount(projection.totalCount())
+                .risingCount(projection.risingCount())
+                .fallingCount(projection.fallingCount())
+                .build();
     }
 }
