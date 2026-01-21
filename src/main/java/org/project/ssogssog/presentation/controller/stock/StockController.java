@@ -16,6 +16,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 import static org.springframework.data.domain.Sort.Direction.DESC;
 
 @RestController
@@ -217,6 +219,59 @@ public class StockController {
     @GetMapping("/volume")
     public ApiResponse<StockResponse.RankingResponseDTO> getTopVolumeStocks() {
         StockResponse.RankingResponseDTO result = stockService.getRanking(RankingType.VOLUME);
+        return ApiResponse.onSuccess(result);
+    }
+
+
+
+
+    // 검색 관련 기능
+    @Operation(
+            summary = "주식 자동완성 검색",
+            description = """
+            종목명 또는 종목코드에 키워드가 포함된 주식을 검색하여 자동완성 결과를 반환합니다.
+
+            - 실시간 검색을 위한 가벼운 API (최대 5개 반환)
+            - 종목명, 종목코드 모두에서 키워드 포함 여부 검색 (contains 방식)
+            """
+    )
+    @GetMapping("/search/autocomplete")
+    public ApiResponse<List<StockResponse.StockItemResponseDTO>> searchAutocomplete(
+            @Parameter(description = "검색 키워드 (종목명 또는 종목코드)", required = true)
+            @RequestParam
+            @NotBlank(message = "검색 키워드를 입력해주세요.")
+            String keyword,
+
+            @Parameter(description = "반환할 최대 개수 (기본값 5)")
+            @RequestParam(defaultValue = "5")
+            @Min(value = 1, message = "limit은 1 이상이어야 합니다.")
+            int limit
+    ) {
+        List<StockResponse.StockItemResponseDTO> result = stockService.searchAutocomplete(keyword, limit);
+        return ApiResponse.onSuccess(result);
+    }
+
+    @Operation(
+            summary = "주식 전체 검색",
+            description = """
+            종목명 또는 종목코드에 키워드가 포함된 주식을 검색하여 페이지네이션된 결과를 반환합니다.
+
+            - 검색 결과 전체를 페이지 단위로 조회
+            - 종목명, 종목코드 모두에서 키워드 포함 여부 검색 (contains 방식)
+            - 종가 기준 내림차순 정렬
+            """
+    )
+    @GetMapping("/search")
+    public ApiResponse<PageDTO<StockResponse.StockItemResponseDTO>> search(
+            @Parameter(description = "검색 키워드 (종목명 또는 종목코드)", required = true)
+            @RequestParam
+            @NotBlank(message = "검색 키워드를 입력해주세요.")
+            String keyword,
+
+            @PageableDefault(size = 10, sort = "closePrice", direction = DESC)
+            Pageable pageable
+    ) {
+        PageDTO<StockResponse.StockItemResponseDTO> result = stockService.search(keyword, pageable);
         return ApiResponse.onSuccess(result);
     }
 
