@@ -4,13 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.common.dto.condition.GrowthConditionDTO;
 import org.project.ssogssog.application.common.dto.condition.RangeConditionDTO;
+import org.project.ssogssog.application.service.stockmetric.api.dto.StockMetricResponse;
+import org.project.ssogssog.domain.stock.projection.StockItemProjection;
 import org.project.ssogssog.domain.stockmetric.enums.MetricBasePeriod;
 import org.project.ssogssog.domain.stockmetric.vo.StockMetricScreenerCondition;
-import org.project.ssogssog.domain.stock.entity.Stock;
-import org.project.ssogssog.domain.stockmetric.entity.StockMetric;
 import org.project.ssogssog.domain.stockmetric.repository.StockMetricRepository;
 import org.project.ssogssog.application.service.stockmetric.api.dto.StockMetricRequest;
-import org.project.ssogssog.application.service.stockmetric.api.dto.StockMetricResponse;
 import org.project.ssogssog.global.paging.SliceDTO;
 import org.project.ssogssog.presentation.controller.stockmetric.enums.MarketCapBucket;
 import org.project.ssogssog.presentation.controller.stockmetric.enums.StockPriceRange;
@@ -27,50 +26,26 @@ public class StockMetricService {
     private final StockMetricRepository stockMetricRepository;
 
     @Transactional(readOnly = true)
-    public SliceDTO<StockMetricResponse.ScreenerItemDTO> getScreener(StockMetricRequest.ScreenerRequestDTO dto, Pageable pageable) {
+    public SliceDTO<StockMetricResponse.StockItemResponseDTO> getScreener(StockMetricRequest.ScreenerRequestDTO dto, Pageable pageable) {
 
         StockMetricScreenerCondition condition = toCondition(dto);
 
-        // 레포지토리에서 조건에 해당하는 엔티티 목록 반환
-        Slice<StockMetric> metrics = stockMetricRepository.getScreener(condition, pageable);
+        // 레포지토리에서 조건 필터링 후 StockItemProjection 반환
+        Slice<StockItemProjection> projections = stockMetricRepository.getScreener(condition, pageable);
 
-        Slice<StockMetricResponse.ScreenerItemDTO> content = metrics.map(
-                this::toScreenerItemDto
-        );
+        Slice<StockMetricResponse.StockItemResponseDTO> content = projections.map(this::toStockItemDTO);
 
-        // Slice를 SliceDTO로 반환
         return SliceDTO.from(content);
-
     }
 
-    private StockMetricResponse.ScreenerItemDTO toScreenerItemDto(StockMetric metric) {
-        Stock stock = metric.getStock(); // LAZY라도 readOnly 트랜잭션 안이라면 OK
-
-        return StockMetricResponse.ScreenerItemDTO.builder()
-                .stockId(stock.getId())
-                .stockCode(stock.getStockCode())
-                .corpName(stock.getCorpName())
-
-                .currentPrice(metric.getCurrentPrice())
-                .marketCap(metric.getMarketCap())
-
-                .per(metric.getPer())
-                .roe(metric.getRoe())
-                .netProfitMargin(metric.getNetProfitMargin())
-
-                .debtRatio(metric.getDebtRatio())
-
-                .salesGrowthYoY(metric.getSalesGrowthYoY())
-                .netProfitGrowthYoY(metric.getNetProfitGrowthYoY())
-
-                .dividendYield(metric.getDividendYield())
-                .foreignOwnershipRate(metric.getForeignOwnershipRate())
-
-                .return3M(metric.getReturn3M())
-                .return6M(metric.getReturn6M())
-                .return12M(metric.getReturn12M())
-
-                .calculatedAt(metric.getCalculatedAt())
+    private StockMetricResponse.StockItemResponseDTO toStockItemDTO(StockItemProjection projection) {
+        return StockMetricResponse.StockItemResponseDTO.builder()
+                .stockId(projection.stockId())
+                .corpName(projection.corpName())
+                .stockCode(projection.stockCode())
+                .closePrice(projection.closePrice())
+                .volume(projection.volume())
+                .changeRate(projection.changeRate())
                 .build();
     }
 
