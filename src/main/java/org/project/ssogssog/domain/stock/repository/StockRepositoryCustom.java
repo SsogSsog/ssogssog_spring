@@ -15,4 +15,10 @@ public interface StockRepositoryCustom {
 
     ThemeCountProjection getThemeCount(String theme);
 
+    // 자동완성용 검색
+    List<StockItemProjection> searchAutocomplete(String keyword, int limit);
+
+    // 전체 검색
+    Page<StockItemProjection> search(String keyword, Pageable pageable);
+
 }

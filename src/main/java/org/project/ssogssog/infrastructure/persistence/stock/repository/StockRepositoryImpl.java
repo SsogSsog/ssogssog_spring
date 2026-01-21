@@ -144,4 +144,96 @@ public class StockRepositoryImpl implements StockRepositoryCustom {
         return new ThemeCountProjection(totalCount, risingCount, fallingCount);
     }
 
+    @Override
+    public List<StockItemProjection> searchAutocomplete(String keyword, int limit) {
+        if (keyword == null || keyword.isBlank()) {
+            return List.of();
+        }
+
+        QDailyPrice dpSub = new QDailyPrice("dpSub");
+
+        var latestDatePerStock = JPAExpressions
+                .select(dpSub.date.max())
+                .from(dpSub)
+                .where(dpSub.stock.eq(qStock));
+
+        String pattern = "%" + keyword + "%";
+
+        return jpaQueryFactory
+                .select(Projections.constructor(StockItemProjection.class,
+                        qStock.id,
+                        qStock.corpName,
+                        qStock.stockCode,
+                        qDailyPrice.closePrice,
+                        qDailyPrice.volume,
+                        qDailyPrice.changePrice,
+                        qDailyPrice.changeRate
+                ))
+                .from(qStock)
+                .leftJoin(qDailyPrice).on(
+                        qDailyPrice.stock.eq(qStock)
+                                .and(qDailyPrice.date.eq(latestDatePerStock))
+                )
+                .where(
+                        qStock.corpName.like(pattern)
+                                .or(qStock.stockCode.like(pattern))
+                )
+                .orderBy(qDailyPrice.closePrice.desc().nullsLast())
+                .limit(limit)
+                .fetch();
+    }
+
+    @Override
+    public Page<StockItemProjection> search(String keyword, Pageable pageable) {
+        if (keyword == null || keyword.isBlank()) {
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
+
+        QDailyPrice dpSub = new QDailyPrice("dpSub");
+
+        var latestDatePerStock = JPAExpressions
+                .select(dpSub.date.max())
+                .from(dpSub)
+                .where(dpSub.stock.eq(qStock));
+
+        String pattern = "%" + keyword + "%";
+
+        List<StockItemProjection> content = jpaQueryFactory
+                .select(Projections.constructor(StockItemProjection.class,
+                        qStock.id,
+                        qStock.corpName,
+                        qStock.stockCode,
+                        qDailyPrice.closePrice,
+                        qDailyPrice.volume,
+                        qDailyPrice.changePrice,
+                        qDailyPrice.changeRate
+                ))
+                .from(qStock)
+                .leftJoin(qDailyPrice).on(
+                        qDailyPrice.stock.eq(qStock)
+                                .and(qDailyPrice.date.eq(latestDatePerStock))
+                )
+                .where(
+                        qStock.corpName.like(pattern)
+                                .or(qStock.stockCode.like(pattern))
+                )
+                .orderBy(qDailyPrice.closePrice.desc().nullsLast())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = jpaQueryFactory
+                .select(qStock.count())
+                .from(qStock)
+                .where(
+                        qStock.corpName.like(pattern)
+                                .or(qStock.stockCode.like(pattern))
+                )
+                .fetchOne();
+
+        Long safeTotal = (total == null) ? 0L : total;
+
+        return new PageImpl<>(content, pageable, safeTotal);
+    }
+
 }
