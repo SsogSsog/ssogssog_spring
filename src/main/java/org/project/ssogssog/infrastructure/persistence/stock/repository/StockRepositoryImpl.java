@@ -4,8 +4,10 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.project.ssogssog.domain.stock.projection.StockItemDTO;
-import org.project.ssogssog.domain.stock.projection.ThemeItemDTO;
+import com.querydsl.core.Tuple;
+import org.project.ssogssog.domain.stock.projection.StockItemProjection;
+import org.project.ssogssog.domain.stock.projection.ThemeItemProjection;
+import org.project.ssogssog.domain.stock.projection.ThemeCountProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -25,13 +27,13 @@ public class StockRepositoryImpl implements StockRepositoryCustom {
     private static final QDailyPrice qDailyPrice = QDailyPrice.dailyPrice;
 
     @Override
-    public List<ThemeItemDTO> getThemeStockStats() {
+    public List<ThemeItemProjection> getThemeStockStats() {
 
         QDailyPrice dpSub = new QDailyPrice("dpSub"); // 서브쿼리용 별칭
 
         return jpaQueryFactory
                 .select(
-                        Projections.constructor(ThemeItemDTO.class,
+                        Projections.constructor(ThemeItemProjection.class,
                                 qStock.sector,
                                 qDailyPrice.changeRate
                         ))
@@ -55,7 +57,7 @@ public class StockRepositoryImpl implements StockRepositoryCustom {
     }
 
     @Override
-    public Page<StockItemDTO> getStocksForThemeOrderByClosePrice(String theme, Pageable pageable) {
+    public Page<StockItemProjection> getStocksForThemeOrderByClosePrice(String theme, Pageable pageable) {
 
         QDailyPrice dpSub = new QDailyPrice("dpSub"); // 서브쿼리용 별칭
 
@@ -65,9 +67,9 @@ public class StockRepositoryImpl implements StockRepositoryCustom {
                 .from(dpSub)
                 .where(dpSub.stock.eq(qStock));
 
-        List<StockItemDTO> content =
+        List<StockItemProjection> content =
                 jpaQueryFactory.select(
-                        Projections.constructor(StockItemDTO.class,
+                        Projections.constructor(StockItemProjection.class,
                                 qStock.id,
                                 qStock.corpName,
                                 qStock.stockCode,
@@ -97,6 +99,49 @@ public class StockRepositoryImpl implements StockRepositoryCustom {
         Long safeTotal = (total == null) ? 0L : total;
 
         return new PageImpl<>(content, pageable, safeTotal);
+    }
+
+    @Override
+    public ThemeCountProjection getThemeCount(String theme) {
+
+        QDailyPrice dpSub = new QDailyPrice("dpSub");
+
+        // 종목별 가장 최신 일자
+        var latestDatePerStock = JPAExpressions
+                .select(dpSub.date.max())
+                .from(dpSub)
+                .where(dpSub.stock.eq(qStock));
+
+        // 테마에 속한 주식들의 최신 changeRate 조회
+        List<Tuple> results = jpaQueryFactory
+                .select(
+                        qStock.id,
+                        qDailyPrice.changeRate
+                )
+                .from(qStock)
+                .leftJoin(qDailyPrice).on(
+                        qDailyPrice.stock.eq(qStock)
+                                .and(qDailyPrice.date.eq(latestDatePerStock))
+                )
+                .where(qStock.sector.eq(theme))
+                .fetch();
+
+        int totalCount = results.size();
+        int risingCount = 0;
+        int fallingCount = 0;
+
+        for (Tuple tuple : results) {
+            Double changeRate = tuple.get(qDailyPrice.changeRate);
+            if (changeRate != null) {
+                if (changeRate > 0) {
+                    risingCount++;
+                } else if (changeRate < 0) {
+                    fallingCount++;
+                }
+            }
+        }
+
+        return new ThemeCountProjection(totalCount, risingCount, fallingCount);
     }
 
 }

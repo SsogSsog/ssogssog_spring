@@ -4,7 +4,7 @@ import lombok.Builder;
 
 
 @Builder
-public record ThemeItemDTO(String themeName, Double changeRate) {
+public record ThemeItemProjection(String themeName, Double changeRate) {
 
 
 }

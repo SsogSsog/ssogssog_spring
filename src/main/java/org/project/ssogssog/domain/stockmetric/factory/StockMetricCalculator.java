@@ -20,6 +20,7 @@ public class StockMetricCalculator {
             DailyPrice latest,
             StockFinancial current,
             StockFinancial prev,
+            StockFinancial prevPrev,      // QoQ 계산용 직전직전 분기
             StockFinancial prevYearSame
     ) {
         if (latest == null) {
@@ -53,23 +54,26 @@ public class StockMetricCalculator {
         // 2. 레벨 지표 (PER, ROE, 순이익률, 부채비율)
         // -----------------------
 
-        // (1) PER = 주가 / EPS,   EPS = netIncome / listedShares
+        // (1) PER = 주가 / EPS,   EPS = 연율화된 netIncome / listedShares
         Double per = null;
 
+        // 연율화된 순이익 계산 (분기 누적 → 연간 추정)
+        String quarter = current.getQuarter();
+        Long annualizedNetIncome = annualizeNetIncome(netIncome, quarter);
 
         //XXX: PER는 "주가 > 0 & 순이익 > 0"인 경우에만 계산!! (적자는 N/A 취급)
         if (currentPrice != null && currentPrice > 0 &&
-                netIncome != null && netIncome > 0 &&
+                annualizedNetIncome != null && annualizedNetIncome > 0 &&
                 listedShares != null && listedShares > 0) {
 
-            double eps = (double) netIncome / listedShares;
+            double eps = (double) annualizedNetIncome / listedShares;
             if (eps != 0.0) {
                 per = safeDivide(currentPrice.doubleValue(), eps);
             }
         }
 
-        // (2) ROE(%) = netIncome / totalEquity * 100
-        Double roe = safeDivideToPercent(netIncome, totalEquity);
+        // (2) ROE(%) = 연율화된 netIncome / totalEquity * 100
+        Double roe = safeDivideToPercent(annualizedNetIncome, totalEquity);
 
         // (3) 순이익률(%) = netIncome / revenue * 100
         Double netProfitMargin = safeDivideToPercent(netIncome, revenue);
@@ -85,16 +89,27 @@ public class StockMetricCalculator {
         // 3. 성장성 지표 (QoQ / YoY)
         // -----------------------
 
-        // (5) 매출 성장률 QoQ = (curRev / prevRev - 1) * 100
+        // QoQ: 단독 분기 값 비교 (누적이 아닌 해당 분기만의 실적)
+        // - current 단독 = current 누적 - prev 누적 (1Q는 그대로)
+        // - prev 단독 = prev 누적 - prevPrev 누적 (1Q는 그대로)
+
+        // (5) 매출 성장률 QoQ = (current 단독 매출 / prev 단독 매출 - 1) * 100
         Double salesGrowthQoQ = null;
         if (prev != null) {
-            Long prevRev = prev.getRevenue();
-            if (revenue != null && prevRev != null && prevRev != 0) {
-                salesGrowthQoQ = ((double) revenue / prevRev - 1.0) * 100.0;
+            Long currentStandaloneRev = getStandaloneQuarterValue(revenue, prev.getRevenue(), quarter);
+            Long prevStandaloneRev = getStandaloneQuarterValue(
+                    prev.getRevenue(),
+                    prevPrev != null ? prevPrev.getRevenue() : null,
+                    prev.getQuarter()
+            );
+
+            if (currentStandaloneRev != null && prevStandaloneRev != null && prevStandaloneRev != 0) {
+                salesGrowthQoQ = ((double) currentStandaloneRev / prevStandaloneRev - 1.0) * 100.0;
             }
         }
 
-        // (6) 매출 성장률 YoY = (curRev / prevYearRev - 1) * 100
+        // (6) 매출 성장률 YoY = (당분기 누적 / 전년 동기 누적 - 1) * 100
+        // YoY는 누적 비교가 맞음 (동일 기간 비교)
         Double salesGrowthYoY = null;
         if (prevYearSame != null) {
             Long prevYearRev = prevYearSame.getRevenue();
@@ -103,12 +118,21 @@ public class StockMetricCalculator {
             }
         }
 
-        // (7) 순이익 성장률 QoQ = (curNI / prevNI - 1) * 100
-        Double netProfitGrowthQoQ = (prev != null)
-                ? safeEarningsGrowth(netIncome, prev.getNetIncome())
-                : null;
+        // (7) 순이익 성장률 QoQ = (current 단독 순이익 / prev 단독 순이익 - 1) * 100
+        Double netProfitGrowthQoQ = null;
+        if (prev != null) {
+            Long currentStandaloneNI = getStandaloneQuarterValue(netIncome, prev.getNetIncome(), quarter);
+            Long prevStandaloneNI = getStandaloneQuarterValue(
+                    prev.getNetIncome(),
+                    prevPrev != null ? prevPrev.getNetIncome() : null,
+                    prev.getQuarter()
+            );
 
-        // (8) 순이익 성장률 YoY = (curNI / prevYearNI - 1) * 100
+            netProfitGrowthQoQ = safeEarningsGrowth(currentStandaloneNI, prevStandaloneNI);
+        }
+
+        // (8) 순이익 성장률 YoY = (당분기 누적 / 전년 동기 누적 - 1) * 100
+        // YoY는 누적 비교가 맞음 (동일 기간 비교)
         Double netProfitGrowthYoY = (prevYearSame != null)
                 ? safeEarningsGrowth(netIncome, prevYearSame.getNetIncome())
                 : null;
@@ -179,6 +203,62 @@ public class StockMetricCalculator {
     // -----------------------
     // 헬퍼 메서드들
     // -----------------------
+
+    /**
+     * 분기 누적 데이터를 연간 기준으로 연율화하는 계수 반환
+     * - 1Q: 3개월 → 12개월 (×4)
+     * - 2Q: 6개월 → 12개월 (×2)
+     * - 3Q: 9개월 → 12개월 (×1.333...)
+     * - 4Q: 12개월 → 12개월 (×1)
+     */
+    private static double getAnnualizationFactor(String quarter) {
+        return switch (quarter) {
+            case "1Q" -> 4.0;
+            case "2Q" -> 2.0;
+            case "3Q" -> 12.0 / 9.0;  // ≈ 1.333
+            case "4Q" -> 1.0;
+            default -> 1.0;
+        };
+    }
+
+    /**
+     * 누적 순이익을 연율화하여 반환
+     */
+    private static Long annualizeNetIncome(Long netIncome, String quarter) {
+        if (netIncome == null || quarter == null) {
+            return null;
+        }
+        double factor = getAnnualizationFactor(quarter);
+        return Math.round(netIncome * factor);
+    }
+
+    /**
+     * 단독 분기 값 계산 (누적 데이터에서 해당 분기만 추출)
+     * - 1Q: 누적 = 단독 (그대로 반환)
+     * - 2Q/3Q/4Q: 당분기 누적 - 직전 분기 누적
+     *
+     * @param currentValue 현재 분기 누적값
+     * @param prevValue    직전 분기 누적값 (1Q인 경우 무시됨)
+     * @param quarter      현재 분기 ("1Q", "2Q", "3Q", "4Q")
+     * @return 단독 분기 값
+     */
+    private static Long getStandaloneQuarterValue(Long currentValue, Long prevValue, String quarter) {
+        if (currentValue == null) {
+            return null;
+        }
+
+        // 1Q는 누적 = 단독
+        if ("1Q".equals(quarter)) {
+            return currentValue;
+        }
+
+        // 2Q/3Q/4Q는 직전 분기 누적값이 필요
+        if (prevValue == null) {
+            return null;
+        }
+
+        return currentValue - prevValue;
+    }
 
     private static Double safeDivide(Double numerator, Double denominator) {
         if (numerator == null || denominator == null || denominator == 0.0) {

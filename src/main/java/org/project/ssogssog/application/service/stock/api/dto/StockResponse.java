@@ -220,4 +220,20 @@ public class StockResponse {
         private Double changeRate;
     }
 
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    @Schema(description = "테마별 주식 요약 정보")
+    public static class ThemeCountDTO {
+        @Schema(description = "테마에 속한 총 주식 개수", example = "50")
+        private int totalCount;
+
+        @Schema(description = "상승한 주식 개수 (changeRate > 0)", example = "30")
+        private int risingCount;
+
+        @Schema(description = "하락한 주식 개수 (changeRate < 0)", example = "15")
+        private int fallingCount;
+    }
+
 }

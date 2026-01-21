@@ -6,8 +6,9 @@ import org.project.ssogssog.application.service.stock.reader.StockCacheReader;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.policy.ThemeEmojiRegistry;
-import org.project.ssogssog.domain.stock.projection.StockItemDTO;
-import org.project.ssogssog.domain.stock.projection.ThemeItemDTO;
+import org.project.ssogssog.domain.stock.projection.StockItemProjection;
+import org.project.ssogssog.domain.stock.projection.ThemeItemProjection;
+import org.project.ssogssog.domain.stock.projection.ThemeCountProjection;
 import org.project.ssogssog.domain.stock.repository.DailyPriceRepository;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
@@ -48,7 +49,7 @@ public class StockService {
         // 3. 마지막에 총합으로 평균 계산
         // 4. (중요!!) arrayList 정렬하기(사전 순으로)
 
-        List<ThemeItemDTO> items = stockRepository.getThemeStockStats();
+        List<ThemeItemProjection> items = stockRepository.getThemeStockStats();
 
         Map<String, StockResponse.ThemeCollectedItemDTO> m = new HashMap<>();
         for(var item : items){
@@ -110,7 +111,7 @@ public class StockService {
 
     public PageDTO<StockResponse.StockItemResponseDTO> getStocksForTheme(String theme, Pageable pageable) {
 
-        Page<StockItemDTO> stockItems =
+        Page<StockItemProjection> stockItems =
                 stockRepository.getStocksForThemeOrderByClosePrice(theme, pageable);
 
         Page<StockResponse.StockItemResponseDTO> stockItemsResponse =
@@ -119,15 +120,15 @@ public class StockService {
         return PageDTO.from(stockItemsResponse);
     }
 
-    private StockResponse.StockItemResponseDTO toStockItemDTO(StockItemDTO stockItemDTO) {
+    private StockResponse.StockItemResponseDTO toStockItemDTO(StockItemProjection stockItemProjection) {
 
         return StockResponse.StockItemResponseDTO.builder()
-                .stockId(stockItemDTO.stockId())
-                .corpName(stockItemDTO.corpName())
-                .stockCode(stockItemDTO.stockCode())
-                .closePrice(stockItemDTO.closePrice())
-                .volume(stockItemDTO.volume())
-                .changeRate(stockItemDTO.changeRate())
+                .stockId(stockItemProjection.stockId())
+                .corpName(stockItemProjection.corpName())
+                .stockCode(stockItemProjection.stockCode())
+                .closePrice(stockItemProjection.closePrice())
+                .volume(stockItemProjection.volume())
+                .changeRate(stockItemProjection.changeRate())
                 .build();
     }
 
@@ -290,5 +291,21 @@ public class StockService {
     @Transactional(readOnly = true)
     public StockResponse.RankingResponseDTO getRanking(RankingType type) {
         return stockCacheReader.getRanking(type);
+    }
+
+    /**
+     * 테마별 주식 요약 조회 (총 개수, 상승 개수, 하락 개수)
+     * @param theme 테마명 (sector)
+     * @return ThemeCountDTO
+     */
+    @Transactional(readOnly = true)
+    public StockResponse.ThemeCountDTO getThemeCount(String theme) {
+        ThemeCountProjection projection = stockRepository.getThemeCount(theme);
+
+        return StockResponse.ThemeCountDTO.builder()
+                .totalCount(projection.totalCount())
+                .risingCount(projection.risingCount())
+                .fallingCount(projection.fallingCount())
+                .build();
     }
 }
