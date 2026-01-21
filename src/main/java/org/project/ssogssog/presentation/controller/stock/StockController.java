@@ -76,7 +76,29 @@ public class StockController {
 
     }
 
-    @GetMapping("/themes")
+    @GetMapping("/themes/{theme}/count")
+    @Operation(
+            summary = "테마별 주식 상승/하락 개수 조회",
+            description = """
+            입력된 테마(섹터)에 속한 주식들의 상승/하락 개수 정보를 반환합니다.
+
+            - totalCount: 해당 테마에 속한 총 주식 개수
+            - risingCount: 상승한 주식 개수 (최신 changeRate > 0)
+            - fallingCount: 하락한 주식 개수 (최신 changeRate < 0)
+
+            테마 자세히 보기 화면에서 주식 목록 API와 함께 병렬로 호출하여 사용합니다.
+            """
+    )
+    public ApiResponse<StockResponse.ThemeCountDTO> getThemeSummary(
+            @PathVariable
+            @NotBlank
+            String theme
+    ) {
+        StockResponse.ThemeCountDTO result = stockService.getThemeCount(theme);
+        return ApiResponse.onSuccess(result);
+    }
+
+    @GetMapping("/themes/{theme}")
     @Operation(
             summary = "테마별 주식 목록 조회 (최신 종가 기준 정렬 + 페이지네이션)",
             description = """
@@ -92,7 +114,7 @@ public class StockController {
 
     public ApiResponse<PageDTO<StockResponse.StockItemResponseDTO>> getStocksForTheme(
             @NotBlank
-            @RequestParam
+            @PathVariable
             String theme,
             @PageableDefault(
                     size=10,
