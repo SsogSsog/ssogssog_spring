@@ -21,6 +21,7 @@ import org.project.ssogssog.global.payload.exception.GeneralException;
 import org.project.ssogssog.presentation.controller.stock.enums.RankingType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -255,6 +256,30 @@ public class StockService {
 
     private Long longValue(Integer v) {
         return v == null ? null : v.longValue();
+    }
+
+    /**
+     * 특정 종목의 일별 시세 조회 (무한 스크롤용)
+     * @param stockCode 종목 코드
+     * @param pageable 페이지네이션 정보
+     * @return SliceDTO<DailyPriceItemDTO>
+     */
+    @Transactional(readOnly = true)
+    public SliceDTO<StockResponse.DailyPriceItemDTO> getDailyPriceHistory(String stockCode, Pageable pageable) {
+        Stock stock = stockRepository.findByStockCode(stockCode)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
+
+        Slice<StockResponse.DailyPriceItemDTO> slice = dailyPriceRepository
+                .findByStockOrderByDateDesc(stock, pageable)
+                .map(dp -> StockResponse.DailyPriceItemDTO.builder()
+                        .date(dp.getDate())
+                        .closePrice(dp.getClosePrice())
+                        .changePrice(dp.getChangePrice())
+                        .changeRate(dp.getChangeRate())
+                        .volume(dp.getVolume())
+                        .build());
+
+        return SliceDTO.from(slice);
     }
 
     /**

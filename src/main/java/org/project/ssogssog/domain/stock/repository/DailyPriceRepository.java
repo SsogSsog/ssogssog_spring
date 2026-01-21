@@ -2,6 +2,8 @@ package org.project.ssogssog.domain.stock.repository;
 
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -69,7 +71,7 @@ public interface DailyPriceRepository extends JpaRepository<DailyPrice, Long> {
         SELECT dp FROM DailyPrice dp
         JOIN FETCH dp.stock
         WHERE dp.date = (
-            SELECT MAX(dp2.date) 
+            SELECT MAX(dp2.date)
             FROM DailyPrice dp2
         )
         AND dp.volume IS NOT NULL
@@ -77,4 +79,9 @@ public interface DailyPriceRepository extends JpaRepository<DailyPrice, Long> {
         LIMIT 5
         """)
     List<DailyPrice> findTop5VolumeStocks();
+
+    /**
+     * 특정 종목의 일별 시세 조회 (날짜 내림차순, 무한 스크롤용)
+     */
+    Slice<DailyPrice> findByStockOrderByDateDesc(Stock stock, Pageable pageable);
 }

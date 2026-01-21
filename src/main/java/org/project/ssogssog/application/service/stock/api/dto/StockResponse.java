@@ -236,4 +236,26 @@ public class StockResponse {
         private int fallingCount;
     }
 
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    @Schema(description = "일별 시세 정보")
+    public static class DailyPriceItemDTO {
+        @Schema(description = "날짜", example = "2025-04-05")
+        private LocalDate date;
+
+        @Schema(description = "종가", example = "19070")
+        private Integer closePrice;
+
+        @Schema(description = "전일대비 가격 변동", example = "-640")
+        private Integer changePrice;
+
+        @Schema(description = "전일대비 등락률 (%)", example = "-3.00")
+        private Double changeRate;
+
+        @Schema(description = "거래량", example = "4265988")
+        private Long volume;
+    }
+
 }
