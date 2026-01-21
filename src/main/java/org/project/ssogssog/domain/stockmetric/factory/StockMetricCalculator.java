@@ -20,6 +20,7 @@ public class StockMetricCalculator {
             DailyPrice latest,
             StockFinancial current,
             StockFinancial prev,
+            StockFinancial prevPrev,      // QoQ 계산용 직전직전 분기
             StockFinancial prevYearSame
     ) {
         if (latest == null) {
@@ -88,16 +89,27 @@ public class StockMetricCalculator {
         // 3. 성장성 지표 (QoQ / YoY)
         // -----------------------
 
-        // (5) 매출 성장률 QoQ = (curRev / prevRev - 1) * 100
+        // QoQ: 단독 분기 값 비교 (누적이 아닌 해당 분기만의 실적)
+        // - current 단독 = current 누적 - prev 누적 (1Q는 그대로)
+        // - prev 단독 = prev 누적 - prevPrev 누적 (1Q는 그대로)
+
+        // (5) 매출 성장률 QoQ = (current 단독 매출 / prev 단독 매출 - 1) * 100
         Double salesGrowthQoQ = null;
         if (prev != null) {
-            Long prevRev = prev.getRevenue();
-            if (revenue != null && prevRev != null && prevRev != 0) {
-                salesGrowthQoQ = ((double) revenue / prevRev - 1.0) * 100.0;
+            Long currentStandaloneRev = getStandaloneQuarterValue(revenue, prev.getRevenue(), quarter);
+            Long prevStandaloneRev = getStandaloneQuarterValue(
+                    prev.getRevenue(),
+                    prevPrev != null ? prevPrev.getRevenue() : null,
+                    prev.getQuarter()
+            );
+
+            if (currentStandaloneRev != null && prevStandaloneRev != null && prevStandaloneRev != 0) {
+                salesGrowthQoQ = ((double) currentStandaloneRev / prevStandaloneRev - 1.0) * 100.0;
             }
         }
 
-        // (6) 매출 성장률 YoY = (curRev / prevYearRev - 1) * 100
+        // (6) 매출 성장률 YoY = (당분기 누적 / 전년 동기 누적 - 1) * 100
+        // YoY는 누적 비교가 맞음 (동일 기간 비교)
         Double salesGrowthYoY = null;
         if (prevYearSame != null) {
             Long prevYearRev = prevYearSame.getRevenue();
@@ -106,12 +118,21 @@ public class StockMetricCalculator {
             }
         }
 
-        // (7) 순이익 성장률 QoQ = (curNI / prevNI - 1) * 100
-        Double netProfitGrowthQoQ = (prev != null)
-                ? safeEarningsGrowth(netIncome, prev.getNetIncome())
-                : null;
+        // (7) 순이익 성장률 QoQ = (current 단독 순이익 / prev 단독 순이익 - 1) * 100
+        Double netProfitGrowthQoQ = null;
+        if (prev != null) {
+            Long currentStandaloneNI = getStandaloneQuarterValue(netIncome, prev.getNetIncome(), quarter);
+            Long prevStandaloneNI = getStandaloneQuarterValue(
+                    prev.getNetIncome(),
+                    prevPrev != null ? prevPrev.getNetIncome() : null,
+                    prev.getQuarter()
+            );
 
-        // (8) 순이익 성장률 YoY = (curNI / prevYearNI - 1) * 100
+            netProfitGrowthQoQ = safeEarningsGrowth(currentStandaloneNI, prevStandaloneNI);
+        }
+
+        // (8) 순이익 성장률 YoY = (당분기 누적 / 전년 동기 누적 - 1) * 100
+        // YoY는 누적 비교가 맞음 (동일 기간 비교)
         Double netProfitGrowthYoY = (prevYearSame != null)
                 ? safeEarningsGrowth(netIncome, prevYearSame.getNetIncome())
                 : null;
@@ -209,6 +230,34 @@ public class StockMetricCalculator {
         }
         double factor = getAnnualizationFactor(quarter);
         return Math.round(netIncome * factor);
+    }
+
+    /**
+     * 단독 분기 값 계산 (누적 데이터에서 해당 분기만 추출)
+     * - 1Q: 누적 = 단독 (그대로 반환)
+     * - 2Q/3Q/4Q: 당분기 누적 - 직전 분기 누적
+     *
+     * @param currentValue 현재 분기 누적값
+     * @param prevValue    직전 분기 누적값 (1Q인 경우 무시됨)
+     * @param quarter      현재 분기 ("1Q", "2Q", "3Q", "4Q")
+     * @return 단독 분기 값
+     */
+    private static Long getStandaloneQuarterValue(Long currentValue, Long prevValue, String quarter) {
+        if (currentValue == null) {
+            return null;
+        }
+
+        // 1Q는 누적 = 단독
+        if ("1Q".equals(quarter)) {
+            return currentValue;
+        }
+
+        // 2Q/3Q/4Q는 직전 분기 누적값이 필요
+        if (prevValue == null) {
+            return null;
+        }
+
+        return currentValue - prevValue;
     }
 
     private static Double safeDivide(Double numerator, Double denominator) {
