@@ -12,9 +12,9 @@ import org.project.ssogssog.domain.stockmetric.vo.StockMetricScreenerCondition;
 import org.project.ssogssog.domain.stockmetric.entity.QStockMetric;
 import org.project.ssogssog.domain.stockmetric.repository.StockMetricRepositoryCustom;
 import org.project.ssogssog.infrastructure.persistence.stockmetric.predicate.StockMetricPredicate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public class StockMetricRepositoryImpl implements StockMetricRepositoryCustom {
     private static final QDailyPrice qDailyPrice = QDailyPrice.dailyPrice;
 
     @Override
-    public Slice<StockItemProjection> getScreener(StockMetricScreenerCondition condition, Pageable pageable) {
+    public Page<StockItemProjection> getScreener(StockMetricScreenerCondition condition, Pageable pageable) {
 
         QDailyPrice dpSub = new QDailyPrice("dpSub");
 
@@ -113,8 +113,6 @@ public class StockMetricRepositoryImpl implements StockMetricRepositoryCustom {
                         condition.maxForeignOwnershipRate()
                 );
 
-        int size = pageable.getPageSize();
-
         // StockMetric 조건 필터링 + Stock + 최신 DailyPrice 조인하여 StockItemProjection 반환
         List<StockItemProjection> content =
                 jpaQueryFactory
@@ -145,15 +143,27 @@ public class StockMetricRepositoryImpl implements StockMetricRepositoryCustom {
                     .where(foreignOwnershipRateCondition)
                     .orderBy(qDailyPrice.closePrice.desc().nullsLast())  // TODO: OrderSpecifier로 동적으로 정렬 조건 설정하도록 변경하기
                     .offset(pageable.getOffset())
-                    .limit(size + 1L)
+                    .limit(pageable.getPageSize())
                     .fetch();
 
-        // content 사이즈로 추가 데이터가 존재하는지 판단
-        boolean hasNext = content.size() > size;
-        if (hasNext) {
-            content.remove(size);
-        }
+        // 전체 개수 조회
+        Long total = jpaQueryFactory
+                .select(qStockMetric.count())
+                .from(qStockMetric)
+                .where(currentPriceCondition)
+                .where(marketCapCondition)
+                .where(perCondition)
+                .where(roeCondition)
+                .where(salesGrowthRateCondition)
+                .where(netProfitGrowthRateCondition)
+                .where(debtRatioCondition)
+                .where(operatingProfitRatioCondition)
+                .where(dividendYieldCondition)
+                .where(foreignOwnershipRateCondition)
+                .fetchOne();
 
-        return new SliceImpl<>(content, pageable, hasNext);
+        Long safeTotal = (total == null) ? 0L : total;
+
+        return new PageImpl<>(content, pageable, safeTotal);
     }
 }

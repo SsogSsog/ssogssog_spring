@@ -10,11 +10,11 @@ import org.project.ssogssog.domain.stockmetric.enums.MetricBasePeriod;
 import org.project.ssogssog.domain.stockmetric.vo.StockMetricScreenerCondition;
 import org.project.ssogssog.domain.stockmetric.repository.StockMetricRepository;
 import org.project.ssogssog.application.service.stockmetric.api.dto.StockMetricRequest;
-import org.project.ssogssog.global.paging.SliceDTO;
+import org.project.ssogssog.global.paging.PageDTO;
 import org.project.ssogssog.presentation.controller.stockmetric.enums.MarketCapBucket;
 import org.project.ssogssog.presentation.controller.stockmetric.enums.StockPriceRange;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,16 +26,16 @@ public class StockMetricService {
     private final StockMetricRepository stockMetricRepository;
 
     @Transactional(readOnly = true)
-    public SliceDTO<StockMetricResponse.StockItemResponseDTO> getScreener(StockMetricRequest.ScreenerRequestDTO dto, Pageable pageable) {
+    public PageDTO<StockMetricResponse.StockItemResponseDTO> getScreener(StockMetricRequest.ScreenerRequestDTO dto, Pageable pageable) {
 
         StockMetricScreenerCondition condition = toCondition(dto);
 
         // 레포지토리에서 조건 필터링 후 StockItemProjection 반환
-        Slice<StockItemProjection> projections = stockMetricRepository.getScreener(condition, pageable);
+        Page<StockItemProjection> projections = stockMetricRepository.getScreener(condition, pageable);
 
-        Slice<StockMetricResponse.StockItemResponseDTO> content = projections.map(this::toStockItemDTO);
+        Page<StockMetricResponse.StockItemResponseDTO> content = projections.map(this::toStockItemDTO);
 
-        return SliceDTO.from(content);
+        return PageDTO.from(content);
     }
 
     private StockMetricResponse.StockItemResponseDTO toStockItemDTO(StockItemProjection projection) {

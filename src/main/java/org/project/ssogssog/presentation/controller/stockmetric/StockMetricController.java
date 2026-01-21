@@ -5,7 +5,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.project.ssogssog.application.service.stockmetric.api.StockMetricService;
 import org.project.ssogssog.application.service.stockmetric.api.dto.StockMetricResponse;
-import org.project.ssogssog.global.paging.SliceDTO;
+import org.project.ssogssog.global.paging.PageDTO;
 import org.project.ssogssog.global.payload.ApiResponse;
 import org.project.ssogssog.application.service.stockmetric.api.dto.StockMetricRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,11 +38,11 @@ public class StockMetricController {
             """
     )
     @PostMapping("/screener")
-    public ApiResponse<SliceDTO<StockMetricResponse.StockItemResponseDTO>> getScreener(
+    public ApiResponse<PageDTO<StockMetricResponse.StockItemResponseDTO>> getScreener(
             @Valid @RequestBody StockMetricRequest.ScreenerRequestDTO screenerRequestDTO,
             @PageableDefault(size=10, sort="closePrice", direction=DESC) Pageable pageable) {
 
-        SliceDTO<StockMetricResponse.StockItemResponseDTO> result = stockMetricService.getScreener(screenerRequestDTO, pageable);
+        PageDTO<StockMetricResponse.StockItemResponseDTO> result = stockMetricService.getScreener(screenerRequestDTO, pageable);
         return ApiResponse.onSuccess(result);
     }
 
