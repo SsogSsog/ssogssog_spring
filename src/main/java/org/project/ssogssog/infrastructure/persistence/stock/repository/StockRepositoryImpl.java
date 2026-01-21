@@ -5,8 +5,8 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import com.querydsl.core.Tuple;
-import org.project.ssogssog.domain.stock.projection.StockItemDTO;
-import org.project.ssogssog.domain.stock.projection.ThemeItemDTO;
+import org.project.ssogssog.domain.stock.projection.StockItemProjection;
+import org.project.ssogssog.domain.stock.projection.ThemeItemProjection;
 import org.project.ssogssog.domain.stock.projection.ThemeCountProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -27,13 +27,13 @@ public class StockRepositoryImpl implements StockRepositoryCustom {
     private static final QDailyPrice qDailyPrice = QDailyPrice.dailyPrice;
 
     @Override
-    public List<ThemeItemDTO> getThemeStockStats() {
+    public List<ThemeItemProjection> getThemeStockStats() {
 
         QDailyPrice dpSub = new QDailyPrice("dpSub"); // 서브쿼리용 별칭
 
         return jpaQueryFactory
                 .select(
-                        Projections.constructor(ThemeItemDTO.class,
+                        Projections.constructor(ThemeItemProjection.class,
                                 qStock.sector,
                                 qDailyPrice.changeRate
                         ))
@@ -57,7 +57,7 @@ public class StockRepositoryImpl implements StockRepositoryCustom {
     }
 
     @Override
-    public Page<StockItemDTO> getStocksForThemeOrderByClosePrice(String theme, Pageable pageable) {
+    public Page<StockItemProjection> getStocksForThemeOrderByClosePrice(String theme, Pageable pageable) {
 
         QDailyPrice dpSub = new QDailyPrice("dpSub"); // 서브쿼리용 별칭
 
@@ -67,9 +67,9 @@ public class StockRepositoryImpl implements StockRepositoryCustom {
                 .from(dpSub)
                 .where(dpSub.stock.eq(qStock));
 
-        List<StockItemDTO> content =
+        List<StockItemProjection> content =
                 jpaQueryFactory.select(
-                        Projections.constructor(StockItemDTO.class,
+                        Projections.constructor(StockItemProjection.class,
                                 qStock.id,
                                 qStock.corpName,
                                 qStock.stockCode,

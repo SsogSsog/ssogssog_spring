@@ -7,7 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.project.ssogssog.application.service.stock.api.StockService;
-import org.project.ssogssog.domain.stock.projection.ThemeItemDTO;
+import org.project.ssogssog.domain.stock.projection.ThemeItemProjection;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
 
@@ -29,12 +29,12 @@ class StockServiceTest {
     @DisplayName("섹터별 그룹핑 후 평균 계산 + themeName 오름차순 정렬 + totalCount는 그룹 개수")
     void getThemeStockStats_groupAndAverageAndSort() {
         // given
-        List<ThemeItemDTO> items = List.of(
-                new ThemeItemDTO("IT", 1.0),
-                new ThemeItemDTO("IT", 3.0),
-                new ThemeItemDTO("BIO", 10.0),
-                new ThemeItemDTO("BIO", 20.0),
-                new ThemeItemDTO("BIO", 30.0)
+        List<ThemeItemProjection> items = List.of(
+                new ThemeItemProjection("IT", 1.0),
+                new ThemeItemProjection("IT", 3.0),
+                new ThemeItemProjection("BIO", 10.0),
+                new ThemeItemProjection("BIO", 20.0),
+                new ThemeItemProjection("BIO", 30.0)
         );
 
         when(stockRepository.getThemeStockStats()).thenReturn(items);
@@ -72,12 +72,12 @@ class StockServiceTest {
     @DisplayName("themeName null/빈값 또는 changeRate null 은 필터링되어 결과에서 제외된다")
     void getThemeStockStats_filtersInvalidItems() {
         // given
-        List<ThemeItemDTO> items = List.of(
-                new ThemeItemDTO(null, 1.0),     // 제외
-                new ThemeItemDTO("", 2.0),       // 제외
-                new ThemeItemDTO("  ", 3.0),     // 제외
-                new ThemeItemDTO("IT", null),    // 제외
-                new ThemeItemDTO("IT", 5.0)      // 포함
+        List<ThemeItemProjection> items = List.of(
+                new ThemeItemProjection(null, 1.0),     // 제외
+                new ThemeItemProjection("", 2.0),       // 제외
+                new ThemeItemProjection("  ", 3.0),     // 제외
+                new ThemeItemProjection("IT", null),    // 제외
+                new ThemeItemProjection("IT", 5.0)      // 포함
         );
 
         when(stockRepository.getThemeStockStats()).thenReturn(items);
@@ -107,10 +107,10 @@ class StockServiceTest {
     @DisplayName("유효한 데이터가 하나도 없으면 빈 리스트와 totalCount=0을 반환한다")
     void getThemeStockStats_emptyWhenAllInvalid() {
         // given
-        List<ThemeItemDTO> items = List.of(
-                new ThemeItemDTO(null, 1.0),
-                new ThemeItemDTO("", 2.0),
-                new ThemeItemDTO("IT", null)
+        List<ThemeItemProjection> items = List.of(
+                new ThemeItemProjection(null, 1.0),
+                new ThemeItemProjection("", 2.0),
+                new ThemeItemProjection("IT", null)
         );
 
         when(stockRepository.getThemeStockStats()).thenReturn(items);
