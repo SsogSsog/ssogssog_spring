@@ -308,4 +308,34 @@ public class StockService {
                 .fallingCount(projection.fallingCount())
                 .build();
     }
+
+    /**
+     * 자동완성용 주식 검색 (종목명 또는 종목코드에 키워드 포함)
+     * @param keyword 검색 키워드
+     * @param limit 반환할 최대 개수
+     * @return StockItemResponseDTO 목록
+     */
+    @Transactional(readOnly = true)
+    public List<StockResponse.StockItemResponseDTO> searchAutocomplete(String keyword, int limit) {
+        List<StockItemProjection> projections = stockRepository.searchAutocomplete(keyword, limit);
+
+        return projections.stream()
+                .map(this::toStockItemDTO)
+                .toList();
+    }
+
+    /**
+     * 전체 주식 검색 (종목명 또는 종목코드에 키워드 포함, 페이지네이션)
+     * @param keyword 검색 키워드
+     * @param pageable 페이지네이션 정보
+     * @return PageDTO<StockItemResponseDTO>
+     */
+    @Transactional(readOnly = true)
+    public PageDTO<StockResponse.StockItemResponseDTO> search(String keyword, Pageable pageable) {
+        Page<StockItemProjection> projections = stockRepository.search(keyword, pageable);
+
+        Page<StockResponse.StockItemResponseDTO> result = projections.map(this::toStockItemDTO);
+
+        return PageDTO.from(result);
+    }
 }
