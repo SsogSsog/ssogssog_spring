@@ -39,6 +39,8 @@ public class StockMetricService {
     }
 
     private StockMetricResponse.StockItemResponseDTO toStockItemDTO(StockItemProjection projection) {
+
+        // 가격 변화량은 스크리너 조회에 필요없으므로 굳이 response에 반환하지 않음
         return StockMetricResponse.StockItemResponseDTO.builder()
                 .stockId(projection.stockId())
                 .corpName(projection.corpName())
