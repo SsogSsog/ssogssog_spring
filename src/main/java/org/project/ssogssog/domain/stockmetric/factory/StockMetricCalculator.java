@@ -53,23 +53,26 @@ public class StockMetricCalculator {
         // 2. 레벨 지표 (PER, ROE, 순이익률, 부채비율)
         // -----------------------
 
-        // (1) PER = 주가 / EPS,   EPS = netIncome / listedShares
+        // (1) PER = 주가 / EPS,   EPS = 연율화된 netIncome / listedShares
         Double per = null;
 
+        // 연율화된 순이익 계산 (분기 누적 → 연간 추정)
+        String quarter = current.getQuarter();
+        Long annualizedNetIncome = annualizeNetIncome(netIncome, quarter);
 
         //XXX: PER는 "주가 > 0 & 순이익 > 0"인 경우에만 계산!! (적자는 N/A 취급)
         if (currentPrice != null && currentPrice > 0 &&
-                netIncome != null && netIncome > 0 &&
+                annualizedNetIncome != null && annualizedNetIncome > 0 &&
                 listedShares != null && listedShares > 0) {
 
-            double eps = (double) netIncome / listedShares;
+            double eps = (double) annualizedNetIncome / listedShares;
             if (eps != 0.0) {
                 per = safeDivide(currentPrice.doubleValue(), eps);
             }
         }
 
-        // (2) ROE(%) = netIncome / totalEquity * 100
-        Double roe = safeDivideToPercent(netIncome, totalEquity);
+        // (2) ROE(%) = 연율화된 netIncome / totalEquity * 100
+        Double roe = safeDivideToPercent(annualizedNetIncome, totalEquity);
 
         // (3) 순이익률(%) = netIncome / revenue * 100
         Double netProfitMargin = safeDivideToPercent(netIncome, revenue);
@@ -179,6 +182,34 @@ public class StockMetricCalculator {
     // -----------------------
     // 헬퍼 메서드들
     // -----------------------
+
+    /**
+     * 분기 누적 데이터를 연간 기준으로 연율화하는 계수 반환
+     * - 1Q: 3개월 → 12개월 (×4)
+     * - 2Q: 6개월 → 12개월 (×2)
+     * - 3Q: 9개월 → 12개월 (×1.333...)
+     * - 4Q: 12개월 → 12개월 (×1)
+     */
+    private static double getAnnualizationFactor(String quarter) {
+        return switch (quarter) {
+            case "1Q" -> 4.0;
+            case "2Q" -> 2.0;
+            case "3Q" -> 12.0 / 9.0;  // ≈ 1.333
+            case "4Q" -> 1.0;
+            default -> 1.0;
+        };
+    }
+
+    /**
+     * 누적 순이익을 연율화하여 반환
+     */
+    private static Long annualizeNetIncome(Long netIncome, String quarter) {
+        if (netIncome == null || quarter == null) {
+            return null;
+        }
+        double factor = getAnnualizationFactor(quarter);
+        return Math.round(netIncome * factor);
+    }
 
     private static Double safeDivide(Double numerator, Double denominator) {
         if (numerator == null || denominator == null || denominator == 0.0) {
