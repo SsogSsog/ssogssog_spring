@@ -1,11 +1,15 @@
 package org.project.ssogssog.infrastructure.persistence.stockmetric.repository;
 
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.project.ssogssog.domain.stock.entity.QDailyPrice;
+import org.project.ssogssog.domain.stock.entity.QStock;
+import org.project.ssogssog.domain.stock.projection.StockItemProjection;
 import org.project.ssogssog.domain.stockmetric.vo.StockMetricScreenerCondition;
 import org.project.ssogssog.domain.stockmetric.entity.QStockMetric;
-import org.project.ssogssog.domain.stockmetric.entity.StockMetric;
 import org.project.ssogssog.domain.stockmetric.repository.StockMetricRepositoryCustom;
 import org.project.ssogssog.infrastructure.persistence.stockmetric.predicate.StockMetricPredicate;
 import org.springframework.data.domain.Pageable;
@@ -23,9 +27,19 @@ public class StockMetricRepositoryImpl implements StockMetricRepositoryCustom {
     private final StockMetricPredicate stockMetricPredicate;
 
     private static final QStockMetric qStockMetric = QStockMetric.stockMetric;
+    private static final QStock qStock = QStock.stock;
+    private static final QDailyPrice qDailyPrice = QDailyPrice.dailyPrice;
 
     @Override
-    public Slice<StockMetric> getScreener(StockMetricScreenerCondition condition, Pageable pageable) {
+    public Slice<StockItemProjection> getScreener(StockMetricScreenerCondition condition, Pageable pageable) {
+
+        QDailyPrice dpSub = new QDailyPrice("dpSub");
+
+        // 종목별 가장 최신 일자
+        var latestDatePerStock = JPAExpressions
+                .select(dpSub.date.max())
+                .from(dpSub)
+                .where(dpSub.stock.eq(qStock));
 
         BooleanExpression currentPriceCondition =
                 stockMetricPredicate.filterCurrentPrice(
@@ -101,10 +115,24 @@ public class StockMetricRepositoryImpl implements StockMetricRepositoryCustom {
 
         int size = pageable.getPageSize();
 
-        List<StockMetric> content =
+        // StockMetric 조건 필터링 + Stock + 최신 DailyPrice 조인하여 StockItemProjection 반환
+        List<StockItemProjection> content =
                 jpaQueryFactory
-                    .selectFrom(qStockMetric)
-                    .leftJoin(qStockMetric.stock).fetchJoin()// N+1 방지
+                    .select(Projections.constructor(StockItemProjection.class,
+                            qStock.id,
+                            qStock.corpName,
+                            qStock.stockCode,
+                            qDailyPrice.closePrice,
+                            qDailyPrice.volume,
+                            qDailyPrice.changePrice,
+                            qDailyPrice.changeRate
+                    ))
+                    .from(qStockMetric)
+                    .join(qStockMetric.stock, qStock)
+                    .leftJoin(qDailyPrice).on(
+                            qDailyPrice.stock.eq(qStock)
+                                    .and(qDailyPrice.date.eq(latestDatePerStock))
+                    )
                     .where(currentPriceCondition)
                     .where(marketCapCondition)
                     .where(perCondition)
@@ -112,10 +140,10 @@ public class StockMetricRepositoryImpl implements StockMetricRepositoryCustom {
                     .where(salesGrowthRateCondition)
                     .where(netProfitGrowthRateCondition)
                     .where(debtRatioCondition)
-                    .where(operatingProfitRatioCondition) // 영업이익률 조건 추가
-                    .where(dividendYieldCondition) // 배당 수익률 조건 추가
+                    .where(operatingProfitRatioCondition)
+                    .where(dividendYieldCondition)
                     .where(foreignOwnershipRateCondition)
-                    .orderBy(qStockMetric.currentPrice.desc()) // TODO: OrderSpecifier로 동적으로 정렬 조건 설정하도록 변경하기
+                    .orderBy(qDailyPrice.closePrice.desc().nullsLast())  // TODO: OrderSpecifier로 동적으로 정렬 조건 설정하도록 변경하기
                     .offset(pageable.getOffset())
                     .limit(size + 1L)
                     .fetch();
