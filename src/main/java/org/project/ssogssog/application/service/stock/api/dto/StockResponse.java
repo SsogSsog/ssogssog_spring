@@ -122,6 +122,7 @@ public class StockResponse {
             private Integer changeAmount;     // 전일 대비 가격 변동
             private Double changeRate;        // 전일 대비 변동률
             private Long previousClose;       // 전일 종가
+            private Long previousVolume;      // 전일 거래량
         }
 
         @Getter
@@ -256,6 +257,96 @@ public class StockResponse {
 
         @Schema(description = "거래량", example = "4265988")
         private Long volume;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    @Schema(description = "재무 정보 개요")
+    public static class FinancialOverviewResponseDTO {
+
+        @Schema(description = "재무 요약 (PER, ROE, 배당수익률, 부채비율)")
+        private FinancialSummary summary;
+
+        @Schema(description = "실적 분석 (연간/분기별 매출액, 영업이익, 당기순이익)")
+        private PerformanceAnalysis performance;
+
+        @Schema(description = "재무 안정성 지표 (부채총계, 자본총계)")
+        private FinancialStability stability;
+
+        @Getter
+        @AllArgsConstructor
+        @NoArgsConstructor
+        @Builder
+        @Schema(description = "재무 요약")
+        public static class FinancialSummary {
+            @Schema(description = "PER (주가수익비율)", example = "15.2")
+            private Double per;
+
+            @Schema(description = "ROE (자기자본이익률, %)", example = "12.5")
+            private Double roe;
+
+            @Schema(description = "배당수익률 (%)", example = "2.3")
+            private Double dividendYield;
+
+            @Schema(description = "부채비율 (%)", example = "45.0")
+            private Double debtRatio;
+        }
+
+        @Getter
+        @AllArgsConstructor
+        @NoArgsConstructor
+        @Builder
+        @Schema(description = "실적 분석")
+        public static class PerformanceAnalysis {
+            @Schema(description = "연간 실적 (최근 3년, 4Q 기준)")
+            private List<PerformanceItem> annual;
+
+            @Schema(description = "분기 실적 (최근 3분기)")
+            private List<PerformanceItem> quarterly;
+        }
+
+        @Getter
+        @AllArgsConstructor
+        @NoArgsConstructor
+        @Builder
+        @Schema(description = "실적 항목")
+        public static class PerformanceItem {
+            @Schema(description = "연도", example = "2024")
+            private Integer year;
+
+            @Schema(description = "분기", example = "4Q")
+            private String quarter;
+
+            @Schema(description = "매출액", example = "1000000000")
+            private Long revenue;
+
+            @Schema(description = "영업이익", example = "200000000")
+            private Long operatingProfit;
+
+            @Schema(description = "당기순이익", example = "150000000")
+            private Long netIncome;
+
+            @Schema(description = "연결재무제표 여부", example = "true")
+            private Boolean isConsolidated;
+        }
+
+        @Getter
+        @AllArgsConstructor
+        @NoArgsConstructor
+        @Builder
+        @Schema(description = "재무 안정성 지표")
+        public static class FinancialStability {
+            @Schema(description = "부채총계", example = "500000000")
+            private Long totalLiabilities;
+
+            @Schema(description = "자본총계", example = "1000000000")
+            private Long totalEquity;
+
+            @Schema(description = "연결재무제표 여부", example = "true")
+            private Boolean isConsolidated;
+        }
     }
 
 }
