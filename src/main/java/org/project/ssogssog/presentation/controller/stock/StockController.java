@@ -97,7 +97,35 @@ public class StockController {
         return ApiResponse.onSuccess(result);
     }
 
+    @GetMapping("/{stockCode}/financials")
+    @Operation(
+            summary = "종목 재무 정보 조회",
+            description = """
+            특정 종목(stockCode)의 재무 정보를 반환합니다.
 
+            - 재무 요약 (summary)
+                - PER, ROE, 배당수익률, 부채비율
+                - StockMetric 데이터가 없으면 null
+
+            - 실적 분석 (performance)
+                - 연간 실적 (annual): 최근 3년 4Q(사업보고서) 데이터
+                - 분기 실적 (quarterly): 최근 3분기 데이터
+                - 각 항목에 매출액, 영업이익, 당기순이익 포함
+                - 연결재무제표 우선, 없으면 별도 재무제표 사용
+
+            - 재무 안정성 (stability)
+                - 가장 최신 분기의 부채총계, 자본총계
+                - 연결재무제표 우선, 없으면 별도 재무제표 사용
+            """
+    )
+    public ApiResponse<StockResponse.FinancialOverviewResponseDTO> getFinancialOverview(
+            @PathVariable
+            @NotBlank
+            String stockCode
+    ) {
+        StockResponse.FinancialOverviewResponseDTO result = stockService.getFinancialOverview(stockCode);
+        return ApiResponse.onSuccess(result);
+    }
 
 
     /// 테마 관련 API

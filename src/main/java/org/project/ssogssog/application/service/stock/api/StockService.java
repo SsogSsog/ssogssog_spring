@@ -9,7 +9,9 @@ import org.project.ssogssog.domain.stock.policy.ThemeEmojiRegistry;
 import org.project.ssogssog.domain.stock.projection.StockItemProjection;
 import org.project.ssogssog.domain.stock.projection.ThemeItemProjection;
 import org.project.ssogssog.domain.stock.projection.ThemeCountProjection;
+import org.project.ssogssog.domain.stock.entity.StockFinancial;
 import org.project.ssogssog.domain.stock.repository.DailyPriceRepository;
+import org.project.ssogssog.domain.stock.repository.StockFinancialRepository;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
 import org.project.ssogssog.domain.stockmetric.entity.StockMetric;
@@ -36,6 +38,7 @@ public class StockService {
 
     private final StockRepository stockRepository;
     private final DailyPriceRepository dailyPriceRepository;
+    private final StockFinancialRepository stockFinancialRepository;
     private final StockMetricRepository stockMetricRepository;
 
     private final StockCacheReader stockCacheReader;
@@ -222,6 +225,7 @@ public class StockService {
                         .changeAmount(changeAmount)     // 가격변동
                         .changeRate(changeRate)         // 등락률
                         .previousClose(previousClose)   // 전날 종가
+                        .previousVolume(prev != null ? prev.getVolume() : null) // 전날 거래량
                         .build())
 
                 .chartData(StockResponse.StockOverviewResponseDTO.ChartData.builder()
@@ -280,6 +284,112 @@ public class StockService {
                         .build());
 
         return SliceDTO.from(slice);
+    }
+
+    private static final int ANNUAL_LIMIT = 3;
+    private static final int QUARTERLY_LIMIT = 3;
+
+    /**
+     * 특정 종목의 재무 정보 개요 조회
+     * @param stockCode 종목 코드
+     * @return FinancialOverviewResponseDTO
+     */
+    @Transactional(readOnly = true)
+    public StockResponse.FinancialOverviewResponseDTO getFinancialOverview(String stockCode) {
+        Stock stock = stockRepository.findByStockCode(stockCode)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
+
+        // 1. 재무 요약 (StockMetric에서)
+        StockMetric metric = stockMetricRepository.findByStock(stock).orElse(null);
+        StockResponse.FinancialOverviewResponseDTO.FinancialSummary summary = buildFinancialSummary(metric);
+
+        // 2. 실적 분석 (StockFinancial에서)
+        StockResponse.FinancialOverviewResponseDTO.PerformanceAnalysis performance = buildPerformanceAnalysis(stock);
+
+        // 3. 재무 안정성 (StockFinancial 최신 데이터에서)
+        StockResponse.FinancialOverviewResponseDTO.FinancialStability stability = buildFinancialStability(stock);
+
+        return StockResponse.FinancialOverviewResponseDTO.builder()
+                .summary(summary)
+                .performance(performance)
+                .stability(stability)
+                .build();
+    }
+
+    private StockResponse.FinancialOverviewResponseDTO.FinancialSummary buildFinancialSummary(StockMetric metric) {
+        if (metric == null) {
+            return null;
+        }
+        return StockResponse.FinancialOverviewResponseDTO.FinancialSummary.builder()
+                .per(metric.getPer())
+                .roe(metric.getRoe())
+                .dividendYield(metric.getDividendYield())
+                .debtRatio(metric.getDebtRatio())
+                .build();
+    }
+
+    private StockResponse.FinancialOverviewResponseDTO.PerformanceAnalysis buildPerformanceAnalysis(Stock stock) {
+        // 연간 실적: 연결재무제표 우선, 없으면 별도 재무제표
+        List<StockFinancial> annualData = stockFinancialRepository
+                .findAnnualByStockAndConsolidated(stock, true, ANNUAL_LIMIT);
+        if (annualData.isEmpty()) {
+            annualData = stockFinancialRepository
+                    .findAnnualByStockAndConsolidated(stock, false, ANNUAL_LIMIT);
+        }
+
+        // 분기 실적: 연결재무제표 우선, 없으면 별도 재무제표
+        List<StockFinancial> quarterlyData = stockFinancialRepository
+                .findQuarterlyByStockAndConsolidated(stock, true, QUARTERLY_LIMIT);
+        if (quarterlyData.isEmpty()) {
+            quarterlyData = stockFinancialRepository
+                    .findQuarterlyByStockAndConsolidated(stock, false, QUARTERLY_LIMIT);
+        }
+
+        List<StockResponse.FinancialOverviewResponseDTO.PerformanceItem> annual = annualData.stream()
+                .map(this::toPerformanceItem)
+                .toList();
+
+        List<StockResponse.FinancialOverviewResponseDTO.PerformanceItem> quarterly = quarterlyData.stream()
+                .map(this::toPerformanceItem)
+                .toList();
+
+        return StockResponse.FinancialOverviewResponseDTO.PerformanceAnalysis.builder()
+                .annual(annual)
+                .quarterly(quarterly)
+                .build();
+    }
+
+    private StockResponse.FinancialOverviewResponseDTO.PerformanceItem toPerformanceItem(StockFinancial sf) {
+        return StockResponse.FinancialOverviewResponseDTO.PerformanceItem.builder()
+                .year(sf.getYear())
+                .quarter(sf.getQuarter())
+                .revenue(sf.getRevenue())
+                .operatingProfit(sf.getOperatingProfit())
+                .netIncome(sf.getNetIncome())
+                .isConsolidated(sf.isConsolidated())
+                .build();
+    }
+
+    private StockResponse.FinancialOverviewResponseDTO.FinancialStability buildFinancialStability(Stock stock) {
+        // 연결재무제표 우선, 없으면 별도 재무제표
+        Optional<StockFinancial> latestOpt = stockFinancialRepository
+                .findTopByStockAndIsConsolidatedOrderByYearDescQuarterDesc(stock, true);
+
+        if (latestOpt.isEmpty()) {
+            latestOpt = stockFinancialRepository
+                    .findTopByStockAndIsConsolidatedOrderByYearDescQuarterDesc(stock, false);
+        }
+
+        if (latestOpt.isEmpty()) {
+            return null;
+        }
+
+        StockFinancial latest = latestOpt.get();
+        return StockResponse.FinancialOverviewResponseDTO.FinancialStability.builder()
+                .totalLiabilities(latest.getTotalLiabilities())
+                .totalEquity(latest.getTotalEquity())
+                .isConsolidated(latest.isConsolidated())
+                .build();
     }
 
     /**
