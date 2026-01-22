@@ -264,6 +264,7 @@ public class StockController {
     }
 
 
+    /// 홈 화면 정보 (top5 리스트)
     @Operation(
             summary = "급상승 종목 TOP 5 조회",
             description = "현재 시장에서 상승률 상위 5개 종목을 조회합니다."
