@@ -11,14 +11,13 @@ import org.project.ssogssog.global.paging.SliceDTO;
 import org.project.ssogssog.global.payload.ApiResponse;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
 import org.project.ssogssog.presentation.controller.stock.enums.RankingType;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static org.springframework.data.domain.Sort.Direction.DESC;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,6 +26,8 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
 public class StockController {
 
     private final StockService stockService;
+
+    /// 주식 상세 조회 관련 API
 
     @GetMapping("/{stockCode}/overview")
     @Operation(
@@ -62,6 +63,72 @@ public class StockController {
         return ApiResponse.onSuccess(result);
     }
 
+    @GetMapping("/{stockCode}/daily-prices")
+    @Operation(
+            summary = "종목 일별 시세 조회",
+            description = """
+            특정 종목(stockCode)의 일별 시세 정보를 날짜 내림차순으로 반환합니다.
+            무한 스크롤 방식의 페이지네이션(Slice)을 지원합니다.
+
+            - date: 거래일
+            - closePrice: 종가
+            - changePrice: 전일 대비 가격 변동
+            - changeRate: 전일 대비 등락률 (%)
+            - volume: 거래량
+            """
+    )
+    public ApiResponse<SliceDTO<StockResponse.DailyPriceItemDTO>> getDailyPriceHistory(
+            @PathVariable
+            @NotBlank
+            String stockCode,
+
+            @Parameter(description = "페이지 번호 (기본값 0)")
+            @RequestParam(defaultValue = "0")
+            @Min(value = 0, message = "page는 0 이상이어야 합니다.")
+            int page,
+
+            @Parameter(description = "페이지 크기 (기본값 30)")
+            @RequestParam(defaultValue = "30")
+            @Min(value = 1, message = "size는 1 이상이어야 합니다.")
+            int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date"));
+        SliceDTO<StockResponse.DailyPriceItemDTO> result = stockService.getDailyPriceHistory(stockCode, pageable);
+        return ApiResponse.onSuccess(result);
+    }
+
+    @GetMapping("/{stockCode}/financials")
+    @Operation(
+            summary = "종목 재무 정보 조회",
+            description = """
+            특정 종목(stockCode)의 재무 정보를 반환합니다.
+
+            - 재무 요약 (summary)
+                - PER, ROE, 배당수익률, 부채비율
+                - StockMetric 데이터가 없으면 null
+
+            - 실적 분석 (performance)
+                - 연간 실적 (annual): 최근 3년 4Q(사업보고서) 데이터
+                - 분기 실적 (quarterly): 최근 3분기 데이터
+                - 각 항목에 매출액, 영업이익, 당기순이익 포함
+                - 연결재무제표 우선, 없으면 별도 재무제표 사용
+
+            - 재무 안정성 (stability)
+                - 가장 최신 분기의 부채총계, 자본총계
+                - 연결재무제표 우선, 없으면 별도 재무제표 사용
+            """
+    )
+    public ApiResponse<StockResponse.FinancialOverviewResponseDTO> getFinancialOverview(
+            @PathVariable
+            @NotBlank
+            String stockCode
+    ) {
+        StockResponse.FinancialOverviewResponseDTO result = stockService.getFinancialOverview(stockCode);
+        return ApiResponse.onSuccess(result);
+    }
+
+
+    /// 테마 관련 API
 
     @GetMapping("/themes/stats")
     @Operation(
@@ -118,15 +185,20 @@ public class StockController {
             @NotBlank
             @PathVariable
             String theme,
-            @PageableDefault(
-                    size=10,
-                    sort="closePrice", direction=DESC
-            ) Pageable pageable
-            ){
 
+            @Parameter(description = "페이지 번호 (기본값 0)")
+            @RequestParam(defaultValue = "0")
+            @Min(value = 0, message = "page는 0 이상이어야 합니다.")
+            int page,
+
+            @Parameter(description = "페이지 크기 (기본값 10)")
+            @RequestParam(defaultValue = "10")
+            @Min(value = 1, message = "size는 1 이상이어야 합니다.")
+            int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "closePrice"));
         PageDTO<StockResponse.StockItemResponseDTO> result = stockService.getStocksForTheme(theme, pageable);
         return ApiResponse.onSuccess(result);
-
     }
 
 
@@ -192,6 +264,7 @@ public class StockController {
     }
 
 
+    /// 홈 화면 정보 (top5 리스트)
     @Operation(
             summary = "급상승 종목 TOP 5 조회",
             description = "현재 시장에서 상승률 상위 5개 종목을 조회합니다."
@@ -268,9 +341,17 @@ public class StockController {
             @NotBlank(message = "검색 키워드를 입력해주세요.")
             String keyword,
 
-            @PageableDefault(size = 10, sort = "closePrice", direction = DESC)
-            Pageable pageable
+            @Parameter(description = "페이지 번호 (기본값 0)")
+            @RequestParam(defaultValue = "0")
+            @Min(value = 0, message = "page는 0 이상이어야 합니다.")
+            int page,
+
+            @Parameter(description = "페이지 크기 (기본값 10)")
+            @RequestParam(defaultValue = "10")
+            @Min(value = 1, message = "size는 1 이상이어야 합니다.")
+            int size
     ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "closePrice"));
         PageDTO<StockResponse.StockItemResponseDTO> result = stockService.search(keyword, pageable);
         return ApiResponse.onSuccess(result);
     }
