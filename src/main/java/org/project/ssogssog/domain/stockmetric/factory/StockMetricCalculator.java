@@ -224,21 +224,30 @@ public class StockMetricCalculator {
 
         // Step 1: 올해 분기 합산 (개별 실적)
         switch (currentQuarter) {
-            case "3Q":
-                ttm += safeGetValue(currentYear, "3Q", valueExtractor);
-                ttm += safeGetValue(currentYear, "2Q", valueExtractor);
-                ttm += safeGetValue(currentYear, "1Q", valueExtractor);
-                hasValidData = currentYear.containsKey("3Q");
+            case "3Q": {
+                Long q3 = safeGetValue(currentYear, "3Q", valueExtractor);
+                Long q2 = safeGetValue(currentYear, "2Q", valueExtractor);
+                Long q1 = safeGetValue(currentYear, "1Q", valueExtractor);
+                if (q3 == null || q2 == null || q1 == null) return null;
+                ttm += q3 + q2 + q1;
+                hasValidData = true;
                 break;
-            case "2Q":
-                ttm += safeGetValue(currentYear, "2Q", valueExtractor);
-                ttm += safeGetValue(currentYear, "1Q", valueExtractor);
-                hasValidData = currentYear.containsKey("2Q");
+            }
+            case "2Q": {
+                Long q2 = safeGetValue(currentYear, "2Q", valueExtractor);
+                Long q1 = safeGetValue(currentYear, "1Q", valueExtractor);
+                if (q2 == null || q1 == null) return null;
+                ttm += q2 + q1;
+                hasValidData = true;
                 break;
-            case "1Q":
-                ttm += safeGetValue(currentYear, "1Q", valueExtractor);
-                hasValidData = currentYear.containsKey("1Q");
+            }
+            case "1Q": {
+                Long q1 = safeGetValue(currentYear, "1Q", valueExtractor);
+                if (q1 == null) return null;
+                ttm += q1;
+                hasValidData = true;
                 break;
+            }
         }
 
         log.debug("[{}] TTM({}) - 올해 {}까지 합산: {}", stockCode, fieldName, currentQuarter, ttm);
@@ -251,6 +260,7 @@ public class StockMetricCalculator {
 
         // 작년 4Q 단독 실적 계산: 4Q(연간) - 3Q - 2Q - 1Q
         Long lastYear4QStandalone = calculateLastYear4QStandalone(lastYear, valueExtractor, stockCode, fieldName);
+        if (lastYear4QStandalone == null) return null;
 
         switch (currentQuarter) {
             case "3Q":
@@ -260,13 +270,17 @@ public class StockMetricCalculator {
             case "2Q":
                 // 올해 2Q까지 있으면 → 작년 4Q 단독 + 작년 3Q
                 ttm += (lastYear4QStandalone != null ? lastYear4QStandalone : 0L);
-                ttm += safeGetValue(lastYear, "3Q", valueExtractor);
+                Long ly3 = safeGetValue(lastYear, "3Q", valueExtractor);
+                if (ly3 == null) return null;
+                ttm += ly3;
                 break;
             case "1Q":
                 // 올해 1Q만 있으면 → 작년 4Q 단독 + 작년 3Q + 작년 2Q
                 ttm += (lastYear4QStandalone != null ? lastYear4QStandalone : 0L);
-                ttm += safeGetValue(lastYear, "3Q", valueExtractor);
-                ttm += safeGetValue(lastYear, "2Q", valueExtractor);
+                Long ly3q = safeGetValue(lastYear, "3Q", valueExtractor);
+                Long ly2q = safeGetValue(lastYear, "2Q", valueExtractor);
+                if (ly3q == null || ly2q == null) return null;
+                ttm += ly3q + ly2q;
                 break;
         }
 
@@ -293,7 +307,7 @@ public class StockMetricCalculator {
         Long q2 = safeGetValue(lastYear, "2Q", valueExtractor);
         Long q3 = safeGetValue(lastYear, "3Q", valueExtractor);
 
-        if (annual == null) {
+        if (annual == null || q1 == null || q2 == null || q3 == null) {
             return null;
         }
 
@@ -332,6 +346,7 @@ public class StockMetricCalculator {
         Long q1 = safeGetValue(targetYear, "1Q", valueExtractor);
         Long q2 = safeGetValue(targetYear, "2Q", valueExtractor);
         Long q3 = safeGetValue(targetYear, "3Q", valueExtractor);
+        if (q1 == null || q2 == null || q3 == null) return null;
 
         return annual - q1 - q2 - q3;
     }
@@ -345,11 +360,11 @@ public class StockMetricCalculator {
             String quarter,
             java.util.function.Function<StockFinancial, Long> valueExtractor
     ) {
-        if (yearData == null) return 0L;
+        if (yearData == null) return null;
         StockFinancial sf = yearData.get(quarter);
-        if (sf == null) return 0L;
-        Long value = valueExtractor.apply(sf);
-        return value != null ? value : 0L;
+        if (sf == null) return null;
+
+        return valueExtractor.apply(sf);
     }
 
     private static String getPrevQuarter(String quarter) {
