@@ -22,6 +22,7 @@ import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
 import org.project.ssogssog.presentation.controller.stock.enums.RankingType;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -331,18 +332,18 @@ public class StockService {
     private StockResponse.FinancialOverviewResponseDTO.PerformanceAnalysis buildPerformanceAnalysis(Stock stock) {
         // 연간 실적: 연결재무제표 우선, 없으면 별도 재무제표
         List<StockFinancial> annualData = stockFinancialRepository
-                .findAnnualByStockAndConsolidated(stock, true, ANNUAL_LIMIT);
+                .findAnnualByStockAndConsolidated(stock, true, PageRequest.of(0, ANNUAL_LIMIT));
         if (annualData.isEmpty()) {
             annualData = stockFinancialRepository
-                    .findAnnualByStockAndConsolidated(stock, false, ANNUAL_LIMIT);
+                    .findAnnualByStockAndConsolidated(stock, false, PageRequest.of(0, ANNUAL_LIMIT));
         }
 
         // 분기 실적: 연결재무제표 우선, 없으면 별도 재무제표
         List<StockFinancial> quarterlyData = stockFinancialRepository
-                .findQuarterlyByStockAndConsolidated(stock, true, QUARTERLY_LIMIT);
+                .findQuarterlyByStockAndConsolidated(stock, true, PageRequest.of(0, QUARTERLY_LIMIT));
         if (quarterlyData.isEmpty()) {
             quarterlyData = stockFinancialRepository
-                    .findQuarterlyByStockAndConsolidated(stock, false, QUARTERLY_LIMIT);
+                    .findQuarterlyByStockAndConsolidated(stock, false, PageRequest.of(0, QUARTERLY_LIMIT));
         }
 
         List<StockResponse.FinancialOverviewResponseDTO.PerformanceItem> annual = annualData.stream()

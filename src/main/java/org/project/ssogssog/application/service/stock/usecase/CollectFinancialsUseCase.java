@@ -244,20 +244,24 @@ public class CollectFinancialsUseCase {
                 return null;
             }
 
-            // 1) CFS 먼저 시도
-            StockFinancial cfs = parseByFsDiv(stock, year, reportCode, listNode, "CFS", true);
-            if (cfs != null) {
+            boolean hasCFS = hasConsolidatedData(listNode);
+
+            if (hasCFS) {
+                // 1. CFS가 존재하면 -> CFS 파싱 시도
+                StockFinancial cfs = parseByFsDiv(stock, year, reportCode, listNode, "CFS", true);
+
+                if (cfs == null) {
+                    // CFS 데이터는 있는데 파싱 실패함
+                    log.error("🚨 CFS 존재함에도 파싱 실패 (계정명 확인 필요): {} ({})",
+                            stock.getCorpName(), stock.getStockCode());
+                    return null; // 저장하지 않음 (오히려 잘못된 OFS 저장보다 나음)
+                }
                 return cfs;
             }
 
-            // 2) CFS에서 아무 것도 못 건지면 OFS로 전체 대체
-            StockFinancial ofs = parseByFsDiv(stock, year, reportCode, listNode, "OFS", false);
-            if (ofs != null) {
-                log.debug("CFS 없음/매핑 실패 → OFS로 저장: {} ({}) year={}, quarter={}",
-                        stock.getCorpName(), stock.getStockCode(), year,
-                        ParserUtils.convertReportCodeToQuarter(reportCode));
-            }
-            return ofs;
+            // 2. CFS가 아예 없으면 -> OFS 파싱 시도
+            log.debug("CFS 데이터 없음 -> OFS 시도: {}", stock.getCorpName());
+            return parseByFsDiv(stock, year, reportCode, listNode, "OFS", false);
 
         } catch (Exception e) {
             log.warn("파싱 에러: {} ({})", stock.getCorpName(), stock.getStockCode());
@@ -277,38 +281,103 @@ public class CollectFinancialsUseCase {
                 .stock(stock)
                 .year(year)
                 .quarter(ParserUtils.convertReportCodeToQuarter(reportCode))
-                .isConsolidated(isConsolidated); // OFS면 false로 내려감
+                .isConsolidated(isConsolidated);
 
-        boolean isDataFound = false;
+        boolean isDataFound = false; // 하나라도 유효한 데이터를 찾았는지 확인
+        boolean foundControllingNetIncome = false; // '지배주주 순이익'을 찾았는지 여부 (우선순위 로직용)
 
         for (JsonNode item : listNode) {
+            // 1. 재무제표 구분(CFS/OFS) 체크
             if (!fsDivToUse.equals(item.path("fs_div").asText())) continue;
 
-            String accountName = item.path("account_nm").asText();
-            Long amount = ParserUtils.parseAmount(item.path("thstrm_amount").asText());
+            // 2. [중요] 계정명 공백 제거 (파싱 정확도 향상)
+            String accountName = item.path("account_nm").asText().trim();
 
-            if (accountName.contains("매출액") || accountName.equals("수익(매출액)")) {
-                builder.revenue(amount);
-                isDataFound = true;
-            } else if (accountName.contains("영업이익")) { // "영업이익(손실)" 포함
-                builder.operatingProfit(amount);
-                isDataFound = true;
-            } else if (accountName.contains("당기순이익")) { // "당기순이익(손실)" 포함
-                builder.netIncome(amount);
-                isDataFound = true;
-            } else if (accountName.equals("자산총계")) {
-                builder.totalAssets(amount);
-                //isDataFound = true;
-            } else if (accountName.equals("부채총계")) {
-                builder.totalLiabilities(amount);
-                //isDataFound = true;
-            } else if (accountName.equals("자본총계")) {
-                builder.totalEquity(amount);
-                isDataFound = true;
+            // 3. [중요] 금액은 아직 파싱하지 않고 문자열로만 둠 (불필요한 데이터 파싱하다 에러나서 멈추는 것 방지)
+            String amountStr = item.path("thstrm_amount").asText().trim();
+
+            // 값을 저장할 변수 (try-catch 안에서 할당)
+            Long amount;
+
+            try {
+                // 4. 내가 찾는 계정명인지 먼저 확인 -> 맞으면 그때 파싱 시도
+                if (isTargetAccount(accountName)) {
+
+                    amount = ParserUtils.parseAmount(amountStr); // 여기서 에러나면 catch로 가서 다음 항목 진행
+
+                    // --- [로직 1] 매출액 (다양한 표현 대응) ---
+                    if (accountName.equals("매출액") || accountName.equals("수익(매출액)") || accountName.equals("영업수익")) {
+                        builder.revenue(amount);
+                        isDataFound = true;
+                    }
+                    // --- [로직 2] 영업이익 ---
+                    else if (accountName.equals("영업이익") || accountName.equals("영업이익(손실)")) {
+                        builder.operatingProfit(amount);
+                        isDataFound = true;
+                    }
+                    // --- [로직 3] 당기순이익 (핵심! 우선순위 적용) ---
+                    else if (accountName.contains("당기순이익") || accountName.contains("순이익")) {
+
+                        // A. 비지배지분은 무조건 무시 (PER 뻥튀기 주범)
+                        if (accountName.contains("비지배")) {
+                            continue;
+                        }
+
+                        // B. 지배주주(지배기업) 순이익 발견 -> 최우선으로 저장 및 깃발 꽂기
+                        if (accountName.contains("지배")) {
+                            builder.netIncome(amount);
+                            foundControllingNetIncome = true;
+                            isDataFound = true;
+                        }
+                        // C. 일반 '당기순이익' -> 아직 지배주주 값을 못 찾았을 때만 임시 저장 (Fallback)
+                        else if (!foundControllingNetIncome) {
+                            builder.netIncome(amount);
+                            isDataFound = true;
+                        }
+                    }
+                    // --- [로직 4] 재무상태표 항목 ---
+                    else if (accountName.equals("자산총계")) {
+                        builder.totalAssets(amount);
+                    } else if (accountName.equals("부채총계")) {
+                        builder.totalLiabilities(amount);
+                    } else if (accountName.equals("자본총계")) {
+                        builder.totalEquity(amount);
+                        isDataFound = true;
+                    }
+                }
+            } catch (Exception e) {
+                // 특정 필드 파싱 중 에러가 나도(빈 문자열 등), 로그만 남기고 다음 필드(Row)를 계속 탐색함
+                // 절대 null을 리턴하거나 메서드를 종료하지 않음!
+                log.trace("필드 파싱 스킵: {} - {}", accountName, amountStr);
+                continue;
             }
         }
 
+        // 유효한 데이터를 하나라도 건졌으면 객체 반환, 아니면 null
         return isDataFound ? builder.build() : null;
+    }
+
+    /**
+     * 파싱 대상 계정명인지 확인하는 헬퍼 메서드
+     */
+    private boolean isTargetAccount(String name) {
+        return name.contains("매출") || name.contains("수익") ||
+                name.contains("영업이익") ||
+                name.contains("순이익") ||
+                name.equals("자산총계") || name.equals("부채총계") || name.equals("자본총계");
+    }
+
+    // 리스트 안에 'CFS(연결)' 데이터가 존재하는지 단순 체크
+    private boolean hasConsolidatedData(JsonNode listNode) {
+        if (listNode.isArray()) {
+            for (JsonNode node : listNode) {
+                // fs_div 필드가 "CFS"인 게 하나라도 있으면 true
+                if ("CFS".equals(node.path("fs_div").asText())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 }
