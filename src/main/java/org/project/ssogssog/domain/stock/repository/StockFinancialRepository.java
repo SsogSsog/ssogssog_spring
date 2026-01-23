@@ -66,4 +66,10 @@ public interface StockFinancialRepository extends JpaRepository<StockFinancial, 
      */
     Optional<StockFinancial> findTopByStockAndIsConsolidatedOrderByYearDescQuarterDesc(
             Stock stock, boolean isConsolidated);
+
+    /**
+     * 특정 종목의 특정 연도 모든 분기 데이터 조회 (TTM 계산용)
+     */
+    List<StockFinancial> findByStockAndYearAndIsConsolidatedOrderByQuarterAsc(
+            Stock stock, Integer year, boolean isConsolidated);
 }

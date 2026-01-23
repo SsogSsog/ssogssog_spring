@@ -11,9 +11,12 @@ import org.project.ssogssog.domain.stockmetric.entity.StockMetric;
 import org.project.ssogssog.domain.stockmetric.factory.StockMetricCalculator;
 import org.project.ssogssog.domain.stockmetric.repository.StockMetricRepository;
 import org.project.ssogssog.domain.stockmetric.vo.MetricValues;
-import org.project.ssogssog.domain.stockmetric.vo.YearQuarter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -31,7 +34,6 @@ public class StockMetricWriter {
     @Transactional
     public void refreshMetricForStock(Stock stock) {
 
-
         DailyPrice latestDailyPrice = dailyPriceRepository
                 .findTopByStockOrderByDateDesc(stock)
                 .orElse(null);
@@ -41,43 +43,41 @@ public class StockMetricWriter {
                 .orElse(null);
 
         if (latestDailyPrice == null) {
-            log.warn("❌ StockMetric 계산 불가 - 일별시세 정보 부족. stockId={}, code={}",
+            log.warn("StockMetric 계산 불가 - 일별시세 정보 부족. stockId={}, code={}",
                     stock.getId(), stock.getStockCode());
             return;
         }
 
-        if(latestStockFinancial == null){
-            log.warn("❌ StockMetric 계산 불가 - 재무제표 정보 부족. stockId={}, code={}",
+        if (latestStockFinancial == null) {
+            log.warn("StockMetric 계산 불가 - 재무제표 정보 부족. stockId={}, code={}",
                     stock.getId(), stock.getStockCode());
             return;
         }
 
-        final int latestYear = latestStockFinancial.getYear();          // 최근 년도
-        final String latestQuarter = latestStockFinancial.getQuarter(); // 최근 분기
-        final YearQuarter prevQuarter = YearQuarter.prevQuarter(latestYear, latestQuarter);   // 직전 분기 YearQuarter
-        final YearQuarter prevPrevQuarter = YearQuarter.prevQuarter(prevQuarter.year(), prevQuarter.quarter()); // 직전직전 분기
-        final YearQuarter prevYear = YearQuarter.prevYear(latestYear, latestQuarter);         // 작년 YearQuarter
+        final int currentYear = latestStockFinancial.getYear();
+        final String currentQuarter = latestStockFinancial.getQuarter();
+        final boolean isConsolidated = latestStockFinancial.isConsolidated();
+        final int lastYear = currentYear - 1;
 
-        StockFinancial prevQuarterStockFinancial = stockFinancialRepository
-                .findByStockIdAndYearAndQuarter(stock.getId(), prevQuarter.year(), prevQuarter.quarter())
-                .orElse(null);
+        // 올해 분기별 재무 데이터 조회 → Map<"1Q", StockFinancial> 형태
+        Map<String, StockFinancial> currentYearMap = toQuarterMap(
+                stockFinancialRepository.findByStockAndYearAndIsConsolidatedOrderByQuarterAsc(
+                        stock, currentYear, isConsolidated)
+        );
 
-        // QoQ 계산을 위한 직전직전 분기 (prev의 단독 분기 값 계산용)
-        StockFinancial prevPrevQuarterStockFinancial = stockFinancialRepository
-                .findByStockIdAndYearAndQuarter(stock.getId(), prevPrevQuarter.year(), prevPrevQuarter.quarter())
-                .orElse(null);
+        // 작년 분기별 재무 데이터 조회 → Map<"1Q"~"4Q", StockFinancial> 형태
+        Map<String, StockFinancial> lastYearMap = toQuarterMap(
+                stockFinancialRepository.findByStockAndYearAndIsConsolidatedOrderByQuarterAsc(
+                        stock, lastYear, isConsolidated)
+        );
 
-        StockFinancial prevYearStockFinancial = stockFinancialRepository
-                .findByStockIdAndYearAndQuarter(stock.getId(), prevYear.year(), prevYear.quarter())
-                .orElse(null);
+        log.debug("[{}] 재무 데이터 조회 완료 - 올해({}): {}, 작년({}): {}",
+                stock.getStockCode(), currentYear, currentYearMap.keySet(),
+                lastYear, lastYearMap.keySet());
 
-        // currentPrice, marketCap
-        // per, roe, netProfitMargin, debtRatio,
-        // salesGrowthQoQ, salesGrowthYoY, netProfitGrowthQoQ, netProfitGrowthYoY,
-        // dividendYield, foreignOwnershipRate, return3M/6M/12M 계산
+        // TTM 기반 메트릭 계산
         MetricValues metricValues = StockMetricCalculator.calculate(
-                stock, latestDailyPrice, latestStockFinancial,
-                prevQuarterStockFinancial, prevPrevQuarterStockFinancial, prevYearStockFinancial);
+                stock, latestDailyPrice, currentYearMap, lastYearMap, currentQuarter);
 
 
         StockMetric metric = stockMetricRepository
@@ -106,4 +106,15 @@ public class StockMetricWriter {
         stockMetricRepository.save(metric);
     }
 
+    /**
+     * List<StockFinancial> → Map<Quarter, StockFinancial> 변환
+     */
+    private Map<String, StockFinancial> toQuarterMap(List<StockFinancial> financials) {
+        return financials.stream()
+                .collect(Collectors.toMap(
+                        StockFinancial::getQuarter,
+                        sf -> sf,
+                        (existing, replacement) -> existing  // 중복 시 기존 값 유지
+                ));
+    }
 }
