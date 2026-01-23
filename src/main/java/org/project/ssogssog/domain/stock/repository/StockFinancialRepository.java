@@ -2,6 +2,7 @@ package org.project.ssogssog.domain.stock.repository;
 
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.entity.StockFinancial;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -38,12 +39,11 @@ public interface StockFinancialRepository extends JpaRepository<StockFinancial, 
              AND sf.quarter = '4Q'
              AND sf.isConsolidated = :isConsolidated
            ORDER BY sf.year DESC
-           LIMIT :limit
            """)
     List<StockFinancial> findAnnualByStockAndConsolidated(
             @Param("stock") Stock stock,
             @Param("isConsolidated") boolean isConsolidated,
-            @Param("limit") int limit);
+            Pageable pageable);
 
     /**
      * 분기 실적 조회 (최근 N분기)
@@ -54,12 +54,11 @@ public interface StockFinancialRepository extends JpaRepository<StockFinancial, 
            WHERE sf.stock = :stock
              AND sf.isConsolidated = :isConsolidated
            ORDER BY sf.year DESC, sf.quarter DESC
-           LIMIT :limit
            """)
     List<StockFinancial> findQuarterlyByStockAndConsolidated(
             @Param("stock") Stock stock,
             @Param("isConsolidated") boolean isConsolidated,
-            @Param("limit") int limit);
+            Pageable pageable);
 
     /**
      * 가장 최신 재무제표 1건 조회 (재무 안정성 지표용)
