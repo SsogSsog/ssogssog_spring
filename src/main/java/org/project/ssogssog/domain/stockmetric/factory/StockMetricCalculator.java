@@ -1,5 +1,6 @@
 package org.project.ssogssog.domain.stockmetric.factory;
 
+import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.entity.StockFinancial;
@@ -7,165 +8,166 @@ import org.project.ssogssog.domain.stockmetric.vo.MetricValues;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Map;
 
 /**
- * 순수 도메인 계산용 클래스.
- * - 외부 IO/리포지토리 접근 없음
- * - 입력(DailyPrice, StockFinancial...)을 받아 MetricValues만 계산해서 돌려줌
+ * 주식 지표 계산기 (TTM 기반)
+ *
+ * OpenDART 데이터 특성:
+ * - 1Q, 2Q, 3Q: 해당 분기의 개별(단독) 실적
+ * - 4Q: 연간 누적 실적 (1Q+2Q+3Q+4Q)
+ *
+ * TTM(Trailing Twelve Months) 계산:
+ * - 최근 12개월 실적을 합산하여 연간 기준 지표 산출
  */
+@Slf4j
 public class StockMetricCalculator {
 
+    /**
+     * 메트릭 계산 메서드
+     *
+     * @param stock             종목 정보
+     * @param latest            최신 일별 시세
+     * @param currentYear       올해 분기별 재무 데이터 (key: "1Q", "2Q", "3Q", "4Q")
+     * @param lastYear          작년 분기별 재무 데이터 (key: "1Q", "2Q", "3Q", "4Q")
+     * @param currentQuarter    현재 기준 분기 (예: "3Q")
+     */
     public static MetricValues calculate(
             Stock stock,
             DailyPrice latest,
-            StockFinancial current,
-            StockFinancial prev,
-            StockFinancial prevPrev,      // QoQ 계산용 직전직전 분기
-            StockFinancial prevYearSame
+            Map<String, StockFinancial> currentYear,
+            Map<String, StockFinancial> lastYear,
+            String currentQuarter
     ) {
+        String stockCode = stock != null ? stock.getStockCode() : "unknown";
+
+        // 필수 데이터 검증
         if (latest == null) {
-            throw new IllegalArgumentException("최신 시세 데이터(DailyPrice)가 필요합니다. stockCode: " +
-                    (stock != null ? stock.getStockCode() : "unknown"));
+            log.warn("[{}] 계산 불가 - DailyPrice 없음", stockCode);
+            return null;
         }
+        if (currentYear == null || currentYear.isEmpty()) {
+            log.warn("[{}] 계산 불가 - 올해 재무 데이터 없음", stockCode);
+            return null;
+        }
+
+        StockFinancial current = currentYear.get(currentQuarter);
         if (current == null) {
-            throw new IllegalArgumentException("현재 재무 데이터(StockFinancial)가 필요합니다. stockCode: " +
-                    (stock != null ? stock.getStockCode() : "unknown"));
+            log.warn("[{}] 계산 불가 - 현재 분기({}) 데이터 없음", stockCode, currentQuarter);
+            return null;
         }
 
         // -----------------------
         // 1. 기본 값들
         // -----------------------
         Integer currentPrice = latest.getClosePrice();
-        Long marketCap = latest.getMarketCap();   // 혹은 currentPrice * listedShares 로 재계산
+        Long marketCap = latest.getMarketCap();
+        Long listedShares = latest.getListedShares();
+        Long foreignHeldShares = latest.getForeignHeldShares();
 
-        // 가장 보고서의 재무 값 (연간/분기 구분 없이 "current" 기준)
-        Long revenue = current.getRevenue();        // 매출액
-        Long netIncome = current.getNetIncome();    // 당기순이익
-        Long operatingProfit = current.getOperatingProfit(); // 영업이익
-        Long totalAssets = current.getTotalAssets();            // 자산총계
-        Long totalLiabilities = current.getTotalLiabilities();  // 부채총계
-        Long totalEquity = current.getTotalEquity();    // 자본총계
+        Long totalEquity = current.getTotalEquity();
+        Long totalLiabilities = current.getTotalLiabilities();
 
-        // 발행주식수, 외국인 보유주식수
-        Long listedShares = latest.getListedShares();               // 발행주식수
-        Long foreignHeldShares = latest.getForeignHeldShares();     // 외국인 보유주식수
+        log.debug("[{}] 기본값 - currentPrice: {}, marketCap: {}, listedShares: {}",
+                stockCode, currentPrice, marketCap, listedShares);
 
         // -----------------------
-        // 2. 레벨 지표 (PER, ROE, 순이익률, 부채비율)
+        // 2. TTM 계산 (PER, ROE용)
         // -----------------------
+        Long ttmNetIncome = calculateTTM(
+                currentYear, lastYear, currentQuarter,
+                StockFinancial::getNetIncome, stockCode, "순이익"
+        );
 
-        // (1) PER = 주가 / EPS,   EPS = 연율화된 netIncome / listedShares
+        Long ttmRevenue = calculateTTM(
+                currentYear, lastYear, currentQuarter,
+                StockFinancial::getRevenue, stockCode, "매출액"
+        );
+
+        Long ttmOperatingProfit = calculateTTM(
+                currentYear, lastYear, currentQuarter,
+                StockFinancial::getOperatingProfit, stockCode, "영업이익"
+        );
+
+        log.debug("[{}] TTM 결과 - 순이익: {}, 매출액: {}, 영업이익: {}",
+                stockCode, ttmNetIncome, ttmRevenue, ttmOperatingProfit);
+
+        // -----------------------
+        // 3. PER 계산
+        // -----------------------
         Double per = null;
-
-        // 연율화된 순이익 계산 (분기 누적 → 연간 추정)
-        String quarter = current.getQuarter();
-        Long annualizedNetIncome = annualizeNetIncome(netIncome, quarter);
-
-        //XXX: PER는 "주가 > 0 & 순이익 > 0"인 경우에만 계산!! (적자는 N/A 취급)
+        Double eps = null;
         if (currentPrice != null && currentPrice > 0 &&
-                annualizedNetIncome != null && annualizedNetIncome > 0 &&
+                ttmNetIncome != null && ttmNetIncome > 0 &&
                 listedShares != null && listedShares > 0) {
 
-            double eps = (double) annualizedNetIncome / listedShares;
-            if (eps != 0.0) {
-                per = safeDivide(currentPrice.doubleValue(), eps);
-            }
+            eps = (double) ttmNetIncome / listedShares;
+            per = currentPrice / eps;
+
+            log.debug("[{}] PER 계산 - EPS: {}, PER: {}", stockCode, eps, per);
         }
 
-        // (2) ROE(%) = 연율화된 netIncome / totalEquity * 100
-        Double roe = safeDivideToPercent(annualizedNetIncome, totalEquity);
+        // -----------------------
+        // 4. ROE 계산 (TTM 순이익 / 자본총계)
+        // -----------------------
+        Double roe = safeDivideToPercent(ttmNetIncome, totalEquity);
+        log.debug("[{}] ROE: {}%", stockCode, roe);
 
-        // (3) 순이익률(%) = netIncome / revenue * 100
-        Double netProfitMargin = safeDivideToPercent(netIncome, revenue);
-
-        // (4) 부채비율(%) = totalLiabilities / totalEquity * 100
+        // -----------------------
+        // 5. 비율 지표 (TTM 기준)
+        // -----------------------
+        Double netProfitMargin = safeDivideToPercent(ttmNetIncome, ttmRevenue);
+        Double operatingProfitMargin = safeDivideToPercent(ttmOperatingProfit, ttmRevenue);
         Double debtRatio = safeDivideToPercent(totalLiabilities, totalEquity);
 
-        // (5) 영업이익률(%) = operatingProfit / revenue * 100
-        Double operatingProfitMargin = safeDivideToPercent(operatingProfit, revenue);
-
-
-        // -----------------------
-        // 3. 성장성 지표 (QoQ / YoY)
-        // -----------------------
-
-        // QoQ: 단독 분기 값 비교 (누적이 아닌 해당 분기만의 실적)
-        // - current 단독 = current 누적 - prev 누적 (1Q는 그대로)
-        // - prev 단독 = prev 누적 - prevPrev 누적 (1Q는 그대로)
-
-        // (5) 매출 성장률 QoQ = (current 단독 매출 / prev 단독 매출 - 1) * 100
-        Double salesGrowthQoQ = null;
-        if (prev != null) {
-            Long currentStandaloneRev = getStandaloneQuarterValue(revenue, prev.getRevenue(), quarter);
-            Long prevStandaloneRev = getStandaloneQuarterValue(
-                    prev.getRevenue(),
-                    prevPrev != null ? prevPrev.getRevenue() : null,
-                    prev.getQuarter()
-            );
-
-            if (currentStandaloneRev != null && prevStandaloneRev != null && prevStandaloneRev != 0) {
-                salesGrowthQoQ = ((double) currentStandaloneRev / prevStandaloneRev - 1.0) * 100.0;
-            }
-        }
-
-        // (6) 매출 성장률 YoY = (당분기 누적 / 전년 동기 누적 - 1) * 100
-        // YoY는 누적 비교가 맞음 (동일 기간 비교)
-        Double salesGrowthYoY = null;
-        if (prevYearSame != null) {
-            Long prevYearRev = prevYearSame.getRevenue();
-            if (revenue != null && prevYearRev != null && prevYearRev != 0) {
-                salesGrowthYoY = ((double) revenue / prevYearRev - 1.0) * 100.0;
-            }
-        }
-
-        // (7) 순이익 성장률 QoQ = (current 단독 순이익 / prev 단독 순이익 - 1) * 100
-        Double netProfitGrowthQoQ = null;
-        if (prev != null) {
-            Long currentStandaloneNI = getStandaloneQuarterValue(netIncome, prev.getNetIncome(), quarter);
-            Long prevStandaloneNI = getStandaloneQuarterValue(
-                    prev.getNetIncome(),
-                    prevPrev != null ? prevPrev.getNetIncome() : null,
-                    prev.getQuarter()
-            );
-
-            netProfitGrowthQoQ = safeEarningsGrowth(currentStandaloneNI, prevStandaloneNI);
-        }
-
-        // (8) 순이익 성장률 YoY = (당분기 누적 / 전년 동기 누적 - 1) * 100
-        // YoY는 누적 비교가 맞음 (동일 기간 비교)
-        Double netProfitGrowthYoY = (prevYearSame != null)
-                ? safeEarningsGrowth(netIncome, prevYearSame.getNetIncome())
-                : null;
-
+        log.debug("[{}] 비율지표 - 순이익률: {}%, 영업이익률: {}%, 부채비율: {}%",
+                stockCode, netProfitMargin, operatingProfitMargin, debtRatio);
 
         // -----------------------
-        // 4. 배당수익률
+        // 6. 성장률 (QoQ, YoY)
         // -----------------------
-        // ex) dividendYield(%) = DPS / currentPrice * 100
+        // QoQ: 현재 분기 vs 직전 분기 (개별 실적 비교)
+        // 주의: 1Q의 직전 분기는 작년 4Q이므로 lastYear에서 조회해야 함
+        String prevQuarter = getPrevQuarter(currentQuarter);
+        boolean prevQuarterIsLastYear = "1Q".equals(currentQuarter);  // 1Q의 직전은 작년 4Q
+
+        Long currentDiscreteRevenue = getDiscreteValue(currentYear, lastYear, currentQuarter, StockFinancial::getRevenue);
+        Long prevDiscreteRevenue = prevQuarterIsLastYear
+                ? getDiscreteValue(lastYear, null, prevQuarter, StockFinancial::getRevenue)
+                : getDiscreteValue(currentYear, lastYear, prevQuarter, StockFinancial::getRevenue);
+        Double salesGrowthQoQ = safeGrowthRate(currentDiscreteRevenue, prevDiscreteRevenue);
+
+        Long currentDiscreteNI = getDiscreteValue(currentYear, lastYear, currentQuarter, StockFinancial::getNetIncome);
+        Long prevDiscreteNI = prevQuarterIsLastYear
+                ? getDiscreteValue(lastYear, null, prevQuarter, StockFinancial::getNetIncome)
+                : getDiscreteValue(currentYear, lastYear, prevQuarter, StockFinancial::getNetIncome);
+        Double netProfitGrowthQoQ = safeGrowthRate(currentDiscreteNI, prevDiscreteNI);
+
+        // YoY: 현재 분기 vs 작년 동일 분기
+        Long lastYearSameQuarterRevenue = getDiscreteValue(lastYear, null, currentQuarter, StockFinancial::getRevenue);
+        Double salesGrowthYoY = safeGrowthRate(currentDiscreteRevenue, lastYearSameQuarterRevenue);
+
+        Long lastYearSameQuarterNI = getDiscreteValue(lastYear, null, currentQuarter, StockFinancial::getNetIncome);
+        Double netProfitGrowthYoY = safeGrowthRate(currentDiscreteNI, lastYearSameQuarterNI);
+
+        log.debug("[{}] 성장률 - 매출QoQ: {}%, 매출YoY: {}%, 순이익QoQ: {}%, 순이익YoY: {}%",
+                stockCode, salesGrowthQoQ, salesGrowthYoY, netProfitGrowthQoQ, netProfitGrowthYoY);
+
+        // -----------------------
+        // 7. 기타 지표
+        // -----------------------
         Double dividendYield = calcDividendYield(currentPrice, stock != null ? stock.getLastDps() : null);
 
-        // -----------------------
-        // 5. 외국인 보유율
-        // -----------------------
-        // foreignOwnershipRate(%) = foreignHeldShares / listedShares * 100
         Double foreignOwnershipRate = null;
-        if (foreignHeldShares != null &&
-                listedShares != null && listedShares != 0) {
-            foreignOwnershipRate =
-                    (double) foreignHeldShares / listedShares * 100.0;
+        if (foreignHeldShares != null && listedShares != null && listedShares > 0) {
+            foreignOwnershipRate = (double) foreignHeldShares / listedShares * 100.0;
         }
 
-        // -----------------------
-        // 6. 3M / 6M / 12M 수익률
-        // -----------------------
-        // 기준 가격(3개월 전, 6개월 전, 12개월 전)이 없으므로 null 처리.
-        // TODO: calculate 뒷 부분에 price3Mago, price6Mago, price12Mago 추가
-        Double return3M = null;
-        Double return6M = null;
-        Double return12M = null;
+        log.debug("[{}] 기타 - 배당수익률: {}%, 외국인보유율: {}%",
+                stockCode, dividendYield, foreignOwnershipRate);
 
         // -----------------------
-        // 7. MetricValues로 묶어서 반환
+        // 8. 결과 반환
         // -----------------------
         return new MetricValues(
                 currentPrice,
@@ -181,83 +183,183 @@ public class StockMetricCalculator {
                 netProfitGrowthYoY,
                 dividendYield,
                 foreignOwnershipRate,
-                return3M,
-                return6M,
-                return12M
+                null, // return3M
+                null, // return6M
+                null  // return12M
         );
     }
 
-
-    // 배당 수익률 계산 로직
-    private static Double calcDividendYield(Integer currentPrice, Integer lastDps) {
-        if (currentPrice == null || currentPrice <= 0) return null;     // 가격 데이터 이상/없음
-        if (lastDps == null) return null;                                // DPS 미수집
-        if (lastDps <= 0) return 0.0;                                    // 배당 없음
-
-        double raw = (lastDps * 100.0) / currentPrice;                   // (%)
-        return BigDecimal.valueOf(raw)
-                .setScale(2, RoundingMode.HALF_UP)
-                .doubleValue();
-    }
-
-    // -----------------------
-    // 헬퍼 메서드들
-    // -----------------------
+    // =========================================================================
+    // TTM 계산 핵심 로직
+    // =========================================================================
 
     /**
-     * 분기 누적 데이터를 연간 기준으로 연율화하는 계수 반환
-     * - 1Q: 3개월 → 12개월 (×4)
-     * - 2Q: 6개월 → 12개월 (×2)
-     * - 3Q: 9개월 → 12개월 (×1.333...)
-     * - 4Q: 12개월 → 12개월 (×1)
-     */
-    private static double getAnnualizationFactor(String quarter) {
-        return switch (quarter) {
-            case "1Q" -> 4.0;
-            case "2Q" -> 2.0;
-            case "3Q" -> 12.0 / 9.0;  // ≈ 1.333
-            case "4Q" -> 1.0;
-            default -> 1.0;
-        };
-    }
-
-    /**
-     * 누적 순이익을 연율화하여 반환
-     */
-    private static Long annualizeNetIncome(Long netIncome, String quarter) {
-        if (netIncome == null || quarter == null) {
-            return null;
-        }
-        double factor = getAnnualizationFactor(quarter);
-        return Math.round(netIncome * factor);
-    }
-
-    /**
-     * 단독 분기 값 계산 (누적 데이터에서 해당 분기만 추출)
-     * - 1Q: 누적 = 단독 (그대로 반환)
-     * - 2Q/3Q/4Q: 당분기 누적 - 직전 분기 누적
+     * TTM(최근 12개월) 값 계산
      *
-     * @param currentValue 현재 분기 누적값
-     * @param prevValue    직전 분기 누적값 (1Q인 경우 무시됨)
-     * @param quarter      현재 분기 ("1Q", "2Q", "3Q", "4Q")
-     * @return 단독 분기 값
+     * 분기별 TTM 구성:
+     * - 1Q: 올해1Q + 작년4Q단독 + 작년3Q + 작년2Q
+     * - 2Q: 올해2Q + 올해1Q + 작년4Q단독 + 작년3Q
+     * - 3Q: 올해3Q + 올해2Q + 올해1Q + 작년4Q단독
+     * - 4Q: 4Q 자체가 연간 누적이므로 그대로 사용
      */
-    private static Long getStandaloneQuarterValue(Long currentValue, Long prevValue, String quarter) {
-        if (currentValue == null) {
+    private static Long calculateTTM(
+            Map<String, StockFinancial> currentYear,
+            Map<String, StockFinancial> lastYear,
+            String currentQuarter,
+            java.util.function.Function<StockFinancial, Long> valueExtractor,
+            String stockCode,
+            String fieldName
+    ) {
+        // 4Q인 경우: 연간 누적 그대로 반환
+        if ("4Q".equals(currentQuarter)) {
+            StockFinancial q4 = currentYear.get("4Q");
+            Long value = q4 != null ? valueExtractor.apply(q4) : null;
+            log.debug("[{}] TTM({}) - 4Q 연간누적 사용: {}", stockCode, fieldName, value);
+            return value;
+        }
+
+        // 1Q, 2Q, 3Q인 경우: TTM 합산 필요
+        Long ttm = 0L;
+        boolean hasValidData = false;
+
+        // Step 1: 올해 분기 합산 (개별 실적)
+        switch (currentQuarter) {
+            case "3Q":
+                ttm += safeGetValue(currentYear, "3Q", valueExtractor);
+                ttm += safeGetValue(currentYear, "2Q", valueExtractor);
+                ttm += safeGetValue(currentYear, "1Q", valueExtractor);
+                hasValidData = currentYear.containsKey("3Q");
+                break;
+            case "2Q":
+                ttm += safeGetValue(currentYear, "2Q", valueExtractor);
+                ttm += safeGetValue(currentYear, "1Q", valueExtractor);
+                hasValidData = currentYear.containsKey("2Q");
+                break;
+            case "1Q":
+                ttm += safeGetValue(currentYear, "1Q", valueExtractor);
+                hasValidData = currentYear.containsKey("1Q");
+                break;
+        }
+
+        log.debug("[{}] TTM({}) - 올해 {}까지 합산: {}", stockCode, fieldName, currentQuarter, ttm);
+
+        // Step 2: 작년 잔여 분기 합산
+        if (lastYear == null || lastYear.isEmpty()) {
+            log.debug("[{}] TTM({}) - 작년 데이터 없음, 올해 데이터만 사용", stockCode, fieldName);
+            return hasValidData ? ttm : null;
+        }
+
+        // 작년 4Q 단독 실적 계산: 4Q(연간) - 3Q - 2Q - 1Q
+        Long lastYear4QStandalone = calculateLastYear4QStandalone(lastYear, valueExtractor, stockCode, fieldName);
+
+        switch (currentQuarter) {
+            case "3Q":
+                // 올해 3Q까지 있으면 → 작년 4Q 단독만 필요
+                ttm += (lastYear4QStandalone != null ? lastYear4QStandalone : 0L);
+                break;
+            case "2Q":
+                // 올해 2Q까지 있으면 → 작년 4Q 단독 + 작년 3Q
+                ttm += (lastYear4QStandalone != null ? lastYear4QStandalone : 0L);
+                ttm += safeGetValue(lastYear, "3Q", valueExtractor);
+                break;
+            case "1Q":
+                // 올해 1Q만 있으면 → 작년 4Q 단독 + 작년 3Q + 작년 2Q
+                ttm += (lastYear4QStandalone != null ? lastYear4QStandalone : 0L);
+                ttm += safeGetValue(lastYear, "3Q", valueExtractor);
+                ttm += safeGetValue(lastYear, "2Q", valueExtractor);
+                break;
+        }
+
+        log.debug("[{}] TTM({}) - 최종 TTM: {}", stockCode, fieldName, ttm);
+        return hasValidData ? ttm : null;
+    }
+
+    /**
+     * 작년 4Q 단독 실적 계산
+     * = 작년 4Q(연간 누적) - 작년 3Q - 작년 2Q - 작년 1Q
+     */
+    private static Long calculateLastYear4QStandalone(
+            Map<String, StockFinancial> lastYear,
+            java.util.function.Function<StockFinancial, Long> valueExtractor,
+            String stockCode,
+            String fieldName
+    ) {
+        if (lastYear == null || !lastYear.containsKey("4Q")) {
             return null;
         }
 
-        // 1Q는 누적 = 단독
-        if ("1Q".equals(quarter)) {
-            return currentValue;
-        }
+        Long annual = safeGetValue(lastYear, "4Q", valueExtractor); // 연간 누적
+        Long q1 = safeGetValue(lastYear, "1Q", valueExtractor);
+        Long q2 = safeGetValue(lastYear, "2Q", valueExtractor);
+        Long q3 = safeGetValue(lastYear, "3Q", valueExtractor);
 
-        // 2Q/3Q/4Q는 직전 분기 누적값이 필요
-        if (prevValue == null) {
+        if (annual == null) {
             return null;
         }
 
-        return currentValue - prevValue;
+        Long standalone = annual - q1 - q2 - q3;
+        log.debug("[{}] 작년4Q 단독({}) = {} - {} - {} - {} = {}",
+                stockCode, fieldName, annual, q1, q2, q3, standalone);
+        return standalone;
+    }
+
+    /**
+     * 해당 분기의 개별(Discrete) 실적 조회
+     * - 1Q, 2Q, 3Q: DB 값이 이미 개별이므로 그대로 반환
+     * - 4Q: 연간 - (1Q + 2Q + 3Q) 계산
+     */
+    private static Long getDiscreteValue(
+            Map<String, StockFinancial> targetYear,
+            Map<String, StockFinancial> prevYear,
+            String quarter,
+            java.util.function.Function<StockFinancial, Long> valueExtractor
+    ) {
+        if (targetYear == null || quarter == null) {
+            return null;
+        }
+
+        // 1Q, 2Q, 3Q는 그대로 반환
+        if (!"4Q".equals(quarter)) {
+            return safeGetValue(targetYear, quarter, valueExtractor);
+        }
+
+        // 4Q인 경우: 연간 - (1Q + 2Q + 3Q)
+        Long annual = safeGetValue(targetYear, "4Q", valueExtractor);
+        if (annual == null) {
+            return null;
+        }
+
+        Long q1 = safeGetValue(targetYear, "1Q", valueExtractor);
+        Long q2 = safeGetValue(targetYear, "2Q", valueExtractor);
+        Long q3 = safeGetValue(targetYear, "3Q", valueExtractor);
+
+        return annual - q1 - q2 - q3;
+    }
+
+    // =========================================================================
+    // 헬퍼 메서드
+    // =========================================================================
+
+    private static Long safeGetValue(
+            Map<String, StockFinancial> yearData,
+            String quarter,
+            java.util.function.Function<StockFinancial, Long> valueExtractor
+    ) {
+        if (yearData == null) return 0L;
+        StockFinancial sf = yearData.get(quarter);
+        if (sf == null) return 0L;
+        Long value = valueExtractor.apply(sf);
+        return value != null ? value : 0L;
+    }
+
+    private static String getPrevQuarter(String quarter) {
+        return switch (quarter) {
+            case "2Q" -> "1Q";
+            case "3Q" -> "2Q";
+            case "4Q" -> "3Q";
+            case "1Q" -> "4Q"; // 작년 4Q
+            default -> null;
+        };
     }
 
     private static Double safeDivide(Double numerator, Double denominator) {
@@ -274,12 +376,25 @@ public class StockMetricCalculator {
         return (double) numerator / denominator * 100.0;
     }
 
-    private static Double safeEarningsGrowth(Long current, Long previous) {
-        if (current == null || previous == null || previous <= 0L) {
-            // 전기 순이익이 0 이하(적자/손익분기)면 퍼센트 성장률은 의미 없다고 보고 null
+    private static Double safeGrowthRate(Long current, Long previous) {
+        if (current == null || previous == null || previous == 0L) {
+            return null;
+        }
+        // 전기 적자인 경우 성장률 의미 없음
+        if (previous < 0L) {
             return null;
         }
         return ((double) current / previous - 1.0) * 100.0;
     }
 
+    private static Double calcDividendYield(Integer currentPrice, Integer lastDps) {
+        if (currentPrice == null || currentPrice <= 0) return null;
+        if (lastDps == null) return null;
+        if (lastDps <= 0) return 0.0;
+
+        double raw = (lastDps * 100.0) / currentPrice;
+        return BigDecimal.valueOf(raw)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
+    }
 }
