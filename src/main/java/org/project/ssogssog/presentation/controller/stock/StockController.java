@@ -92,6 +92,7 @@ public class StockController {
             @Min(value = 1, message = "size는 1 이상이어야 합니다.")
             int size
     ) {
+        // TODO 현재 QueryDSL에서는 해당 정렬이 사용되지 않고 고정 정렬이 사용되어 있어서 해당 부분 검토 필요
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date"));
         SliceDTO<StockResponse.DailyPriceItemDTO> result = stockService.getDailyPriceHistory(stockCode, pageable);
         return ApiResponse.onSuccess(result);
@@ -196,6 +197,7 @@ public class StockController {
             @Min(value = 1, message = "size는 1 이상이어야 합니다.")
             int size
     ) {
+        // TODO 현재 QueryDSL에서는 해당 정렬이 사용되지 않고 고정 정렬이 사용되어 있어서 해당 부분 검토 필요
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "closePrice"));
         PageDTO<StockResponse.StockItemResponseDTO> result = stockService.getStocksForTheme(theme, pageable);
         return ApiResponse.onSuccess(result);
