@@ -6,9 +6,12 @@ import org.project.ssogssog.application.service.stock.reader.StockCacheReader;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.policy.ThemeEmojiRegistry;
-import org.project.ssogssog.domain.stock.projection.StockItemDTO;
-import org.project.ssogssog.domain.stock.projection.ThemeItemDTO;
+import org.project.ssogssog.domain.stock.projection.StockItemProjection;
+import org.project.ssogssog.domain.stock.projection.ThemeItemProjection;
+import org.project.ssogssog.domain.stock.projection.ThemeCountProjection;
+import org.project.ssogssog.domain.stock.entity.StockFinancial;
 import org.project.ssogssog.domain.stock.repository.DailyPriceRepository;
+import org.project.ssogssog.domain.stock.repository.StockFinancialRepository;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
 import org.project.ssogssog.domain.stockmetric.entity.StockMetric;
@@ -20,6 +23,7 @@ import org.project.ssogssog.global.payload.exception.GeneralException;
 import org.project.ssogssog.presentation.controller.stock.enums.RankingType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +38,7 @@ public class StockService {
 
     private final StockRepository stockRepository;
     private final DailyPriceRepository dailyPriceRepository;
+    private final StockFinancialRepository stockFinancialRepository;
     private final StockMetricRepository stockMetricRepository;
 
     private final StockCacheReader stockCacheReader;
@@ -48,7 +53,7 @@ public class StockService {
         // 3. 마지막에 총합으로 평균 계산
         // 4. (중요!!) arrayList 정렬하기(사전 순으로)
 
-        List<ThemeItemDTO> items = stockRepository.getThemeStockStats();
+        List<ThemeItemProjection> items = stockRepository.getThemeStockStats();
 
         Map<String, StockResponse.ThemeCollectedItemDTO> m = new HashMap<>();
         for(var item : items){
@@ -110,7 +115,7 @@ public class StockService {
 
     public PageDTO<StockResponse.StockItemResponseDTO> getStocksForTheme(String theme, Pageable pageable) {
 
-        Page<StockItemDTO> stockItems =
+        Page<StockItemProjection> stockItems =
                 stockRepository.getStocksForThemeOrderByClosePrice(theme, pageable);
 
         Page<StockResponse.StockItemResponseDTO> stockItemsResponse =
@@ -119,15 +124,15 @@ public class StockService {
         return PageDTO.from(stockItemsResponse);
     }
 
-    private StockResponse.StockItemResponseDTO toStockItemDTO(StockItemDTO stockItemDTO) {
+    private StockResponse.StockItemResponseDTO toStockItemDTO(StockItemProjection stockItemProjection) {
 
         return StockResponse.StockItemResponseDTO.builder()
-                .stockId(stockItemDTO.stockId())
-                .corpName(stockItemDTO.corpName())
-                .stockCode(stockItemDTO.stockCode())
-                .closePrice(stockItemDTO.closePrice())
-                .volume(stockItemDTO.volume())
-                .changeRate(stockItemDTO.changeRate())
+                .stockId(stockItemProjection.stockId())
+                .corpName(stockItemProjection.corpName())
+                .stockCode(stockItemProjection.stockCode())
+                .closePrice(stockItemProjection.closePrice())
+                .volume(stockItemProjection.volume())
+                .changeRate(stockItemProjection.changeRate())
                 .build();
     }
 
@@ -220,6 +225,7 @@ public class StockService {
                         .changeAmount(changeAmount)     // 가격변동
                         .changeRate(changeRate)         // 등락률
                         .previousClose(previousClose)   // 전날 종가
+                        .previousVolume(prev != null ? prev.getVolume() : null) // 전날 거래량
                         .build())
 
                 .chartData(StockResponse.StockOverviewResponseDTO.ChartData.builder()
@@ -257,6 +263,136 @@ public class StockService {
     }
 
     /**
+     * 특정 종목의 일별 시세 조회 (무한 스크롤용)
+     * @param stockCode 종목 코드
+     * @param pageable 페이지네이션 정보
+     * @return SliceDTO<DailyPriceItemDTO>
+     */
+    @Transactional(readOnly = true)
+    public SliceDTO<StockResponse.DailyPriceItemDTO> getDailyPriceHistory(String stockCode, Pageable pageable) {
+        Stock stock = stockRepository.findByStockCode(stockCode)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
+
+        Slice<StockResponse.DailyPriceItemDTO> slice = dailyPriceRepository
+                .findByStockOrderByDateDesc(stock, pageable)
+                .map(dp -> StockResponse.DailyPriceItemDTO.builder()
+                        .date(dp.getDate())
+                        .closePrice(dp.getClosePrice())
+                        .changePrice(dp.getChangePrice())
+                        .changeRate(dp.getChangeRate())
+                        .volume(dp.getVolume())
+                        .build());
+
+        return SliceDTO.from(slice);
+    }
+
+    private static final int ANNUAL_LIMIT = 3;
+    private static final int QUARTERLY_LIMIT = 3;
+
+    /**
+     * 특정 종목의 재무 정보 개요 조회
+     * @param stockCode 종목 코드
+     * @return FinancialOverviewResponseDTO
+     */
+    @Transactional(readOnly = true)
+    public StockResponse.FinancialOverviewResponseDTO getFinancialOverview(String stockCode) {
+        Stock stock = stockRepository.findByStockCode(stockCode)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
+
+        // 1. 재무 요약 (StockMetric에서)
+        StockMetric metric = stockMetricRepository.findByStock(stock).orElse(null);
+        StockResponse.FinancialOverviewResponseDTO.FinancialSummary summary = buildFinancialSummary(metric);
+
+        // 2. 실적 분석 (StockFinancial에서)
+        StockResponse.FinancialOverviewResponseDTO.PerformanceAnalysis performance = buildPerformanceAnalysis(stock);
+
+        // 3. 재무 안정성 (StockFinancial 최신 데이터에서)
+        StockResponse.FinancialOverviewResponseDTO.FinancialStability stability = buildFinancialStability(stock);
+
+        return StockResponse.FinancialOverviewResponseDTO.builder()
+                .summary(summary)
+                .performance(performance)
+                .stability(stability)
+                .build();
+    }
+
+    private StockResponse.FinancialOverviewResponseDTO.FinancialSummary buildFinancialSummary(StockMetric metric) {
+        if (metric == null) {
+            return null;
+        }
+        return StockResponse.FinancialOverviewResponseDTO.FinancialSummary.builder()
+                .per(metric.getPer())
+                .roe(metric.getRoe())
+                .dividendYield(metric.getDividendYield())
+                .debtRatio(metric.getDebtRatio())
+                .build();
+    }
+
+    private StockResponse.FinancialOverviewResponseDTO.PerformanceAnalysis buildPerformanceAnalysis(Stock stock) {
+        // 연간 실적: 연결재무제표 우선, 없으면 별도 재무제표
+        List<StockFinancial> annualData = stockFinancialRepository
+                .findAnnualByStockAndConsolidated(stock, true, ANNUAL_LIMIT);
+        if (annualData.isEmpty()) {
+            annualData = stockFinancialRepository
+                    .findAnnualByStockAndConsolidated(stock, false, ANNUAL_LIMIT);
+        }
+
+        // 분기 실적: 연결재무제표 우선, 없으면 별도 재무제표
+        List<StockFinancial> quarterlyData = stockFinancialRepository
+                .findQuarterlyByStockAndConsolidated(stock, true, QUARTERLY_LIMIT);
+        if (quarterlyData.isEmpty()) {
+            quarterlyData = stockFinancialRepository
+                    .findQuarterlyByStockAndConsolidated(stock, false, QUARTERLY_LIMIT);
+        }
+
+        List<StockResponse.FinancialOverviewResponseDTO.PerformanceItem> annual = annualData.stream()
+                .map(this::toPerformanceItem)
+                .toList();
+
+        List<StockResponse.FinancialOverviewResponseDTO.PerformanceItem> quarterly = quarterlyData.stream()
+                .map(this::toPerformanceItem)
+                .toList();
+
+        return StockResponse.FinancialOverviewResponseDTO.PerformanceAnalysis.builder()
+                .annual(annual)
+                .quarterly(quarterly)
+                .build();
+    }
+
+    private StockResponse.FinancialOverviewResponseDTO.PerformanceItem toPerformanceItem(StockFinancial sf) {
+        return StockResponse.FinancialOverviewResponseDTO.PerformanceItem.builder()
+                .year(sf.getYear())
+                .quarter(sf.getQuarter())
+                .revenue(sf.getRevenue())
+                .operatingProfit(sf.getOperatingProfit())
+                .netIncome(sf.getNetIncome())
+                .isConsolidated(sf.isConsolidated())
+                .build();
+    }
+
+    private StockResponse.FinancialOverviewResponseDTO.FinancialStability buildFinancialStability(Stock stock) {
+        // 연결재무제표 우선, 없으면 별도 재무제표
+        Optional<StockFinancial> latestOpt = stockFinancialRepository
+                .findTopByStockAndIsConsolidatedOrderByYearDescQuarterDesc(stock, true);
+
+        if (latestOpt.isEmpty()) {
+            latestOpt = stockFinancialRepository
+                    .findTopByStockAndIsConsolidatedOrderByYearDescQuarterDesc(stock, false);
+        }
+
+        if (latestOpt.isEmpty()) {
+            return null;
+        }
+
+        StockFinancial latest = latestOpt.get();
+        return StockResponse.FinancialOverviewResponseDTO.FinancialStability.builder()
+                .totalLiabilities(latest.getTotalLiabilities())
+                .totalEquity(latest.getTotalEquity())
+                .isConsolidated(latest.isConsolidated())
+                .build();
+    }
+
+    /**
      * 주식 리스트의 기본정보(이름, 종목코드, 분야, 최근 가격, 최근 등락률)을 가져오는 메서드
      * @param stocks
      * @return
@@ -290,5 +426,51 @@ public class StockService {
     @Transactional(readOnly = true)
     public StockResponse.RankingResponseDTO getRanking(RankingType type) {
         return stockCacheReader.getRanking(type);
+    }
+
+    /**
+     * 테마별 주식 요약 조회 (총 개수, 상승 개수, 하락 개수)
+     * @param theme 테마명 (sector)
+     * @return ThemeCountDTO
+     */
+    @Transactional(readOnly = true)
+    public StockResponse.ThemeCountDTO getThemeCount(String theme) {
+        ThemeCountProjection projection = stockRepository.getThemeCount(theme);
+
+        return StockResponse.ThemeCountDTO.builder()
+                .totalCount(projection.totalCount())
+                .risingCount(projection.risingCount())
+                .fallingCount(projection.fallingCount())
+                .build();
+    }
+
+    /**
+     * 자동완성용 주식 검색 (종목명 또는 종목코드에 키워드 포함)
+     * @param keyword 검색 키워드
+     * @param limit 반환할 최대 개수
+     * @return StockItemResponseDTO 목록
+     */
+    @Transactional(readOnly = true)
+    public List<StockResponse.StockItemResponseDTO> searchAutocomplete(String keyword, int limit) {
+        List<StockItemProjection> projections = stockRepository.searchAutocomplete(keyword, limit);
+
+        return projections.stream()
+                .map(this::toStockItemDTO)
+                .toList();
+    }
+
+    /**
+     * 전체 주식 검색 (종목명 또는 종목코드에 키워드 포함, 페이지네이션)
+     * @param keyword 검색 키워드
+     * @param pageable 페이지네이션 정보
+     * @return PageDTO<StockItemResponseDTO>
+     */
+    @Transactional(readOnly = true)
+    public PageDTO<StockResponse.StockItemResponseDTO> search(String keyword, Pageable pageable) {
+        Page<StockItemProjection> projections = stockRepository.search(keyword, pageable);
+
+        Page<StockResponse.StockItemResponseDTO> result = projections.map(this::toStockItemDTO);
+
+        return PageDTO.from(result);
     }
 }

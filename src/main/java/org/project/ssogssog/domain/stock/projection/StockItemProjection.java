@@ -3,7 +3,7 @@ package org.project.ssogssog.domain.stock.projection;
 import lombok.Builder;
 
 @Builder
-public record StockItemDTO(
+public record StockItemProjection(
         Long stockId,
         String corpName,
         String stockCode,

@@ -55,10 +55,16 @@ public class StockMetricWriter {
         final int latestYear = latestStockFinancial.getYear();          // 최근 년도
         final String latestQuarter = latestStockFinancial.getQuarter(); // 최근 분기
         final YearQuarter prevQuarter = YearQuarter.prevQuarter(latestYear, latestQuarter);   // 직전 분기 YearQuarter
+        final YearQuarter prevPrevQuarter = YearQuarter.prevQuarter(prevQuarter.year(), prevQuarter.quarter()); // 직전직전 분기
         final YearQuarter prevYear = YearQuarter.prevYear(latestYear, latestQuarter);         // 작년 YearQuarter
 
         StockFinancial prevQuarterStockFinancial = stockFinancialRepository
                 .findByStockIdAndYearAndQuarter(stock.getId(), prevQuarter.year(), prevQuarter.quarter())
+                .orElse(null);
+
+        // QoQ 계산을 위한 직전직전 분기 (prev의 단독 분기 값 계산용)
+        StockFinancial prevPrevQuarterStockFinancial = stockFinancialRepository
+                .findByStockIdAndYearAndQuarter(stock.getId(), prevPrevQuarter.year(), prevPrevQuarter.quarter())
                 .orElse(null);
 
         StockFinancial prevYearStockFinancial = stockFinancialRepository
@@ -70,7 +76,8 @@ public class StockMetricWriter {
         // salesGrowthQoQ, salesGrowthYoY, netProfitGrowthQoQ, netProfitGrowthYoY,
         // dividendYield, foreignOwnershipRate, return3M/6M/12M 계산
         MetricValues metricValues = StockMetricCalculator.calculate(
-                stock, latestDailyPrice, latestStockFinancial,prevQuarterStockFinancial, prevYearStockFinancial);
+                stock, latestDailyPrice, latestStockFinancial,
+                prevQuarterStockFinancial, prevPrevQuarterStockFinancial, prevYearStockFinancial);
 
 
         StockMetric metric = stockMetricRepository
