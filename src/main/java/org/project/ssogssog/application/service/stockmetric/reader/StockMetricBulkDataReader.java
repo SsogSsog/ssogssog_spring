@@ -12,6 +12,7 @@ import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.domain.stockmetric.entity.StockMetric;
 import org.project.ssogssog.domain.stockmetric.repository.StockMetricRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,6 +37,7 @@ public class StockMetricBulkDataReader {
      *
      * @return BulkData - 메모리 매핑된 데이터 객체
      */
+    @Transactional(readOnly = true)
     public BulkData fetchAll() {
         // 1. 모든 Stock 조회
         List<Stock> stocks = stockRepository.findAll();
@@ -110,7 +112,12 @@ public class StockMetricBulkDataReader {
                 .collect(Collectors.toMap(
                         sf -> sf.getStock().getId(),
                         sf -> sf,
-                        (existing, replacement) -> existing
+                        (existing, replacement) -> {
+                            // 연결재무제표 우선 선택
+                            if (existing.isConsolidated()) return existing;
+                            if (replacement.isConsolidated()) return replacement;
+                            return existing;  // 둘 다 별도면 기존 것 유지
+                        }
                 ));
 
         // Stock ID → Year → Quarter → StockFinancial
