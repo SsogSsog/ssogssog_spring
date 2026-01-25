@@ -56,7 +56,7 @@ public class TodayPriceCollectScheduler {
         try {
             log.info("[주식 통계 업데이트][{}] 시작", runId);
 
-            syncStockMetricDataUseCase.refreshAllMetrics();
+            syncStockMetricDataUseCase.refreshAllMetricsOptimized();
         } catch (Exception e) {
             log.error("[주식 통계 업데이트][{}] 실패 msg={}", runId, e.getMessage(), e);
         }
