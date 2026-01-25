@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-public interface DailyPriceRepository extends JpaRepository<DailyPrice, Long> {
+public interface DailyPriceRepository extends JpaRepository<DailyPrice, Long>, DailyPriceRepositoryCustom {
     // 이미 수집한 날짜인지 확인용
     Optional<DailyPrice> findByStockIdAndDate(Long stockId, LocalDate date);
 

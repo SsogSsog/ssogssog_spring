@@ -72,4 +72,48 @@ public interface StockFinancialRepository extends JpaRepository<StockFinancial, 
      */
     List<StockFinancial> findByStockAndYearAndIsConsolidatedOrderByQuarterAsc(
             Stock stock, Integer year, boolean isConsolidated);
+
+
+
+    /**
+     * 모든 종목의 최신 StockFinancial 한 번에 조회
+     * ROW_NUMBER로 각 종목별 최신 1건만 선택
+     *
+     * Bulk 조회 쿼리
+     */
+    @Query(value = """
+        SELECT sf.* FROM stock_financial sf
+        INNER JOIN (
+            SELECT stock_id, MAX(year * 10 +
+                CASE quarter
+                    WHEN '1Q' THEN 1
+                    WHEN '2Q' THEN 2
+                    WHEN '3Q' THEN 3
+                    WHEN '4Q' THEN 4
+                END) as max_ord
+            FROM stock_financial
+            GROUP BY stock_id
+        ) latest ON sf.stock_id = latest.stock_id
+        AND (sf.year * 10 +
+            CASE sf.quarter
+                WHEN '1Q' THEN 1
+                WHEN '2Q' THEN 2
+                WHEN '3Q' THEN 3
+                WHEN '4Q' THEN 4
+            END) = latest.max_ord
+        """, nativeQuery = true)
+    List<StockFinancial> findAllLatestByStock();
+
+    /**
+     * 특정 연도의 모든 종목 재무 데이터 조회 (bulk)
+     */
+    List<StockFinancial> findByYear(Integer year);
+
+    /**
+     * 특정 연도 목록의 모든 재무 데이터 조회 (올해 + 작년 한 번에)
+     *
+     * Bulk 조회 쿼리
+     */
+    @Query("SELECT sf FROM StockFinancial sf WHERE sf.year IN :years")
+    List<StockFinancial> findByYearIn(@Param("years") List<Integer> years);
 }
