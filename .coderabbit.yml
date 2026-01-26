@@ -1,23 +1,51 @@
-reviewer: "code-review-bot"
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: "ko-KR"
-frameworks:
-  - "Spring Boot"
-  - "JPA"
-rules:
-  - name: "Spring Boot Best Practices"
-  - name: "Use Lombok Judiciously"
-  - name: "Avoid Field Injection"
-  - name: "Avoid N+1 Queries"
-  - name: "Use Constructor Injection"
-style: "concise"
-ignore:
-  - path: "src/test/"
-  - path: "**/*.md"
+
+instructions: |
+  This project is a stock data platform based on **Spring Boot 3.5** and **Java 21**, following the **Hexagonal Architecture**.
+  
+  Please act as a **constructive advisor**. Instead of enforcing strict rules, **suggest improvements** and **explain the benefits** of the recommended patterns.
+
+  ## 1. Caching Strategy (Advisory)
+  - **Cache Reader Pattern**: 
+    - If `@Cacheable` is mixed with complex business logic, **suggest** separating it into a Reader class (e.g., `MemberCacheReader`) for better maintainability.
+    - **Advise** keeping cache methods focused solely on DB retrieval.
+  - **Consistency**: 
+    - Check if `CacheType.Values` and `CacheType.Keys` are used. If hardcoded strings are found, **kindly suggest** using the constants.
+  - **Eviction**: 
+    - When logic modifies data, **verify** if cache eviction is handled. If missing, **remind the author** to check if eviction is necessary to prevent stale data.
+
+  ## 2. Write Optimization (Context-Aware)
+  - **Condition for Optimization**: Do **NOT** suggest asynchronous processing for simple or fast logic. Offer advice **only** when there is a clear bottleneck (e.g., external API calls, heavy calculations).
+  - **Staged Suggestion**: If optimization seems beneficial, suggest in this order:
+    1. `@Async` / `CompletableFuture`
+    2. `Spring ApplicationEvent`
+    3. External MQ (Only for high-throughput scenarios)
+
+  ## 3. Architecture & Code Quality (Best Practices)
+  - **Layer Isolation**: **Encourage** keeping the `domain` layer independent. If dependencies are found, explain why isolation is beneficial.
+  - **API Response**: **Recommend** wrapping responses in `ApiResponse<DTO>` for consistency, rather than returning raw Entities.
+  - **Dependency Injection**: **Encourage** Constructor Injection over Field Injection for better testability and immutability.
+
+  ## 4. Database & Query Optimization
+  - **JPA/QueryDSL**:
+    - If potential **N+1 problems** are detected, **suggest** using `fetch join`.
+    - For bulk operations, **recommend** `saveAll` or bulk updates over looping.
+    - **Advise** using DTO Projections for read-only views to improve performance.
+
 reviews:
-  review_status: true
   profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
   auto_review:
     enabled: true
     drafts: false
+
+  path_filters:
+    - "!**/generated/**"
+    - "!src/test/**"
+    - "!**/*.md"
+    - "!gradle/**"
+
 chat:
   auto_reply: true
