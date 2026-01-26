@@ -1,51 +1,104 @@
-# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: "ko-KR"
 
-instructions: |
-  This project is a stock data platform based on **Spring Boot 3.5** and **Java 21**, following the **Hexagonal Architecture**.
-  
-  Please act as a **constructive advisor**. Instead of enforcing strict rules, **suggest improvements** and **explain the benefits** of the recommended patterns.
-
-  ## 1. Caching Strategy (Advisory)
-  - **Cache Reader Pattern**: 
-    - If `@Cacheable` is mixed with complex business logic, **suggest** separating it into a Reader class (e.g., `MemberCacheReader`) for better maintainability.
-    - **Advise** keeping cache methods focused solely on DB retrieval.
-  - **Consistency**: 
-    - Check if `CacheType.Values` and `CacheType.Keys` are used. If hardcoded strings are found, **kindly suggest** using the constants.
-  - **Eviction**: 
-    - When logic modifies data, **verify** if cache eviction is handled. If missing, **remind the author** to check if eviction is necessary to prevent stale data.
-
-  ## 2. Write Optimization (Context-Aware)
-  - **Condition for Optimization**: Do **NOT** suggest asynchronous processing for simple or fast logic. Offer advice **only** when there is a clear bottleneck (e.g., external API calls, heavy calculations).
-  - **Staged Suggestion**: If optimization seems beneficial, suggest in this order:
-    1. `@Async` / `CompletableFuture`
-    2. `Spring ApplicationEvent`
-    3. External MQ (Only for high-throughput scenarios)
-
-  ## 3. Architecture & Code Quality (Best Practices)
-  - **Layer Isolation**: **Encourage** keeping the `domain` layer independent. If dependencies are found, explain why isolation is beneficial.
-  - **API Response**: **Recommend** wrapping responses in `ApiResponse<DTO>` for consistency, rather than returning raw Entities.
-  - **Dependency Injection**: **Encourage** Constructor Injection over Field Injection for better testability and immutability.
-
-  ## 4. Database & Query Optimization
-  - **JPA/QueryDSL**:
-    - If potential **N+1 problems** are detected, **suggest** using `fetch join`.
-    - For bulk operations, **recommend** `saveAll` or bulk updates over looping.
-    - **Advise** using DTO Projections for read-only views to improve performance.
+tone_instructions: |
+  You are a constructive advisor for a Spring Boot 3.5 & Java 21 project following Hexagonal Architecture.
+  Suggest improvements and explain benefits rather than enforcing strict rules.
 
 reviews:
   profile: "chill"
   request_changes_workflow: false
   high_level_summary: true
+
   auto_review:
     enabled: true
     drafts: false
 
   path_filters:
     - "!**/generated/**"
-    - "!src/test/**"
     - "!**/*.md"
     - "!gradle/**"
+
+  path_instructions:
+    # 캐싱 전략 관련 - Reader 클래스들
+    - path: "**/application/service/**/reader/**/*.java"
+      instructions: |
+        **Cache Reader Pattern (Advisory)**:
+        - Check if @Cacheable is properly separated from business logic
+        - Verify cache methods are focused solely on DB retrieval
+        - Suggest using CacheType.Values and CacheType.Keys constants instead of hardcoded strings
+        - When logic modifies data, remind to check if cache eviction is necessary
+
+    # Service 레이어 - 쓰기 최적화 (UseCase, Writer, API 포함)
+    - path: "**/application/service/**/*.java"
+      instructions: |
+        **Write Optimization (Context-Aware)**:
+        - Only suggest async processing for clear bottlenecks (external API calls, heavy calculations)
+        - Do NOT suggest optimization for simple/fast logic
+        - If optimization is beneficial, suggest in order:
+          1. @Async / CompletableFuture
+          2. Spring ApplicationEvent
+          3. External MQ (only for high-throughput scenarios)
+
+    # Domain 레이어 - 아키텍처 격리 (entity, vo, enums, policy, factory 포함)
+    - path: "**/domain/**/*.java"
+      instructions: |
+        **Layer Isolation**:
+        - Encourage keeping domain layer independent
+        - Check for inappropriate dependencies (infra, application layers)
+        - Explain why isolation is beneficial for maintainability
+
+    # Domain Repository 인터페이스
+    - path: "**/domain/**/repository/**/*.java"
+      instructions: |
+        **Repository Interface Best Practices**:
+        - Repository interface should be simple and domain-focused
+        - Avoid infrastructure-specific annotations in domain layer
+        - Method names should reflect business intent
+
+    # Infrastructure Persistence Repository 구현체 (QueryDSL 등)
+    - path: "**/infrastructure/persistence/**/repository/**/*.java"
+      instructions: |
+        **Database & Query Optimization**:
+        - Detect potential N+1 problems and suggest fetch join
+        - For bulk operations, recommend saveAll or bulk updates over loops
+        - Advise using DTO Projections for read-only views
+        - Review QueryDSL usage for complex dynamic queries
+
+    # External API Clients
+    - path: "**/infrastructure/client/**/*.java"
+      instructions: |
+        **External API Client Best Practices**:
+        - Check for proper rate limiting usage (Guava RateLimiter)
+        - Verify timeout configurations are appropriate
+        - Ensure proper error handling for API failures
+        - Consider circuit breaker pattern for resilience
+
+    # Scheduler
+    - path: "**/infrastructure/scheduler/**/*.java"
+      instructions: |
+        **Scheduler Best Practices**:
+        - Verify ShedLock is properly configured for distributed environments
+        - Check that scheduled tasks have appropriate error handling
+        - Ensure proper logging for task execution tracking
+
+
+    # 테스트 코드
+    - path: "**/test/**/*Test.java"
+      instructions: |
+        **Test Best Practices**:
+        - **Structure**: Encourage Given-When-Then or Arrange-Act-Assert pattern
+        - **Naming**: Test method names should describe behavior and expected outcome
+          Example: `shouldReturnUserWhenValidIdProvided()` not `testGetUser()`
+        - **One Assertion Focus**: Each test should verify one specific behavior
+        - **Test Data**: Use meaningful test data, not just `test1`, `test2`
+
+    # 전체 Java 파일
+    - path: "**/*.java"
+      instructions: |
+        **Code Quality Best Practices**:
+        - Check for proper exception handling
+        - Verify logging is appropriate (not excessive, not missing critical points)
+        - Suggest improvements for code readability
 
 chat:
   auto_reply: true
