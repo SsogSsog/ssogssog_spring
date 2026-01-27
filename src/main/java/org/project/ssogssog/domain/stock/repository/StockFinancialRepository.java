@@ -29,21 +29,6 @@ public interface StockFinancialRepository extends JpaRepository<StockFinancial, 
     List<Long> findStockIdsByYearAndQuarter(@Param("year") Integer year,
                                             @Param("quarter") String quarter);
 
-    /**
-     * 연간 실적 조회 (4Q 기준, 최근 N년)
-     * 연결재무제표 우선 (isConsolidated DESC)
-     */
-    @Query("""
-           SELECT sf FROM StockFinancial sf
-           WHERE sf.stock = :stock
-             AND sf.quarter = '4Q'
-             AND sf.isConsolidated = :isConsolidated
-           ORDER BY sf.year DESC
-           """)
-    List<StockFinancial> findAnnualByStockAndConsolidated(
-            @Param("stock") Stock stock,
-            @Param("isConsolidated") boolean isConsolidated,
-            Pageable pageable);
 
     /**
      * 분기 실적 조회 (최근 N분기)
@@ -104,10 +89,6 @@ public interface StockFinancialRepository extends JpaRepository<StockFinancial, 
         """, nativeQuery = true)
     List<StockFinancial> findAllLatestByStock();
 
-    /**
-     * 특정 연도의 모든 종목 재무 데이터 조회 (bulk)
-     */
-    List<StockFinancial> findByYear(Integer year);
 
     /**
      * 특정 연도 목록의 모든 재무 데이터 조회 (올해 + 작년 한 번에)
