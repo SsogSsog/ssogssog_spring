@@ -84,4 +84,9 @@ public interface DailyPriceRepository extends JpaRepository<DailyPrice, Long>, D
      * 특정 종목의 일별 시세 조회 (날짜 내림차순, 무한 스크롤용)
      */
     Slice<DailyPrice> findByStockOrderByDateDesc(Stock stock, Pageable pageable);
+
+    /**
+     * 특정 종목의 모든 일별 시세 조회 (날짜 오름차순, 등락 정보 동기화용)
+     */
+    List<DailyPrice> findByStockOrderByDateAsc(Stock stock);
 }
