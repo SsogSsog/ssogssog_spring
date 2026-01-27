@@ -284,6 +284,9 @@ public class StockResponse {
             @Schema(description = "PER (주가수익비율)", example = "15.2")
             private Double per;
 
+            @Schema(description = "PBR (주가순자산비율)", example = "1.2")
+            private Double pbr;
+
             @Schema(description = "ROE (자기자본이익률, %)", example = "12.5")
             private Double roe;
 

@@ -327,6 +327,7 @@ public class StockService {
         }
         return StockResponse.FinancialOverviewResponseDTO.FinancialSummary.builder()
                 .per(metric.getPer())
+                .pbr(metric.getPbr())
                 .roe(metric.getRoe())
                 .dividendYield(metric.getDividendYield())
                 .debtRatio(metric.getDebtRatio())
