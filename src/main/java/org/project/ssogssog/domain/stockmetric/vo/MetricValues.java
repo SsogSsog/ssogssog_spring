@@ -10,6 +10,7 @@ public record MetricValues(
         Long marketCap,
 
         Double per,
+        Double pbr,
         Double roe,
         Double netProfitMargin,
         Double debtRatio,

@@ -32,6 +32,7 @@ public class StockMetric {
 
     // --- [수익성 지표] ---
     private Double per;           // PER (주가수익비율)
+    private Double pbr;           // PBR (주가순자산비율)
     private Double roe;           // ROE (자기자본이익률)
     private Double netProfitMargin; // 순이익률
     private Double operatingProfitMargin; // 영업이익률
@@ -77,6 +78,7 @@ public class StockMetric {
             Integer currentPrice,
             Long marketCap,
             Double per,
+            Double pbr,
             Double roe,
             Double netProfitMargin,
             Double debtRatio,
@@ -95,6 +97,7 @@ public class StockMetric {
         this.marketCap = marketCap;
 
         this.per = per;
+        this.pbr = pbr;
         this.roe = roe;
         this.netProfitMargin = netProfitMargin;
         this.debtRatio = debtRatio;

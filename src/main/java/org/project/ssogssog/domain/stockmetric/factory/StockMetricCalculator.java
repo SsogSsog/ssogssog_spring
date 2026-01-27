@@ -108,13 +108,19 @@ public class StockMetricCalculator {
         }
 
         // -----------------------
-        // 4. ROE 계산 (TTM 순이익 / 자본총계)
+        // 4. PBR 계산 (시가총액 / 자본총계)
+        // -----------------------
+        Double pbr = safeDivide(marketCap, totalEquity);
+        log.debug("[{}] PBR: {}", stockCode, pbr);
+
+        // -----------------------
+        // 5. ROE 계산 (TTM 순이익 / 자본총계)
         // -----------------------
         Double roe = safeDivideToPercent(ttmNetIncome, totalEquity);
         log.debug("[{}] ROE: {}%", stockCode, roe);
 
         // -----------------------
-        // 5. 비율 지표 (TTM 기준)
+        // 6. 비율 지표 (TTM 기준)
         // -----------------------
         Double netProfitMargin = safeDivideToPercent(ttmNetIncome, ttmRevenue);
         Double operatingProfitMargin = safeDivideToPercent(ttmOperatingProfit, ttmRevenue);
@@ -124,7 +130,7 @@ public class StockMetricCalculator {
                 stockCode, netProfitMargin, operatingProfitMargin, debtRatio);
 
         // -----------------------
-        // 6. 성장률 (QoQ, YoY)
+        // 7. 성장률 (QoQ, YoY)
         // -----------------------
         // QoQ: 현재 분기 vs 직전 분기 (개별 실적 비교)
         // 주의: 1Q의 직전 분기는 작년 4Q이므로 lastYear에서 조회해야 함
@@ -154,7 +160,7 @@ public class StockMetricCalculator {
                 stockCode, salesGrowthQoQ, salesGrowthYoY, netProfitGrowthQoQ, netProfitGrowthYoY);
 
         // -----------------------
-        // 7. 기타 지표
+        // 8. 기타 지표
         // -----------------------
         Double dividendYield = calcDividendYield(currentPrice, stock != null ? stock.getLastDps() : null);
 
@@ -167,12 +173,13 @@ public class StockMetricCalculator {
                 stockCode, dividendYield, foreignOwnershipRate);
 
         // -----------------------
-        // 8. 결과 반환
+        // 9. 결과 반환
         // -----------------------
         return new MetricValues(
                 currentPrice,
                 marketCap,
                 per,
+                pbr,
                 roe,
                 netProfitMargin,
                 debtRatio,
@@ -396,6 +403,13 @@ public class StockMetricCalculator {
             return null;
         }
         return numerator / denominator;
+    }
+
+    private static Double safeDivide(Long numerator, Long denominator) {
+        if (numerator == null || denominator == null || denominator == 0L) {
+            return null;
+        }
+        return (double) numerator / denominator;
     }
 
     private static Double safeDivideToPercent(Long numerator, Long denominator) {
