@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
 import org.project.ssogssog.application.service.stock.port.StockIssuePort;
-import org.project.ssogssog.application.service.stock.usecase.dto.DisclosureDTO;
-import org.project.ssogssog.application.service.stock.usecase.dto.NewsDTO;
+import org.project.ssogssog.application.service.stock.collect.dto.DisclosureDTO;
+import org.project.ssogssog.application.service.stock.collect.dto.NewsDTO;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.DailyPriceRepository;
@@ -17,7 +17,6 @@ import org.project.ssogssog.infrastructure.config.cache.CacheType;
 import org.project.ssogssog.presentation.controller.stock.enums.RankingType;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collections;

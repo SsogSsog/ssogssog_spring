@@ -9,7 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.project.ssogssog.application.service.stock.port.DailyPricePort;
-import org.project.ssogssog.application.service.stock.usecase.CollectTodayPricesUseCase;
+import org.project.ssogssog.application.service.stock.collect.CollectTodayPricesUseCase;
 import org.project.ssogssog.application.service.stock.writer.DailyPriceWriter;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.StockRepository;

@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.service.stock.usecase;
+package org.project.ssogssog.application.service.stock.collect;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,10 +1,10 @@
-package org.project.ssogssog.application.service.stock.usecase;
+package org.project.ssogssog.application.service.stock.collect;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.stock.port.DailyPricePort;
 import org.project.ssogssog.application.utils.DateUtils;
-import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceDTO;
+import org.project.ssogssog.application.service.stock.collect.dto.HistoricalPriceDTO;
 import org.project.ssogssog.application.service.stock.writer.DailyPriceWriter;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.StockRepository;

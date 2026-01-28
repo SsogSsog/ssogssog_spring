@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.service.stock.usecase.dto;
+package org.project.ssogssog.application.service.stock.collect.dto;
 
 public record NewsDTO(String title,
         String link,

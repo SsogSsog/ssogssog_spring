@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceDTO;
+import org.project.ssogssog.application.service.stock.collect.dto.HistoricalPriceDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;

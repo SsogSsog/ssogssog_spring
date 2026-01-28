@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.service.stock.usecase.dto;
+package org.project.ssogssog.application.service.stock.collect.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;

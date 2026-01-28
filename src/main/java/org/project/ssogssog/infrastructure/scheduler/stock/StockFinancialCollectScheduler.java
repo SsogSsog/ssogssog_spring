@@ -3,7 +3,7 @@ package org.project.ssogssog.infrastructure.scheduler.stock;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.project.ssogssog.application.service.stock.usecase.CollectFinancialsUseCase;
+import org.project.ssogssog.application.service.stock.collect.CollectFinancialsUseCase;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 

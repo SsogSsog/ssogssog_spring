@@ -1,7 +1,7 @@
 package org.project.ssogssog.application.service.stock.port;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceDTO;
+import org.project.ssogssog.application.service.stock.collect.dto.HistoricalPriceDTO;
 
 import java.time.LocalDate;
 

@@ -1,12 +1,11 @@
 package org.project.ssogssog.infrastructure.adapter.stock;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.benmanes.caffeine.cache.Cache;
 import com.google.common.util.concurrent.RateLimiter;
 
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.stock.port.DailyPricePort;
-import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceDTO;
+import org.project.ssogssog.application.service.stock.collect.dto.HistoricalPriceDTO;
 import org.project.ssogssog.infrastructure.client.ksi.KISClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
