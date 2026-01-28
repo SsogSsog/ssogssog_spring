@@ -8,6 +8,7 @@ import org.project.ssogssog.application.service.stock.collect.dto.DisclosureDTO;
 import org.project.ssogssog.application.service.stock.collect.dto.NewsDTO;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
+import org.project.ssogssog.domain.stock.projection.ThemeItemProjection;
 import org.project.ssogssog.domain.stock.repository.DailyPriceRepository;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.global.paging.SliceDTO;
@@ -98,6 +99,17 @@ public class StockCacheReader {
 
         // TODO: 현재 hasNext가 true여서 무한으로 공시 검색 할 수 있으므로 횟수 제한 적용하기
         return SliceDTO.of(disclosureItems, page, DISCLOSURE_PAGE_SIZE, true);
+    }
+
+    /**
+     * 테마별 주식 통계 조회 (캐시)
+     */
+    @Cacheable(
+            value = CacheType.Values.THEME_STATS,
+            key = CacheType.Keys.THEME_STATS
+    )
+    public List<ThemeItemProjection> getThemeStockStats() {
+        return stockRepository.getThemeStockStats();
     }
 
     /**

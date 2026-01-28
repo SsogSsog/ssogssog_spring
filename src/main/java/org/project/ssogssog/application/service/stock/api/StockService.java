@@ -58,7 +58,7 @@ public class StockService {
         // 3. 마지막에 총합으로 평균 계산
         // 4. (중요!!) arrayList 정렬하기(사전 순으로)
 
-        List<ThemeItemProjection> items = stockRepository.getThemeStockStats();
+        List<ThemeItemProjection> items = stockCacheReader.getThemeStockStats();
 
         Map<String, StockResponse.ThemeCollectedItemDTO> m = new HashMap<>();
         for(var item : items){
