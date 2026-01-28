@@ -13,8 +13,8 @@ public enum MarketCapBucket {
 
         return switch (marketCapBucket){
             case SMALL_CAP -> null;
-            case MID_CAP -> 500000000000L;
-            case LARGE_CAP -> 3000000000000L;
+            case MID_CAP -> 5000L;
+            case LARGE_CAP -> 30000L;
         };
     }
 
@@ -25,8 +25,8 @@ public enum MarketCapBucket {
         }
 
         return switch (marketCapBucket){
-            case SMALL_CAP -> 500000000000L;
-            case MID_CAP -> 3000000000000L;
+            case SMALL_CAP -> 5000L;
+            case MID_CAP -> 30000L;
             case LARGE_CAP -> null;
         };
     }

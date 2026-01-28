@@ -2,9 +2,11 @@ package org.project.ssogssog.presentation.controller.stock;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import org.project.ssogssog.application.service.member.api.MemberService;
 import org.project.ssogssog.application.service.stock.api.StockService;
 import org.project.ssogssog.global.paging.PageDTO;
 import org.project.ssogssog.global.paging.SliceDTO;
@@ -26,6 +28,7 @@ import java.util.List;
 public class StockController {
 
     private final StockService stockService;
+    private final MemberService memberService;
 
     /// 주식 상세 조회 관련 API
 
@@ -126,6 +129,27 @@ public class StockController {
     ) {
         StockResponse.FinancialOverviewResponseDTO result = stockService.getFinancialOverview(stockCode);
         return ApiResponse.onSuccess(result);
+    }
+
+    @GetMapping("/{stockCode}/liked")
+    @Operation(
+            summary = "특정 종목 좋아요 여부 조회",
+            description = """
+            현재 사용자가 해당 종목을 좋아요했는지 여부를 반환합니다.
+
+            - liked: true (좋아요함), false (좋아요하지 않음)
+            - 비즈니스 로직은 Member 도메인에서 처리됩니다.
+            """
+    )
+    public ApiResponse<StockResponse.LikedStatusDTO> isLiked(
+            @PathVariable
+            @NotBlank
+            String stockCode,
+            HttpServletRequest httpRequest
+    ) {
+        String uuid = (String) httpRequest.getAttribute("memberUuId");
+        boolean liked = memberService.isLiked(uuid, stockCode);
+        return ApiResponse.onSuccess(new StockResponse.LikedStatusDTO(liked));
     }
 
 

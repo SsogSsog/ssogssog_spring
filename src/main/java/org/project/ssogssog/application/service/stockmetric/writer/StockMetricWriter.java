@@ -88,6 +88,7 @@ public class StockMetricWriter {
                 metricValues.currentPrice(),
                 metricValues.marketCap(),
                 metricValues.per(),
+                metricValues.pbr(),
                 metricValues.roe(),
                 metricValues.netProfitMargin(),
                 metricValues.debtRatio(),

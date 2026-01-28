@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceDTO;
+import org.project.ssogssog.application.service.stock.collect.dto.HistoricalPriceDTO;
 import org.project.ssogssog.application.service.stock.writer.DailyPriceWriter;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;

@@ -12,9 +12,11 @@ import java.util.Optional;
 
 public interface StockLikeRepository extends JpaRepository<StockLike, Long> {
     Optional<StockLike> findByMemberAndStock(Member member, Stock stock);
-    List<StockLike> findAllByMember(Member member);
-    boolean existsByMemberAndStock(Member member, Stock stock);
+
 
     @Query("SELECT sl.stock.id FROM StockLike sl WHERE sl.member.uuid = :uuid")
     List<Long> findStockIdsByMemberUuid(@Param("uuid") String uuid);
+
+    // JPA 장점을 살리기 위해 해당 메서드에 한정해 _ 허용
+    boolean existsByMember_UuidAndStock_StockCode(String uuid, String stockCode);
 }

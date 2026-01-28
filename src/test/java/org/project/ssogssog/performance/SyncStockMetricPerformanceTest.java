@@ -3,7 +3,7 @@ package org.project.ssogssog.performance;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.project.ssogssog.application.service.stockmetric.usecase.SyncStockMetricDataUseCase;
+import org.project.ssogssog.application.service.stockmetric.collect.SyncStockMetricDataUseCase;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.entity.StockFinancial;
 import org.project.ssogssog.domain.stock.repository.DailyPriceRepository;

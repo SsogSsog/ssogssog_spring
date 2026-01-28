@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.service.stock.usecase.dto;
+package org.project.ssogssog.application.service.stock.collect.dto;
 
 public record DisclosureDTO(
         String reportName, // 공시 제목 (예: 분기보고서)

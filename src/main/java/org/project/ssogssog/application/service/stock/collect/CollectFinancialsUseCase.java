@@ -1,4 +1,4 @@
-package org.project.ssogssog.application.service.stock.usecase;
+package org.project.ssogssog.application.service.stock.collect;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;

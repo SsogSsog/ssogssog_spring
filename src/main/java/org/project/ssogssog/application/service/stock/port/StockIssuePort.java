@@ -1,7 +1,7 @@
 package org.project.ssogssog.application.service.stock.port;
 
-import org.project.ssogssog.application.service.stock.usecase.dto.DisclosureDTO;
-import org.project.ssogssog.application.service.stock.usecase.dto.NewsDTO;
+import org.project.ssogssog.application.service.stock.collect.dto.DisclosureDTO;
+import org.project.ssogssog.application.service.stock.collect.dto.NewsDTO;
 
 import java.util.List;
 

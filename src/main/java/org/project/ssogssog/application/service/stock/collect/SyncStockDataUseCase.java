@@ -1,16 +1,12 @@
-package org.project.ssogssog.application.service.stock.usecase;
+package org.project.ssogssog.application.service.stock.collect;
 
-import com.google.common.util.concurrent.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.stock.port.StockPort;
 import org.project.ssogssog.application.utils.ParserUtils;
-import org.project.ssogssog.application.service.stock.writer.StockFinancialWriter;
 import org.project.ssogssog.application.service.stock.writer.StockWriter;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
-import org.project.ssogssog.infrastructure.client.ksi.KISClient;
-import org.project.ssogssog.infrastructure.client.opendart.OpenDartClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
