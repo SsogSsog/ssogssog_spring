@@ -19,6 +19,12 @@ public class StockConverter {
             Integer year, Map<String, StockFinancial> yearData) {
 
         StockFinancial q4 = yearData.get("4Q");
+
+        if (q4 == null) {
+            log.warn("4Q 데이터가 없어 계산 불가 - year: {}", year);
+            return null;
+        }
+
         StockFinancial q1 = yearData.get("1Q");
         StockFinancial q2 = yearData.get("2Q");
         StockFinancial q3 = yearData.get("3Q");
@@ -28,7 +34,7 @@ public class StockConverter {
             log.warn("4Q 단독 실적 계산 불가 (분기 데이터 부족) - year: {}", year);
             // 데이터가 없으니 추정값이라도 전달
             return StockResponse.FinancialOverviewResponseDTO.PerformanceItem.builder()
-                    .year(q4.getYear())
+                    .year(year)
                     .quarter("4Q")
                     .revenue(q4.getRevenue()/4L)
                     .operatingProfit(q4.getOperatingProfit()/4L)
@@ -55,6 +61,9 @@ public class StockConverter {
                 .build();
     }
 
+    /**
+     * 1Q, 2Q, 3Q의 경우 단독 실적을 PerformanceItem으로 변환
+     */
     public static StockResponse.FinancialOverviewResponseDTO.PerformanceItem toPerformanceItem(StockFinancial sf) {
         return StockResponse.FinancialOverviewResponseDTO.PerformanceItem.builder()
                 .year(sf.getYear())

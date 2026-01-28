@@ -351,12 +351,21 @@ public class StockService {
                         Collectors.toMap(StockFinancial::getQuarter, sf -> sf, (a, b) -> a)
                 ));
 
-        // 연간 실적: 4Q가 있는 연도의 4Q 단독 실적 (최근 3년)
+        // 최신 데이터의 분기 파악 (allData는 이미 최신순 정렬)
+        String latestQuarter = allData.get(0).getQuarter();
+
+        // 연간 실적: 최신 분기 기준으로 각 연도의 동일 분기 (최근 3년 YoY 비교용)
         List<StockResponse.FinancialOverviewResponseDTO.PerformanceItem> annual = dataByYear.entrySet().stream()
-                .filter(e -> e.getValue().containsKey("4Q"))
+                .filter(e -> e.getValue().containsKey(latestQuarter))
                 .sorted((a, b) -> b.getKey().compareTo(a.getKey())) // 최신 연도 우선
                 .limit(ANNUAL_LIMIT)
-                .map(e -> toQ4StandalonePerformanceItem(e.getKey(), e.getValue()))
+                .map(e -> {
+                    Map<String, StockFinancial> yearData = e.getValue();
+                    if ("4Q".equals(latestQuarter)) {
+                        return toQ4StandalonePerformanceItem(e.getKey(), yearData);
+                    }
+                    return toPerformanceItem(yearData.get(latestQuarter));
+                })
                 .toList();
 
         // 분기 실적: 최근 4분기 (4Q는 단독 실적으로 계산)
