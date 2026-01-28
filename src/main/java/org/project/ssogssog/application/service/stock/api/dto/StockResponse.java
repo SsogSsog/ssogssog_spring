@@ -362,7 +362,7 @@ public class StockResponse {
     @Schema(description = "주식 좋아요 여부")
     public static class LikedStatusDTO{
         @Schema(description = "좋아요 여부", example = "true")
-        boolean liked;
+        private boolean liked;
     }
 
 }
