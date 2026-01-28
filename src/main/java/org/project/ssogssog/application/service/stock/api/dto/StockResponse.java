@@ -352,4 +352,17 @@ public class StockResponse {
         }
     }
 
+    /**
+     * 주식 좋아요 여부 응답 DTO
+     */
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    @Schema(description = "주식 좋아요 여부")
+    public static class LikedStatusDTO{
+        @Schema(description = "좋아요 여부", example = "true")
+        boolean liked;
+    }
+
 }
