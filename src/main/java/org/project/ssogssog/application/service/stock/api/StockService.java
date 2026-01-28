@@ -2,6 +2,7 @@ package org.project.ssogssog.application.service.stock.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.project.ssogssog.application.service.stock.api.converter.StockConverter;
 import org.project.ssogssog.application.service.stock.reader.StockCacheReader;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
@@ -123,22 +124,12 @@ public class StockService {
                 stockRepository.getStocksForThemeOrderByClosePrice(theme, pageable);
 
         Page<StockResponse.StockItemResponseDTO> stockItemsResponse =
-                stockItems.map(this::toStockItemDTO);
+                stockItems.map(StockConverter::toStockItemDTO);
 
         return PageDTO.from(stockItemsResponse);
     }
 
-    private StockResponse.StockItemResponseDTO toStockItemDTO(StockItemProjection stockItemProjection) {
 
-        return StockResponse.StockItemResponseDTO.builder()
-                .stockId(stockItemProjection.stockId())
-                .corpName(stockItemProjection.corpName())
-                .stockCode(stockItemProjection.stockCode())
-                .closePrice(stockItemProjection.closePrice())
-                .volume(stockItemProjection.volume())
-                .changeRate(stockItemProjection.changeRate())
-                .build();
-    }
 
     private static final int CHART_MONTHS = 3;
 
@@ -321,6 +312,7 @@ public class StockService {
                 .build();
     }
 
+    // 재무 정보 헬퍼 메서드
     private StockResponse.FinancialOverviewResponseDTO.FinancialSummary buildFinancialSummary(StockMetric metric) {
         if (metric == null) {
             return null;
@@ -334,6 +326,7 @@ public class StockService {
                 .build();
     }
 
+    // 재무 정보 헬퍼 메서드
     private StockResponse.FinancialOverviewResponseDTO.PerformanceAnalysis buildPerformanceAnalysis(Stock stock) {
         // 3개년 전체 분기 데이터 조회 (4Q 단독 실적 계산을 위해)
         // 연결재무제표 우선, 없으면 별도 재무제표 (한 개라도 StockFinancial이 존재 시 가져옴)
@@ -386,7 +379,7 @@ public class StockService {
                 .build();
     }
 
-
+    // 제무 정보 헬퍼 메서드
     private StockResponse.FinancialOverviewResponseDTO.FinancialStability buildFinancialStability(Stock stock) {
         // 연결재무제표 우선, 없으면 별도 재무제표
         Optional<StockFinancial> latestOpt = stockFinancialRepository
@@ -472,7 +465,7 @@ public class StockService {
         List<StockItemProjection> projections = stockRepository.searchAutocomplete(keyword, limit);
 
         return projections.stream()
-                .map(this::toStockItemDTO)
+                .map(StockConverter::toStockItemDTO)
                 .toList();
     }
 
@@ -486,7 +479,7 @@ public class StockService {
     public PageDTO<StockResponse.StockItemResponseDTO> search(String keyword, Pageable pageable) {
         Page<StockItemProjection> projections = stockRepository.search(keyword, pageable);
 
-        Page<StockResponse.StockItemResponseDTO> result = projections.map(this::toStockItemDTO);
+        Page<StockResponse.StockItemResponseDTO> result = projections.map(StockConverter::toStockItemDTO);
 
         return PageDTO.from(result);
     }

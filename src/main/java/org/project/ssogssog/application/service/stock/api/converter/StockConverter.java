@@ -3,6 +3,7 @@ package org.project.ssogssog.application.service.stock.api.converter;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.stock.api.dto.StockResponse;
 import org.project.ssogssog.domain.stock.entity.StockFinancial;
+import org.project.ssogssog.domain.stock.projection.StockItemProjection;
 import org.project.ssogssog.domain.stockmetric.factory.StockMetricCalculator;
 
 import java.util.Map;
@@ -62,6 +63,18 @@ public class StockConverter {
                 .operatingProfit(sf.getOperatingProfit())
                 .netIncome(sf.getNetIncome())
                 .isConsolidated(sf.isConsolidated())
+                .build();
+    }
+
+    public static StockResponse.StockItemResponseDTO toStockItemDTO(StockItemProjection stockItemProjection) {
+
+        return StockResponse.StockItemResponseDTO.builder()
+                .stockId(stockItemProjection.stockId())
+                .corpName(stockItemProjection.corpName())
+                .stockCode(stockItemProjection.stockCode())
+                .closePrice(stockItemProjection.closePrice())
+                .volume(stockItemProjection.volume())
+                .changeRate(stockItemProjection.changeRate())
                 .build();
     }
 }
