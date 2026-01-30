@@ -44,7 +44,18 @@ public class StockFinancialAdapter implements StockFinancialPort {
                     year,
                     reportCode
             );
-            return objectMapper.readTree(response);
+
+            JsonNode root = objectMapper.readTree(response);
+
+            String status = root.path("status").asText();
+
+            // "000" (정상)이 아니면 데이터가 없거나 에러인 상황
+            if (!"000".equals(status)) {
+                String msg = root.path("message").asText();
+                log.info("OpenDART 재무정보 조회 결과 없음 - status: {}, msg: {}, code: {}", status, msg, corpCode);
+                return null; // 서비스 계층에서 null 처리를 하도록 유도
+            }
+            return root;
 
         } catch (JsonProcessingException e) {
             log.warn("OpenDART JSON 파싱 실패 corpCode={}, year={}, reportCode={}",
