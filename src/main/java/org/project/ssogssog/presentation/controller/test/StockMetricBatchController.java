@@ -1,7 +1,7 @@
 package org.project.ssogssog.presentation.controller.test;
 
 import lombok.RequiredArgsConstructor;
-import org.project.ssogssog.application.service.stockmetric.usecase.SyncStockMetricDataUseCase;
+import org.project.ssogssog.application.service.stockmetric.collect.SyncStockMetricDataUseCase;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,7 +19,8 @@ public class StockMetricBatchController {
      */
     @PostMapping("/refresh")
     public ResponseEntity<Void> refreshAll() {
-        syncStockMetricDataUseCase.refreshAllMetrics();
+        //syncStockMetricDataUseCase.refreshAllMetrics();
+        syncStockMetricDataUseCase.refreshAllMetricsOptimized();
         return ResponseEntity.ok().build();
     }
 }

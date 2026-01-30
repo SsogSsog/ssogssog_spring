@@ -3,51 +3,59 @@ package org.project.ssogssog.infrastructure.adapter.stock;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.google.common.util.concurrent.RateLimiter;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.stock.port.StockFinancialPort;
-import org.project.ssogssog.infrastructure.client.ksi.KISClient;
-import org.project.ssogssog.infrastructure.client.opendart.OpenDartClient;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.project.ssogssog.infrastructure.client.feign.opendart.OpenDartFeignClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+/**
+ * 재무정보 어댑터
+ * - OpenDART Feign Client를 사용하여 외부 API 호출
+ * - Resilience4j 어노테이션으로 회복 탄력성 적용
+ */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class StockFinancialAdapter implements StockFinancialPort {
 
-    // Spring이 제공하는 ObjectMapper 주입 (JSON 파싱용)
     private final ObjectMapper objectMapper;
+    private final OpenDartFeignClient openDartFeignClient;
 
-    private final OpenDartClient openDartClient;
-    private final RateLimiter rateLimiter;
+    @Value("${opendart.api-key}")
+    private String openDartApiKey;
 
-    // 주의!
-    // @Qualifier 어노테이션 사용 시 생성자를 직접 만들어야 에러가 안 생긴다..
-    public StockFinancialAdapter(ObjectMapper objectMapper,
-                             OpenDartClient openDartClient,
-                             @Qualifier("openDartRateLimiter") RateLimiter rateLimiter) {
-        this.objectMapper = objectMapper;
-        this.openDartClient = openDartClient;
-        this.rateLimiter = rateLimiter;
-    }
-
-
+    /**
+     * 재무정보 조회
+     */
     @Override
+    @Retry(name = "opendart-retry", fallbackMethod = "getFinancialInfoFallback")
+    @CircuitBreaker(name = "opendart-circuit", fallbackMethod = "getFinancialInfoFallback")
+    @RateLimiter(name = "opendart-rate-limiter")
     public JsonNode getFinancialInfo(String corpCode, Integer year, String reportCode) {
-
         try {
-            rateLimiter.acquire();
+            String response = openDartFeignClient.getFinancialInfo(
+                    openDartApiKey,
+                    corpCode,
+                    year,
+                    reportCode
+            );
+            return objectMapper.readTree(response);
 
-            String response = openDartClient.getFinancialInfo(corpCode, year, reportCode);
-            JsonNode root = objectMapper.readTree(response);
-            return root;
         } catch (JsonProcessingException e) {
-            log.warn("OpenDART JSON 파싱 실패 corpCode={}, year={}, reportCode={}", corpCode, year, reportCode, e);
+            log.warn("OpenDART JSON 파싱 실패 corpCode={}, year={}, reportCode={}",
+                    corpCode, year, reportCode, e);
             return null;
         }
+    }
 
-
+    public JsonNode getFinancialInfoFallback(String corpCode, Integer year, String reportCode, Exception e) {
+        log.warn("OpenDART 재무정보 조회 실패 (fallback) - corpCode: {}, year: {}, reportCode: {}, 원인: {}",
+                corpCode, year, reportCode, e.getMessage());
+        return null;
     }
 }
