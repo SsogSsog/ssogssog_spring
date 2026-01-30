@@ -5,6 +5,7 @@ import feign.RequestInterceptor;
 import feign.Retryer;
 import feign.codec.ErrorDecoder;
 import org.project.ssogssog.infrastructure.client.feign.kis.KisTokenManager;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
 import java.util.concurrent.TimeUnit;
@@ -15,6 +16,12 @@ import java.util.concurrent.TimeUnit;
  * - 이 설정은 @FeignClient(configuration = KisFeignConfig.class)로만 적용됨
  */
 public class KisFeignConfig {
+
+    @Value("${kis.app-key}")
+    private String appKey;
+
+    @Value("${kis.app-secret}")
+    private String appSecret;
 
     /**
      * HTTP 상태 코드 → 커스텀 예외 변환
@@ -29,7 +36,7 @@ public class KisFeignConfig {
      */
     @Bean
     public RequestInterceptor kisRequestInterceptor(KisTokenManager tokenManager) {
-        return new KisRequestInterceptor(tokenManager);
+        return new KisRequestInterceptor(tokenManager, appKey, appSecret);
     }
 
     /**

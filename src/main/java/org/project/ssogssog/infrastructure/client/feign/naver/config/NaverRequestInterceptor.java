@@ -12,11 +12,13 @@ import org.springframework.beans.factory.annotation.Value;
 @Slf4j
 public class NaverRequestInterceptor implements RequestInterceptor {
 
-    @Value("${naver-search.app-key}")
-    private String clientId;
+    private final String clientId;
+    private final String clientSecret;
 
-    @Value("${naver-search.app-secret}")
-    private String clientSecret;
+    public NaverRequestInterceptor(String clientId, String clientSecret) {
+        this.clientId = clientId;
+        this.clientSecret = clientSecret;
+    }
 
     @Override
     public void apply(RequestTemplate template) {

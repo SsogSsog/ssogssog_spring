@@ -15,15 +15,13 @@ import org.springframework.beans.factory.annotation.Value;
 public class KisRequestInterceptor implements RequestInterceptor {
 
     private final KisTokenManager tokenManager;
+    private final String appKey;
+    private final String appSecret;
 
-    @Value("${kis.app-key}")
-    private String appKey;
-
-    @Value("${kis.app-secret}")
-    private String appSecret;
-
-    public KisRequestInterceptor(KisTokenManager tokenManager) {
+    public KisRequestInterceptor(KisTokenManager tokenManager, String appKey, String appSecret) {
         this.tokenManager = tokenManager;
+        this.appKey = appKey;
+        this.appSecret = appSecret;
     }
 
     @Override

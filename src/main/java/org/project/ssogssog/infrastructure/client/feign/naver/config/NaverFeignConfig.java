@@ -4,6 +4,7 @@ import feign.Request;
 import feign.RequestInterceptor;
 import feign.Retryer;
 import feign.codec.ErrorDecoder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
 import java.util.concurrent.TimeUnit;
@@ -17,6 +18,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class NaverFeignConfig {
 
+    @Value("${naver-search.app-key}")
+    private String clientId;
+
+    @Value("${naver-search.app-secret}")
+    private String clientSecret;
     /**
      * HTTP 상태 코드 → 커스텀 예외 변환
      */
@@ -30,7 +36,7 @@ public class NaverFeignConfig {
      */
     @Bean
     public RequestInterceptor naverRequestInterceptor() {
-        return new NaverRequestInterceptor();
+        return new NaverRequestInterceptor(clientId, clientSecret);
     }
 
     /**
