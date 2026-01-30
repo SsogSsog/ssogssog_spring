@@ -130,17 +130,6 @@ public class StockIssueAdapter implements StockIssuePort {
             return Collections.emptyList();
         }
 
-        try {
-            OpenDartValidator.validate(root);
-        } catch (Exception e) {
-            // validate()에서 던진 예외를 상위로 던져야 Resilience4j가 반응
-            throw e;
-        }
-
-        // 013(데이터 없음)인 경우 빈 리스트 반환
-        if ("013".equals(root.path("status").asText())) {
-            return Collections.emptyList();
-        }
         JsonNode items = root.path("items");
 
         List<NewsDTO> newsList = new ArrayList<>();
@@ -178,9 +167,15 @@ public class StockIssueAdapter implements StockIssuePort {
             return Collections.emptyList();
         }
 
-        // OpenDART 상태 코드 확인 ("000"이 정상)
-        String status = root.path("status").asText();
-        if (!"000".equals(status)) {
+        try {
+            OpenDartValidator.validate(root);
+        } catch (Exception e) {
+            // validate()에서 던진 예외를 상위로 던져야 Resilience4j가 반응
+            throw e;
+        }
+
+        // 013(데이터 없음)인 경우 빈 리스트 반환
+        if ("013".equals(root.path("status").asText())) {
             return Collections.emptyList();
         }
 
