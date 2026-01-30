@@ -18,6 +18,13 @@ repositories {
     mavenCentral()
 }
 
+// Spring Cloud
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2025.0.1"
+    }
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     //implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -42,8 +49,19 @@ dependencies {
     // validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-    // Google Guava
+    // Google Guava (향후 제거 예정 - Resilience4j로 대체)
     implementation 'com.google.guava:guava:33.0.0-jre'
+
+    // Spring Cloud OpenFeign
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+    // Resilience4j (Circuit Breaker, Retry, RateLimiter, TimeLimiter)
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-feign:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-micrometer:2.2.0'
+
+    // Spring AOP
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
 
     // shed lock
     implementation 'net.javacrumbs.shedlock:shedlock-spring:7.5.0'
