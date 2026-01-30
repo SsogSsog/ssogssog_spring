@@ -7,7 +7,7 @@ import lombok.ToString;
 
 @Getter
 @NoArgsConstructor
-@ToString
+@ToString(exclude = "accessToken")
 public class KisTokenResponse {
 
     @JsonProperty("access_token")

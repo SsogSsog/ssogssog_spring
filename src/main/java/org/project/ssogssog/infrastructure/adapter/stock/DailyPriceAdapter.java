@@ -147,6 +147,7 @@ public class DailyPriceAdapter implements DailyPricePort {
             return false;
         }
 
+        // TODO 날짜 파싱 로직 검토하 + 통합 테스트 코드 만들기
         // 요청한 날짜의 개장 여부 확인
         return response.getOutput().stream()
                 .filter(info -> info.getBaseDate().equals(dateStr))
