@@ -133,27 +133,33 @@ public class DailyPriceAdapter implements DailyPricePort {
     public boolean isMarketOpen(LocalDate date) {
         String dateStr = date.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
-        KisHolidayResponse response = kisFeignClient.checkHoliday(
-                "CTCA0903R",  // tr_id: 휴장일 조회
-                "",           // tr_cont
-                "P",          // custtype: 개인
-                dateStr,
-                "",           // CTX_AREA_NK
-                ""            // CTX_AREA_FK
-        );
+        try{
+            KisHolidayResponse response = kisFeignClient.checkHoliday(
+                    "CTCA0903R",  // tr_id: 휴장일 조회
+                    "",           // tr_cont
+                    "P",          // custtype: 개인
+                    dateStr,
+                    "",           // CTX_AREA_NK
+                    ""            // CTX_AREA_FK
+            );
 
-        if (response == null || response.getOutput() == null || response.getOutput().isEmpty()) {
-            log.error("휴장일 정보를 가져오지 못했습니다. 안전하게 '휴장'으로 처리합니다.");
-            return false;
+            if (response == null || response.getOutput() == null || response.getOutput().isEmpty()) {
+                log.error("휴장일 정보를 가져오지 못했습니다. 안전하게 '휴장'으로 처리합니다.");
+                return false;
+            }
+
+            // TODO 날짜 파싱 로직 검토하 + 통합 테스트 코드 만들기
+            // 요청한 날짜의 개장 여부 확인
+            return response.getOutput().stream()
+                    .filter(info -> info.getBaseDate().equals(dateStr))
+                    .findFirst()
+                    .map(KisHolidayResponse.HolidayInfo::isMarketOpen)
+                    .orElse(response.getOutput().get(0).isMarketOpen());
+        }catch (TokenExpiredException e) {
+            kisTokenManager.invalidateToken();
+            throw e;
         }
 
-        // TODO 날짜 파싱 로직 검토하 + 통합 테스트 코드 만들기
-        // 요청한 날짜의 개장 여부 확인
-        return response.getOutput().stream()
-                .filter(info -> info.getBaseDate().equals(dateStr))
-                .findFirst()
-                .map(KisHolidayResponse.HolidayInfo::isMarketOpen)
-                .orElse(response.getOutput().get(0).isMarketOpen());
     }
 
     public boolean isMarketOpenFallback(LocalDate date, Exception e) {
