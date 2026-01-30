@@ -13,6 +13,7 @@ import org.project.ssogssog.application.service.stock.collect.dto.DisclosureDTO;
 import org.project.ssogssog.application.service.stock.collect.dto.NewsDTO;
 import org.project.ssogssog.infrastructure.client.feign.naver.NaverFeignClient;
 import org.project.ssogssog.infrastructure.client.feign.opendart.OpenDartFeignClient;
+import org.project.ssogssog.infrastructure.client.feign.opendart.validator.OpenDartValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -126,6 +127,18 @@ public class StockIssueAdapter implements StockIssuePort {
             root = objectMapper.readTree(jsonResponse);
         } catch (JsonProcessingException e) {
             log.error("네이버 뉴스 검색 실패 - 에러: {}", e.getMessage());
+            return Collections.emptyList();
+        }
+
+        try {
+            OpenDartValidator.validate(root);
+        } catch (Exception e) {
+            // validate()에서 던진 예외를 상위로 던져야 Resilience4j가 반응
+            throw e;
+        }
+
+        // 013(데이터 없음)인 경우 빈 리스트 반환
+        if ("013".equals(root.path("status").asText())) {
             return Collections.emptyList();
         }
         JsonNode items = root.path("items");

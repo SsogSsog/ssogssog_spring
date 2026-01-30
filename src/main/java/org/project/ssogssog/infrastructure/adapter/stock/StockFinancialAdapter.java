@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.stock.port.StockFinancialPort;
 import org.project.ssogssog.infrastructure.client.feign.opendart.OpenDartFeignClient;
+import org.project.ssogssog.infrastructure.client.feign.opendart.validator.OpenDartValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -47,13 +48,13 @@ public class StockFinancialAdapter implements StockFinancialPort {
 
             JsonNode root = objectMapper.readTree(response);
 
-            String status = root.path("status").asText();
+            // [★ 적용] 공통 검증기 호출 (여기서 020, 800 등은 예외가 터져서 재시도됨)
+            OpenDartValidator.validate(root);
 
-            // "000" (정상)이 아니면 데이터가 없거나 에러인 상황
-            if (!"000".equals(status)) {
-                String msg = root.path("message").asText();
-                log.info("OpenDART 재무정보 조회 결과 없음 - status: {}, msg: {}, code: {}", status, msg, corpCode);
-                return null; // 서비스 계층에서 null 처리를 하도록 유도
+            // 검증 통과 후, "013(데이터 없음)"인 경우는 null 리턴
+            if ("013".equals(root.path("status").asText())) {
+                log.info("OpenDART 데이터 없음 (013) - corpCode: {}", corpCode);
+                return null;
             }
             return root;
 
