@@ -15,8 +15,11 @@ import java.util.List;
 @ToString
 public class OpenDartDividendResponse {
 
+    @JsonProperty("status")
     private String status;  // "000"이면 성공
+    @JsonProperty("message")
     private String message;
+    @JsonProperty("list")
     private List<DividendItem> list;
 
     public boolean isSuccess() {
