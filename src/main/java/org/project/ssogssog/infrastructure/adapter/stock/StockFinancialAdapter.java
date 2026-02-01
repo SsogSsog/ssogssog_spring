@@ -3,6 +3,7 @@ package org.project.ssogssog.infrastructure.adapter.stock;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -35,7 +36,7 @@ public class StockFinancialAdapter implements StockFinancialPort {
      */
     @Override
     @Retry(name = "opendart-retry", fallbackMethod = "getFinancialInfoFallback")
-    @CircuitBreaker(name = "opendart-circuit", fallbackMethod = "getFinancialInfoFallback")
+    @CircuitBreaker(name = "opendart-circuit")
     @RateLimiter(name = "opendart-rate-limiter")
     public JsonNode getFinancialInfo(String corpCode, Integer year, String reportCode) {
         try {
@@ -66,8 +67,12 @@ public class StockFinancialAdapter implements StockFinancialPort {
     }
 
     public JsonNode getFinancialInfoFallback(String corpCode, Integer year, String reportCode, Exception e) {
-        log.warn("OpenDART 재무정보 조회 실패 (fallback) - corpCode: {}, year: {}, reportCode: {}, 원인: {}",
-                corpCode, year, reportCode, e.getMessage());
+        if (e instanceof CallNotPermittedException) {
+            log.warn("[Circuit 차단] 서킷이 열려있어 요청이 거부됨");
+        }else{
+            log.warn("OpenDART 재무정보 조회 실패 (fallback) - corpCode: {}, year: {}, reportCode: {}, 원인: {}",
+                    corpCode, year, reportCode, e.getMessage());
+        }
         return null;
     }
 }

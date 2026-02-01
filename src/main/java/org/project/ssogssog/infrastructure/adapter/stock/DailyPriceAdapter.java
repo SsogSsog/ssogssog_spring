@@ -128,7 +128,15 @@ public class DailyPriceAdapter implements DailyPricePort {
      * Circuit Open 또는 최종 실패 시 fallback
      */
     public HistoricalPriceDTO fetchPastPricesFallback(String stockCode, String strStartDate, String strEndDate, Exception e) {
-        log.warn("KIS 기간별 시세 조회 실패 (fallback) - 종목: {}, 원인: {}", stockCode, e.getMessage());
+        // 1. 서킷 브레이커가 열려서 실패한 경우
+        if (e instanceof CallNotPermittedException) {
+            log.warn("[Circuit 차단] 서킷이 열려있어 요청이 거부됨 - 종목: {}", stockCode);
+        }
+        // 2. 재시도를 다 했으나 서버 오류로 실패한 경우
+        else {
+            log.warn("KIS 기간별 시세 조회 실패 (fallback) - 종목: {}, 원인: {}", stockCode, e.getMessage());
+
+        }
         return null;
     }
 
@@ -172,7 +180,15 @@ public class DailyPriceAdapter implements DailyPricePort {
     }
 
     public boolean isMarketOpenFallback(LocalDate date, Exception e) {
-        log.warn("휴장일 확인 실패 (fallback) - 날짜: {}, 원인: {}. 보수적으로 '휴장'으로 처리", date, e.getMessage());
+        // 1. 서킷 브레이커가 열려서 실패한 경우
+        if (e instanceof CallNotPermittedException) {
+            log.warn("[Circuit 차단] 서킷이 열려있어 요청이 거부됨");
+        }
+        // 2. 재시도를 다 했으나 서버 오류로 실패한 경우
+        else {
+            log.warn("휴장일 확인 실패 (fallback) - 날짜: {}, 원인: {}. 보수적으로 '휴장'으로 처리", date, e.getMessage());
+
+        }
         return false;
     }
 

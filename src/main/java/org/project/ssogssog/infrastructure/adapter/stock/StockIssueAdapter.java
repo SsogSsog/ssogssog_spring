@@ -3,6 +3,7 @@ package org.project.ssogssog.infrastructure.adapter.stock;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -45,7 +46,7 @@ public class StockIssueAdapter implements StockIssuePort {
      */
     @Override
     @Retry(name = "naver-retry", fallbackMethod = "searchNewsFallback")
-    @CircuitBreaker(name = "naver-circuit", fallbackMethod = "searchNewsFallback")
+    @CircuitBreaker(name = "naver-circuit")
     @RateLimiter(name = "naver-rate-limiter")
     public List<NewsDTO> searchNews(String keyword, int page) {
         if (page < 0) page = 0;
@@ -70,8 +71,14 @@ public class StockIssueAdapter implements StockIssuePort {
     }
 
     public List<NewsDTO> searchNewsFallback(String keyword, int page, Exception e) {
-        log.warn("네이버 뉴스 검색 실패 (fallback) - keyword: {}, page: {}, 원인: {}",
-                keyword, page, e.getMessage());
+
+        if (e instanceof CallNotPermittedException) {
+            log.warn("[Circuit 차단] 서킷이 열려있어 요청이 거부됨");
+        }else{
+            log.warn("네이버 뉴스 검색 실패 (fallback) - keyword: {}, page: {}, 원인: {}",
+                    keyword, page, e.getMessage());
+        }
+
         return Collections.emptyList();
     }
 
@@ -80,7 +87,7 @@ public class StockIssueAdapter implements StockIssuePort {
      */
     @Override
     @Retry(name = "opendart-retry", fallbackMethod = "searchDisclosuresFallback")
-    @CircuitBreaker(name = "opendart-circuit", fallbackMethod = "searchDisclosuresFallback")
+    @CircuitBreaker(name = "opendart-circuit")
     @RateLimiter(name = "opendart-rate-limiter")
     public List<DisclosureDTO> searchDisclosures(String corpCode, int page) {
         if (corpCode == null || corpCode.isEmpty()) {
@@ -113,8 +120,12 @@ public class StockIssueAdapter implements StockIssuePort {
     }
 
     public List<DisclosureDTO> searchDisclosuresFallback(String corpCode, int page, Exception e) {
-        log.warn("OpenDART 공시 검색 실패 (fallback) - corpCode: {}, page: {}, 원인: {}",
-                corpCode, page, e.getMessage());
+        if (e instanceof CallNotPermittedException) {
+            log.warn("[Circuit 차단] 서킷이 열려있어 요청이 거부됨");
+        }else{
+            log.warn("OpenDART 공시 검색 실패 (fallback) - corpCode: {}, page: {}, 원인: {}",
+                    corpCode, page, e.getMessage());
+        }
         return Collections.emptyList();
     }
 

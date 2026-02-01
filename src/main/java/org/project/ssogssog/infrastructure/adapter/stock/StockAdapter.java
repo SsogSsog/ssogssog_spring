@@ -1,5 +1,6 @@
 package org.project.ssogssog.infrastructure.adapter.stock;
 
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -38,8 +39,8 @@ public class StockAdapter implements StockPort {
      * 업종(섹터) 정보 조회
      */
     @Override
-    @Retry(name = "kis-token-retry", fallbackMethod = "fetchSectorFallback")
-    @CircuitBreaker(name = "kis-circuit", fallbackMethod = "fetchSectorFallback")
+    @Retry(name = "kis-retry", fallbackMethod = "fetchSectorFallback")
+    @CircuitBreaker(name = "kis-circuit")
     @RateLimiter(name = "kis-rate-limiter")
     public String fetchSector(String stockCode) {
         try {
@@ -63,7 +64,12 @@ public class StockAdapter implements StockPort {
     }
 
     public String fetchSectorFallback(String stockCode, Exception e) {
-        log.warn("KIS 섹터 조회 실패 (fallback) - 종목: {}, 원인: {}", stockCode, e.getMessage());
+        // 1. 서킷 브레이커가 열려서 실패한 경우
+        if (e instanceof CallNotPermittedException) {
+            log.warn("[Circuit 차단] 서킷이 열려있어 요청이 거부됨");
+        }else{
+            log.warn("KIS 섹터 조회 실패 (fallback) - 종목: {}, 원인: {}", stockCode, e.getMessage());
+        }
         return null;
     }
 
@@ -72,14 +78,19 @@ public class StockAdapter implements StockPort {
      */
     @Override
     @Retry(name = "opendart-retry", fallbackMethod = "getCorpCodeZipFallback")
-    @CircuitBreaker(name = "opendart-circuit", fallbackMethod = "getCorpCodeZipFallback")
+    @CircuitBreaker(name = "opendart-circuit")
     @RateLimiter(name = "opendart-rate-limiter")
     public byte[] getCorpCodeZip() {
         return openDartFeignClient.getCorpCodeZip(openDartApiKey);
     }
 
     public byte[] getCorpCodeZipFallback(Exception e) {
-        log.warn("OpenDART 기업코드 조회 실패 (fallback) - 원인: {}", e.getMessage());
+        if (e instanceof CallNotPermittedException) {
+            log.warn("[Circuit 차단] 서킷이 열려있어 요청이 거부됨");
+        }else{
+            log.warn("OpenDART 기업코드 조회 실패 (fallback) - 원인: {}", e.getMessage());
+        }
+
         return null;
     }
 
@@ -117,8 +128,13 @@ public class StockAdapter implements StockPort {
     }
 
     public Integer fetchLastDpsFallback(String corpCode, String year, Exception e) {
-        log.warn("OpenDART 배당금 조회 실패 (fallback) - corpCode: {}, year: {}, 원인: {}",
-                corpCode, year, e.getMessage());
+        if (e instanceof CallNotPermittedException) {
+            log.warn("[Circuit 차단] 서킷이 열려있어 요청이 거부됨");
+        }else{
+            log.warn("OpenDART 배당금 조회 실패 (fallback) - corpCode: {}, year: {}, 원인: {}",
+                    corpCode, year, e.getMessage());
+        }
+
         return null;
     }
 
