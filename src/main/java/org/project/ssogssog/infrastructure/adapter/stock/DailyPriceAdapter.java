@@ -94,7 +94,7 @@ public class DailyPriceAdapter implements DailyPricePort {
      */
     @Override
     @Retry(name = "kis-retry", fallbackMethod = "fetchPastPricesFallback")
-    @CircuitBreaker(name = "kis-circuit", fallbackMethod = "fetchPastPricesFallback")
+    @CircuitBreaker(name = "kis-circuit")
     @RateLimiter(name = "kis-rate-limiter")
     public HistoricalPriceDTO fetchPastPrices(String stockCode, String strStartDate, String strEndDate) {
         try {

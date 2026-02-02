@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  */
 @FeignClient(
         name = "naver-client",
-        url = "https://openapi.naver.com",
+        url = "${naver-search.base-url}",
         configuration = NaverFeignConfig.class
 )
 public interface NaverFeignClient {

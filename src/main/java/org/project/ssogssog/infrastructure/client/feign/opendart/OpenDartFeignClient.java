@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  */
 @FeignClient(
         name = "opendart-client",
-        url = "https://opendart.fss.or.kr",
+        url = "${opendart.base-url}",
         configuration = OpenDartFeignConfig.class
 )
 public interface OpenDartFeignClient {
