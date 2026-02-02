@@ -228,14 +228,25 @@ public class CollectFinancialsUseCase {
             return null;
         }
 
+        // API 응답 시간 측정
+        long startTime = System.currentTimeMillis();
         JsonNode root = stockFinancialPort.getFinancialInfo(stock.getCorpCode(), year, reportCode);
+        long elapsedTime = System.currentTimeMillis() - startTime;
+
         if(root == null){
-            // 로깅은 port에서 처리 했음
+            log.warn("[OpenDART] {} ({}) - 응답 없음 (null), 소요시간: {}ms",
+                    stock.getCorpName(), stock.getStockCode(), elapsedTime);
             return null;
         }
 
+        // 응답 코드 로깅
+        String status = root.path("status").asText();
+        String message = root.path("message").asText();
+        log.info("[OpenDART] {} ({}) - status: {}, message: {}, 소요시간: {}ms",
+                stock.getCorpName(), stock.getStockCode(), status, message, elapsedTime);
+
         try {
-            if (!"000".equals(root.path("status").asText())) {
+            if (!"000".equals(status)) {
                 return null;
             }
 
