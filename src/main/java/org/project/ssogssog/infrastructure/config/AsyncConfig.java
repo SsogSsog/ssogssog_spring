@@ -39,6 +39,7 @@ public class AsyncConfig {
 
         executor.setCorePoolSize(15);      // 기본 스레드 수
         executor.setMaxPoolSize(15);       // 최대 스레드 수
+        executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("OpenDart-");  // 로그에서 식별 쉬움
 
         // 종료 시 진행 중인 작업 완료 대기
