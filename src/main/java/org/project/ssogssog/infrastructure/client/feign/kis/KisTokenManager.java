@@ -1,7 +1,9 @@
 package org.project.ssogssog.infrastructure.client.feign.kis;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
+import org.project.ssogssog.infrastructure.client.common.exception.TokenExpiredException;
 import org.project.ssogssog.infrastructure.client.feign.kis.auth.KisTokenFeignClient;
 import org.project.ssogssog.infrastructure.client.feign.kis.dto.KisTokenRequest;
 import org.project.ssogssog.infrastructure.client.feign.kis.dto.KisTokenResponse;
@@ -37,7 +39,9 @@ public class KisTokenManager {
      * 유효한 토큰 반환
      * - 캐시에 토큰이 있으면 반환
      * - 없으면 새로 발급하여 캐시에 저장 후 반환
+     * - 토큰 발급 실패 시 1분 대기 후 재시도
      */
+    @Retry(name = "kis-token-retry")
     public String getValidToken() {
         String token = kisTokenCache.getIfPresent(CACHE_KEY);
         if (token != null) {
@@ -55,8 +59,11 @@ public class KisTokenManager {
             if (newToken != null) {
                 kisTokenCache.put(CACHE_KEY, newToken);
                 log.info("KIS 토큰 발급 완료");
+                return newToken;
             }
-            return newToken;
+
+            // 토큰 발급 실패 시 예외를 던져 @Retry가 감지하도록 함
+            throw new TokenExpiredException("KIS", 403, "KIS 토큰 신규 발급에 실패했습니다.");
         }
     }
 
@@ -81,7 +88,8 @@ public class KisTokenManager {
             return null;
 
         } catch (Exception e) {
-            log.error("KIS 토큰 발급 실패: {}", e.getMessage(), e);
+            // 여기서 발생하는 예외는 getValidToken으로 전파되어 @Retry에 의해 처리됨
+            log.warn("KIS 토큰 발급 시도 중 예외 발생: {}", e.getMessage());
             return null;
         }
     }

@@ -2,6 +2,7 @@ package org.project.ssogssog.infrastructure.adapter.stock;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -42,8 +43,8 @@ public class DailyPriceAdapter implements DailyPricePort {
      * 오늘의 일별시세 정보 제공
      */
     @Override
-    @Retry(name = "kis-token-retry", fallbackMethod = "getPriceRootFallback")
-    @CircuitBreaker(name = "kis-circuit", fallbackMethod = "getPriceRootFallback")
+    @Retry(name = "kis-retry", fallbackMethod = "getPriceRootFallback")
+    @CircuitBreaker(name = "kis-circuit")
     @RateLimiter(name = "kis-rate-limiter")
     public JsonNode getPriceRoot(String stockCode) {
         try {
@@ -76,16 +77,24 @@ public class DailyPriceAdapter implements DailyPricePort {
      * Circuit Open 또는 최종 실패 시 fallback
      */
     public JsonNode getPriceRootFallback(String stockCode, Exception e) {
-        log.warn("KIS API 호출 실패 (fallback) - 종목: {}, 원인: {}", stockCode, e.getMessage());
+        // 1. 서킷 브레이커가 열려서 실패한 경우
+        if (e instanceof CallNotPermittedException) {
+            log.warn("[Circuit 차단] 서킷이 열려있어 요청이 거부됨 - 종목: {}", stockCode);
+        }
+        // 2. 재시도를 다 했으나 서버 오류로 실패한 경우
+        else {
+            log.warn("[Retry 실패] 재시도 횟수 초과 - 종목: {}, 원인: {}", stockCode, e.getMessage());
+        }
         return null;
     }
+
 
     /**
      * 기간별 과거 시세 조회
      */
     @Override
-    @Retry(name = "kis-token-retry", fallbackMethod = "fetchPastPricesFallback")
-    @CircuitBreaker(name = "kis-circuit", fallbackMethod = "fetchPastPricesFallback")
+    @Retry(name = "kis-retry", fallbackMethod = "fetchPastPricesFallback")
+    @CircuitBreaker(name = "kis-circuit")
     @RateLimiter(name = "kis-rate-limiter")
     public HistoricalPriceDTO fetchPastPrices(String stockCode, String strStartDate, String strEndDate) {
         try {
@@ -119,7 +128,15 @@ public class DailyPriceAdapter implements DailyPricePort {
      * Circuit Open 또는 최종 실패 시 fallback
      */
     public HistoricalPriceDTO fetchPastPricesFallback(String stockCode, String strStartDate, String strEndDate, Exception e) {
-        log.warn("KIS 기간별 시세 조회 실패 (fallback) - 종목: {}, 원인: {}", stockCode, e.getMessage());
+        // 1. 서킷 브레이커가 열려서 실패한 경우
+        if (e instanceof CallNotPermittedException) {
+            log.warn("[Circuit 차단] 서킷이 열려있어 요청이 거부됨 - 종목: {}", stockCode);
+        }
+        // 2. 재시도를 다 했으나 서버 오류로 실패한 경우
+        else {
+            log.warn("KIS 기간별 시세 조회 실패 (fallback) - 종목: {}, 원인: {}", stockCode, e.getMessage());
+
+        }
         return null;
     }
 
@@ -163,7 +180,15 @@ public class DailyPriceAdapter implements DailyPricePort {
     }
 
     public boolean isMarketOpenFallback(LocalDate date, Exception e) {
-        log.warn("휴장일 확인 실패 (fallback) - 날짜: {}, 원인: {}. 보수적으로 '휴장'으로 처리", date, e.getMessage());
+        // 1. 서킷 브레이커가 열려서 실패한 경우
+        if (e instanceof CallNotPermittedException) {
+            log.warn("[Circuit 차단] 서킷이 열려있어 요청이 거부됨");
+        }
+        // 2. 재시도를 다 했으나 서버 오류로 실패한 경우
+        else {
+            log.warn("휴장일 확인 실패 (fallback) - 날짜: {}, 원인: {}. 보수적으로 '휴장'으로 처리", date, e.getMessage());
+
+        }
         return false;
     }
 

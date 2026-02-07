@@ -1,11 +1,15 @@
 package org.project.ssogssog.infrastructure.adapter.stock;
 
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.TimeLimiter;
+import io.github.resilience4j.timelimiter.TimeLimiterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.stock.port.StockPort;
+import org.project.ssogssog.infrastructure.client.common.exception.RetryableApiException;
 import org.project.ssogssog.infrastructure.client.common.exception.TokenExpiredException;
 import org.project.ssogssog.infrastructure.client.feign.kis.KisFeignClient;
 import org.project.ssogssog.infrastructure.client.feign.kis.KisTokenManager;
@@ -16,6 +20,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeoutException;
 
 /**
  * 주식 기본 정보 어댑터
@@ -30,6 +37,8 @@ public class StockAdapter implements StockPort {
     private final KisFeignClient kisFeignClient;
     private final KisTokenManager kisTokenManager;
     private final OpenDartFeignClient openDartFeignClient;
+    private final TimeLimiterRegistry timeLimiterRegistry;
+    private final Executor openDartApiExecutor;
 
     @Value("${opendart.api-key}")
     private String openDartApiKey;
@@ -38,8 +47,8 @@ public class StockAdapter implements StockPort {
      * 업종(섹터) 정보 조회
      */
     @Override
-    @Retry(name = "kis-token-retry", fallbackMethod = "fetchSectorFallback")
-    @CircuitBreaker(name = "kis-circuit", fallbackMethod = "fetchSectorFallback")
+    @Retry(name = "kis-retry", fallbackMethod = "fetchSectorFallback")
+    @CircuitBreaker(name = "kis-circuit")
     @RateLimiter(name = "kis-rate-limiter")
     public String fetchSector(String stockCode) {
         try {
@@ -63,7 +72,12 @@ public class StockAdapter implements StockPort {
     }
 
     public String fetchSectorFallback(String stockCode, Exception e) {
-        log.warn("KIS 섹터 조회 실패 (fallback) - 종목: {}, 원인: {}", stockCode, e.getMessage());
+        // 1. 서킷 브레이커가 열려서 실패한 경우
+        if (e instanceof CallNotPermittedException) {
+            log.warn("[Circuit 차단] 서킷이 열려있어 요청이 거부됨");
+        }else{
+            log.warn("KIS 섹터 조회 실패 (fallback) - 종목: {}, 원인: {}", stockCode, e.getMessage());
+        }
         return null;
     }
 
@@ -72,25 +86,55 @@ public class StockAdapter implements StockPort {
      */
     @Override
     @Retry(name = "opendart-retry", fallbackMethod = "getCorpCodeZipFallback")
-    @CircuitBreaker(name = "opendart-circuit", fallbackMethod = "getCorpCodeZipFallback")
+    @CircuitBreaker(name = "opendart-circuit")
     @RateLimiter(name = "opendart-rate-limiter")
     public byte[] getCorpCodeZip() {
         return openDartFeignClient.getCorpCodeZip(openDartApiKey);
     }
 
     public byte[] getCorpCodeZipFallback(Exception e) {
-        log.warn("OpenDART 기업코드 조회 실패 (fallback) - 원인: {}", e.getMessage());
+        if (e instanceof CallNotPermittedException) {
+            log.warn("[Circuit 차단] 서킷이 열려있어 요청이 거부됨");
+        }else{
+            log.warn("OpenDART 기업코드 조회 실패 (fallback) - 원인: {}", e.getMessage());
+        }
+
         return null;
     }
 
     /**
      * 배당금(DPS) 조회
+     * - TimeLimiter로 타임아웃 제한 (느린 응답 방지)
+     * - CompletableFuture를 사용한 비동기 처리
      */
     @Override
     @Retry(name = "opendart-retry", fallbackMethod = "fetchLastDpsFallback")
-    @CircuitBreaker(name = "opendart-circuit", fallbackMethod = "fetchLastDpsFallback")
+    @CircuitBreaker(name = "opendart-circuit")
     @RateLimiter(name = "opendart-rate-limiter")
     public Integer fetchLastDps(String corpCode, String year) {
+        TimeLimiter timeLimiter = timeLimiterRegistry.timeLimiter("opendart-slow-api");
+
+        try {
+            // CompletableFuture로 API 호출을 감싸고 TimeLimiter 적용
+            return timeLimiter.executeFutureSupplier(
+                    () -> CompletableFuture.supplyAsync(() ->
+                            fetchLastDpsInternal(corpCode, year), openDartApiExecutor
+                    )
+            );
+        } catch (TimeoutException e) {
+            log.warn("[TimeLimiter 타임아웃] OpenDART 배당금 조회 시간 초과 - corpCode: {}, year: {}",
+                    corpCode, year);
+            return null;
+        } catch (Exception e) {
+            // 다른 예외는 상위로 전파 (Retry/CircuitBreaker가 처리)
+            throw new RetryableApiException("네트워크 에러", 500, e.getMessage());
+        }
+    }
+
+    /**
+     * 실제 배당금 조회 로직 (내부 메서드)
+     */
+    private Integer fetchLastDpsInternal(String corpCode, String year) {
         OpenDartDividendResponse response = openDartFeignClient.getDividendInfo(
                 openDartApiKey,
                 corpCode,
@@ -117,8 +161,13 @@ public class StockAdapter implements StockPort {
     }
 
     public Integer fetchLastDpsFallback(String corpCode, String year, Exception e) {
-        log.warn("OpenDART 배당금 조회 실패 (fallback) - corpCode: {}, year: {}, 원인: {}",
-                corpCode, year, e.getMessage());
+        if (e instanceof CallNotPermittedException) {
+            log.warn("[Circuit 차단] 서킷이 열려있어 요청이 거부됨");
+        }else{
+            log.warn("OpenDART 배당금 조회 실패 (fallback) - corpCode: {}, year: {}, 원인: {}",
+                    corpCode, year, e.getMessage());
+        }
+
         return null;
     }
 

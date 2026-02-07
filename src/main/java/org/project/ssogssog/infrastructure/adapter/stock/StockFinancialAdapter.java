@@ -3,16 +3,24 @@ package org.project.ssogssog.infrastructure.adapter.stock;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.TimeLimiter;
+import io.github.resilience4j.timelimiter.TimeLimiterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.stock.port.StockFinancialPort;
+import org.project.ssogssog.infrastructure.client.common.exception.RetryableApiException;
 import org.project.ssogssog.infrastructure.client.feign.opendart.OpenDartFeignClient;
 import org.project.ssogssog.infrastructure.client.feign.opendart.validator.OpenDartValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeoutException;
 
 /**
  * 재무정보 어댑터
@@ -26,18 +34,44 @@ public class StockFinancialAdapter implements StockFinancialPort {
 
     private final ObjectMapper objectMapper;
     private final OpenDartFeignClient openDartFeignClient;
+    private final TimeLimiterRegistry timeLimiterRegistry;
+    private final Executor openDartApiExecutor;
 
     @Value("${opendart.api-key}")
     private String openDartApiKey;
-
     /**
      * 재무정보 조회
+     * - TimeLimiter로 타임아웃 제한 (느린 응답 방지)
+     * - CompletableFuture를 사용한 비동기 처리
      */
     @Override
     @Retry(name = "opendart-retry", fallbackMethod = "getFinancialInfoFallback")
-    @CircuitBreaker(name = "opendart-circuit", fallbackMethod = "getFinancialInfoFallback")
+    @CircuitBreaker(name = "opendart-circuit")
     @RateLimiter(name = "opendart-rate-limiter")
     public JsonNode getFinancialInfo(String corpCode, Integer year, String reportCode) {
+        TimeLimiter timeLimiter = timeLimiterRegistry.timeLimiter("opendart-slow-api");
+
+        try {
+            // CompletableFuture로 API 호출을 감싸고 TimeLimiter 적용
+            return timeLimiter.executeFutureSupplier(
+                    () -> CompletableFuture.supplyAsync(() ->
+                            fetchFinancialInfoInternal(corpCode, year, reportCode), openDartApiExecutor
+                    )
+            );
+        } catch (TimeoutException e) {
+            log.warn("[TimeLimiter 타임아웃] OpenDART 재무정보 조회 시간 초과 - corpCode: {}, year: {}, reportCode: {}",
+                    corpCode, year, reportCode);
+            return null;
+        } catch (Exception e) {
+            // 다른 예외는 상위로 전파 (Retry/CircuitBreaker가 처리)
+            throw new RetryableApiException("네트워크 에러", 500, e.getMessage());
+        }
+    }
+
+    /**
+     * 실제 API 호출 로직 (내부 메서드)
+     */
+    private JsonNode fetchFinancialInfoInternal(String corpCode, Integer year, String reportCode) {
         try {
             String response = openDartFeignClient.getFinancialInfo(
                     openDartApiKey,
@@ -66,8 +100,12 @@ public class StockFinancialAdapter implements StockFinancialPort {
     }
 
     public JsonNode getFinancialInfoFallback(String corpCode, Integer year, String reportCode, Exception e) {
-        log.warn("OpenDART 재무정보 조회 실패 (fallback) - corpCode: {}, year: {}, reportCode: {}, 원인: {}",
-                corpCode, year, reportCode, e.getMessage());
+        if (e instanceof CallNotPermittedException) {
+            log.warn("[Circuit 차단] 서킷이 열려있어 요청이 거부됨");
+        }else{
+            log.warn("OpenDART 재무정보 조회 실패 (fallback) - corpCode: {}, year: {}, reportCode: {}, 원인: {}",
+                    corpCode, year, reportCode, e.getMessage());
+        }
         return null;
     }
 }
