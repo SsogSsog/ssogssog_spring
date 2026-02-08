@@ -361,12 +361,12 @@ public class StockMetricCalculator {
 
     /**
      * 4Q 단독 값 계산: 연간 누적(4Q) - 1Q - 2Q - 3Q
-     * 제무재표 하나의 값을 계산할 때 사용하는 메서드입니다.(년도 x, stockCode x)
+     * 재무제표 하나의 값을 계산할 때 사용하는 메서드입니다.(년도 x, stockCode x)
      *
      */
     public static Long calculateQ4StandaloneValue(Long annual, Long q1, Long q2, Long q3) {
         if (annual == null || q1 == null || q2 == null || q3 == null) {
-            return annual; // 계산 불가 시 원본 반환
+            return null; // 계산 불가 시 null 반환
         }
         return annual - q1 - q2 - q3;
     }
