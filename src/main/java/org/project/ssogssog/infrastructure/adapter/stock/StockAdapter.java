@@ -127,7 +127,7 @@ public class StockAdapter implements StockPort {
             return null;
         } catch (Exception e) {
             // 다른 예외는 상위로 전파 (Retry/CircuitBreaker가 처리)
-            throw new RetryableApiException("네트워크 에러", 500, e.getMessage());
+            throw new RetryableApiException("OPENDART", 500, e.getMessage(), e);
         }
     }
 
