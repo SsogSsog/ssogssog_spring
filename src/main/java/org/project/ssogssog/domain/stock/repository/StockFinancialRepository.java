@@ -67,25 +67,16 @@ public interface StockFinancialRepository extends JpaRepository<StockFinancial, 
      * Bulk 조회 쿼리
      */
     @Query(value = """
-        SELECT sf.* FROM stock_financial sf
-        INNER JOIN (
-            SELECT stock_id, MAX(year * 10 +
-                CASE quarter
-                    WHEN '1Q' THEN 1
-                    WHEN '2Q' THEN 2
-                    WHEN '3Q' THEN 3
-                    WHEN '4Q' THEN 4
-                END) as max_ord
-            FROM stock_financial
-            GROUP BY stock_id
-        ) latest ON sf.stock_id = latest.stock_id
-        AND (sf.year * 10 +
-            CASE sf.quarter
-                WHEN '1Q' THEN 1
-                WHEN '2Q' THEN 2
-                WHEN '3Q' THEN 3
-                WHEN '4Q' THEN 4
-            END) = latest.max_ord
+        SELECT *
+        FROM (
+            SELECT sf.*,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY sf.stock_id
+                       ORDER BY sf.year DESC, sf.quarter DESC, sf.is_consolidated DESC
+                   ) as rn
+            FROM stock_financial sf
+        ) t
+        WHERE t.rn = 1
         """, nativeQuery = true)
     List<StockFinancial> findAllLatestByStock();
 
