@@ -131,7 +131,12 @@ public class StockMetricBulkDataReader {
             financialMap
                     .computeIfAbsent(stockId, k -> new HashMap<>())
                     .computeIfAbsent(year, k -> new HashMap<>())
-                    .put(quarter, sf);
+                    .merge(quarter, sf, (existing, replacement) -> {
+                        // 연결재무제표 우선
+                        if (existing.isConsolidated()) return existing;
+                        if (replacement.isConsolidated()) return replacement;
+                        return existing;
+                    });
         }
 
         // Stock ID → 기존 StockMetric (없으면 null)
