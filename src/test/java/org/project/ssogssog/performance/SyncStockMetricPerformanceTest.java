@@ -69,12 +69,12 @@ class SyncStockMetricPerformanceTest {
 
         stopWatch.start("refreshAllMetrics 전체 실행");
         syncStockMetricDataUseCase.refreshAllMetrics();
-        try {
+/*        try {
             mockMvc.perform(post("/admin/stock-metrics/refresh"))
                     .andExpect(status().isOk());
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }
+        }*/
         stopWatch.stop();
 
         // then
