@@ -36,9 +36,9 @@ public class StockConverter {
             return StockResponse.FinancialOverviewResponseDTO.PerformanceItem.builder()
                     .year(year)
                     .quarter("4Q")
-                    .revenue(safeDivideBy4(q4.getRevenue()/4L))
-                    .operatingProfit(safeDivideBy4(q4.getOperatingProfit()/4L))
-                    .netIncome(safeDivideBy4(q4.getNetIncome()/4L))
+                    .revenue(safeDivideBy4(q4.getRevenue()))
+                    .operatingProfit(safeDivideBy4(q4.getOperatingProfit()))
+                    .netIncome(safeDivideBy4(q4.getNetIncome()))
                     .isConsolidated(q4.isConsolidated())
                     .build();
         }
