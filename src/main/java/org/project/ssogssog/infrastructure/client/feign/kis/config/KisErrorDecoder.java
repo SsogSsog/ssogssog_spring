@@ -37,8 +37,7 @@ public class KisErrorDecoder implements ErrorDecoder {
         }
 
         // 시나리오 B: 호출 제한 초과
-        // KIS는 HTTP 200으로 응답하면서 body에 에러 코드를 담는 경우도 있음
-        if (status == 429 || isRateLimitError(body)) {
+        if (status == 429) {
             return new RateLimitExceededException(API_NAME, 1L,
                     "KIS API 호출 제한 초과: " + body);
         }
@@ -59,13 +58,6 @@ public class KisErrorDecoder implements ErrorDecoder {
         return defaultDecoder.decode(methodKey, response);
     }
 
-    /**
-     * KIS API Rate Limit 에러 확인
-     * - HTTP 200으로 응답하면서 rt_cd=1, msg_cd=EGW00201로 알림
-     */
-    private boolean isRateLimitError(String body) {
-        return body != null && body.contains("EGW00201");
-    }
 
     private String extractBody(Response response) {
         try {
