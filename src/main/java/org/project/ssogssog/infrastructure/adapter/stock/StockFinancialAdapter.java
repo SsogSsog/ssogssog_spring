@@ -12,6 +12,7 @@ import io.github.resilience4j.timelimiter.TimeLimiterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.stock.port.StockFinancialPort;
+import org.project.ssogssog.infrastructure.client.common.exception.FatalApiException;
 import org.project.ssogssog.infrastructure.client.common.exception.RetryableApiException;
 import org.project.ssogssog.infrastructure.client.feign.opendart.OpenDartFeignClient;
 import org.project.ssogssog.infrastructure.client.feign.opendart.validator.OpenDartValidator;
@@ -63,8 +64,17 @@ public class StockFinancialAdapter implements StockFinancialPort {
                     corpCode, year, reportCode);
             return null;
         } catch (Exception e) {
-            // 다른 예외는 상위로 전파 (Retry/CircuitBreaker가 처리)
-            throw new RetryableApiException("네트워크 에러", 500, e.getMessage());
+            // 1. CompletableFuture 등에서 감싸진 에러 꺼내기
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+
+            // 2. 재시도하면 안 되는 치명적 예외인지 확인 (API 키 만료, 한도 초과 등)
+            if (cause instanceof FatalApiException) {
+                // ignoreException 등록 필수
+                throw (FatalApiException) cause;
+            }
+
+            // 3. 그 외(네트워크 오류 등)는 재시도 대상
+            throw new RetryableApiException("OpenDART 통신 에러", 500, cause.getMessage());
         }
     }
 
