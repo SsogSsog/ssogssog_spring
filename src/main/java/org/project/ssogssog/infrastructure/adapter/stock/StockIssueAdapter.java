@@ -178,12 +178,7 @@ public class StockIssueAdapter implements StockIssuePort {
             return Collections.emptyList();
         }
 
-        try {
-            OpenDartValidator.validate(root);
-        } catch (Exception e) {
-            // validate()에서 던진 예외를 상위로 던져야 Resilience4j가 반응
-            throw e;
-        }
+        OpenDartValidator.validate(root);
 
         // 013(데이터 없음)인 경우 빈 리스트 반환
         if ("013".equals(root.path("status").asText())) {
