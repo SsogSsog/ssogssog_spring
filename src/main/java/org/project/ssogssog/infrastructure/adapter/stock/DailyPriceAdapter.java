@@ -145,7 +145,7 @@ public class DailyPriceAdapter implements DailyPricePort {
      */
     @Override
     @Retry(name = "kis-retry", fallbackMethod = "isMarketOpenFallback")
-    @CircuitBreaker(name = "kis-circuit", fallbackMethod = "isMarketOpenFallback")
+    @CircuitBreaker(name = "kis-circuit")
     @RateLimiter(name = "kis-rate-limiter")
     public boolean isMarketOpen(LocalDate date) {
         String dateStr = date.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
