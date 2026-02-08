@@ -25,6 +25,18 @@ public enum CacheType {
     ),
 
     /**
+     * 테마별 주식 통계 (섹터별 평균 등락률)
+     * - TTL: 1시간
+     * - 크기: 1개 (전체 테마 통계)
+     */
+    THEME_STATS(
+            Values.THEME_STATS,
+            1, TimeUnit.HOURS,
+            2,
+            "테마 통계 캐시"
+    ),
+
+    /**
      * 종목별 뉴스
      * - TTL: 8시간 (외부 API 제한 고려)
      * - 크기: 1,000개 (종목코드 + 페이지 조합)
@@ -85,6 +97,7 @@ public enum CacheType {
      */
     public static class Values {
         public static final String STOCK_RANKING = "stockRanking";
+        public static final String THEME_STATS = "themeStats";
         public static final String STOCK_NEWS = "stockNews";
         public static final String STOCK_DISCLOSURES = "stockDisclosures";
         public static final String MEMBER_LIKED_STOCKS = "memberLikedStocks";
@@ -98,6 +111,7 @@ public enum CacheType {
      */
     public static class Keys{
         public static final String STOCK_RANKING = "#type.cacheKey";
+        public static final String THEME_STATS = "'all'";
         public static final String STOCK_NEWS = "#stockCode + ':' + #page";
         public static final String STOCK_DISCLOSURE = "#stockCode + ':' + #page";
         public static final String MEMBER_UUID = "#uuid";

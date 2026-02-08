@@ -2,6 +2,7 @@ package org.project.ssogssog.application.service.stock.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.project.ssogssog.application.service.stock.api.converter.StockConverter;
 import org.project.ssogssog.application.service.stock.reader.StockCacheReader;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
@@ -32,6 +33,9 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.project.ssogssog.application.service.stock.api.converter.StockConverter.toPerformanceItem;
+import static org.project.ssogssog.application.service.stock.api.converter.StockConverter.toQ4StandalonePerformanceItem;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -54,7 +58,7 @@ public class StockService {
         // 3. 마지막에 총합으로 평균 계산
         // 4. (중요!!) arrayList 정렬하기(사전 순으로)
 
-        List<ThemeItemProjection> items = stockRepository.getThemeStockStats();
+        List<ThemeItemProjection> items = stockCacheReader.getThemeStockStats();
 
         Map<String, StockResponse.ThemeCollectedItemDTO> m = new HashMap<>();
         for(var item : items){
@@ -120,22 +124,12 @@ public class StockService {
                 stockRepository.getStocksForThemeOrderByClosePrice(theme, pageable);
 
         Page<StockResponse.StockItemResponseDTO> stockItemsResponse =
-                stockItems.map(this::toStockItemDTO);
+                stockItems.map(StockConverter::toStockItemDTO);
 
         return PageDTO.from(stockItemsResponse);
     }
 
-    private StockResponse.StockItemResponseDTO toStockItemDTO(StockItemProjection stockItemProjection) {
 
-        return StockResponse.StockItemResponseDTO.builder()
-                .stockId(stockItemProjection.stockId())
-                .corpName(stockItemProjection.corpName())
-                .stockCode(stockItemProjection.stockCode())
-                .closePrice(stockItemProjection.closePrice())
-                .volume(stockItemProjection.volume())
-                .changeRate(stockItemProjection.changeRate())
-                .build();
-    }
 
     private static final int CHART_MONTHS = 3;
 
@@ -287,8 +281,9 @@ public class StockService {
         return SliceDTO.from(slice);
     }
 
-    private static final int ANNUAL_LIMIT = 3;
-    private static final int QUARTERLY_LIMIT = 3;
+    private static final int ANNUAL_LIMIT = 3;           // 연간 실적 표시 개수 (3개년)
+    private static final int QUARTERLY_LIMIT = 4;        // 분기 실적 표시 개수 (최근 4분기)
+    private static final int DATA_FETCH_LIMIT = 12;      // 데이터 조회 개수 (3년 × 4분기)
 
     /**
      * 특정 종목의 재무 정보 개요 조회
@@ -317,41 +312,74 @@ public class StockService {
                 .build();
     }
 
+    // 재무 정보 헬퍼 메서드
     private StockResponse.FinancialOverviewResponseDTO.FinancialSummary buildFinancialSummary(StockMetric metric) {
         if (metric == null) {
             return null;
         }
         return StockResponse.FinancialOverviewResponseDTO.FinancialSummary.builder()
                 .per(metric.getPer())
+                .pbr(metric.getPbr())
                 .roe(metric.getRoe())
                 .dividendYield(metric.getDividendYield())
                 .debtRatio(metric.getDebtRatio())
                 .build();
     }
 
+    // 재무 정보 헬퍼 메서드
     private StockResponse.FinancialOverviewResponseDTO.PerformanceAnalysis buildPerformanceAnalysis(Stock stock) {
-        // 연간 실적: 연결재무제표 우선, 없으면 별도 재무제표
-        List<StockFinancial> annualData = stockFinancialRepository
-                .findAnnualByStockAndConsolidated(stock, true, PageRequest.of(0, ANNUAL_LIMIT));
-        if (annualData.isEmpty()) {
-            annualData = stockFinancialRepository
-                    .findAnnualByStockAndConsolidated(stock, false, PageRequest.of(0, ANNUAL_LIMIT));
+        // 3개년 전체 분기 데이터 조회 (4Q 단독 실적 계산을 위해)
+        // 연결재무제표 우선, 없으면 별도 재무제표 (한 개라도 StockFinancial이 존재 시 가져옴)
+        List<StockFinancial> allData = stockFinancialRepository
+                .findQuarterlyByStockAndConsolidated(stock, true, PageRequest.of(0, DATA_FETCH_LIMIT));
+        if (allData.isEmpty()) {
+            allData = stockFinancialRepository
+                    .findQuarterlyByStockAndConsolidated(stock, false, PageRequest.of(0, DATA_FETCH_LIMIT));
         }
 
-        // 분기 실적: 연결재무제표 우선, 없으면 별도 재무제표
-        List<StockFinancial> quarterlyData = stockFinancialRepository
-                .findQuarterlyByStockAndConsolidated(stock, true, PageRequest.of(0, QUARTERLY_LIMIT));
-        if (quarterlyData.isEmpty()) {
-            quarterlyData = stockFinancialRepository
-                    .findQuarterlyByStockAndConsolidated(stock, false, PageRequest.of(0, QUARTERLY_LIMIT));
+        if (allData.isEmpty()) {
+            return StockResponse.FinancialOverviewResponseDTO.PerformanceAnalysis.builder()
+                    .annual(List.of())
+                    .quarterly(List.of())
+                    .build();
         }
 
-        List<StockResponse.FinancialOverviewResponseDTO.PerformanceItem> annual = annualData.stream()
-                .map(this::toPerformanceItem)
+        // 연도별로 그룹화: Map<year, Map<quarter, StockFinancial>>
+        Map<Integer, Map<String, StockFinancial>> dataByYear = allData.stream()
+                .collect(Collectors.groupingBy(
+                        StockFinancial::getYear,
+                        Collectors.toMap(StockFinancial::getQuarter, sf -> sf, (a, b) -> a)
+                ));
+
+        // 최신 데이터의 분기 파악 (allData는 이미 최신순 정렬)
+        String latestQuarter = allData.get(0).getQuarter();
+
+        // 연간 실적: 최신 분기 기준으로 각 연도의 동일 분기 (최근 3년 YoY 비교용)
+        List<StockResponse.FinancialOverviewResponseDTO.PerformanceItem> annual = dataByYear.entrySet().stream()
+                .filter(e -> e.getValue().containsKey(latestQuarter))
+                .sorted((a, b) -> b.getKey().compareTo(a.getKey())) // 최신 연도 우선
+                .limit(ANNUAL_LIMIT)
+                .map(e -> {
+                    Map<String, StockFinancial> yearData = e.getValue();
+                    if ("4Q".equals(latestQuarter)) {
+                        return toQ4StandalonePerformanceItem(e.getKey(), yearData);
+                    }
+                    return toPerformanceItem(yearData.get(latestQuarter));
+                })
                 .toList();
 
-        List<StockResponse.FinancialOverviewResponseDTO.PerformanceItem> quarterly = quarterlyData.stream()
-                .map(this::toPerformanceItem)
+        // 분기 실적: 최근 4분기 (4Q는 단독 실적으로 계산)
+        List<StockResponse.FinancialOverviewResponseDTO.PerformanceItem> quarterly = allData.stream()
+                .limit(QUARTERLY_LIMIT)
+                .map(sf -> {
+                    if ("4Q".equals(sf.getQuarter())) {
+                        // 4Q인 경우 단독 실적 계산 (StockMetricCalculator 활용)
+                        Map<String, StockFinancial> yearData = dataByYear.get(sf.getYear());
+                        return toQ4StandalonePerformanceItem(sf.getYear(), yearData);
+                    }
+                    // 1Q, 2Q, 3Q는 그대로 반환
+                    return toPerformanceItem(sf);
+                })
                 .toList();
 
         return StockResponse.FinancialOverviewResponseDTO.PerformanceAnalysis.builder()
@@ -360,17 +388,7 @@ public class StockService {
                 .build();
     }
 
-    private StockResponse.FinancialOverviewResponseDTO.PerformanceItem toPerformanceItem(StockFinancial sf) {
-        return StockResponse.FinancialOverviewResponseDTO.PerformanceItem.builder()
-                .year(sf.getYear())
-                .quarter(sf.getQuarter())
-                .revenue(sf.getRevenue())
-                .operatingProfit(sf.getOperatingProfit())
-                .netIncome(sf.getNetIncome())
-                .isConsolidated(sf.isConsolidated())
-                .build();
-    }
-
+    // 제무 정보 헬퍼 메서드
     private StockResponse.FinancialOverviewResponseDTO.FinancialStability buildFinancialStability(Stock stock) {
         // 연결재무제표 우선, 없으면 별도 재무제표
         Optional<StockFinancial> latestOpt = stockFinancialRepository
@@ -456,7 +474,7 @@ public class StockService {
         List<StockItemProjection> projections = stockRepository.searchAutocomplete(keyword, limit);
 
         return projections.stream()
-                .map(this::toStockItemDTO)
+                .map(StockConverter::toStockItemDTO)
                 .toList();
     }
 
@@ -470,7 +488,7 @@ public class StockService {
     public PageDTO<StockResponse.StockItemResponseDTO> search(String keyword, Pageable pageable) {
         Page<StockItemProjection> projections = stockRepository.search(keyword, pageable);
 
-        Page<StockResponse.StockItemResponseDTO> result = projections.map(this::toStockItemDTO);
+        Page<StockResponse.StockItemResponseDTO> result = projections.map(StockConverter::toStockItemDTO);
 
         return PageDTO.from(result);
     }

@@ -173,6 +173,14 @@ public class MemberService {
 
 
     /**
+     * 특정 주식 좋아요 여부 조회
+     */
+    @Transactional(readOnly = true)
+    public boolean isLiked(String uuid, String stockCode) {
+        return stockLikeRepository.existsByMember_UuidAndStock_StockCode(uuid, stockCode);
+    }
+
+    /**
      * 좋아요한 Stock ID 목록 조회
      */
     @Transactional(readOnly = true)

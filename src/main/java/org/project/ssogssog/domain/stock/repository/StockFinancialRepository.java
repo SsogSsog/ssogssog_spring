@@ -29,21 +29,6 @@ public interface StockFinancialRepository extends JpaRepository<StockFinancial, 
     List<Long> findStockIdsByYearAndQuarter(@Param("year") Integer year,
                                             @Param("quarter") String quarter);
 
-    /**
-     * 연간 실적 조회 (4Q 기준, 최근 N년)
-     * 연결재무제표 우선 (isConsolidated DESC)
-     */
-    @Query("""
-           SELECT sf FROM StockFinancial sf
-           WHERE sf.stock = :stock
-             AND sf.quarter = '4Q'
-             AND sf.isConsolidated = :isConsolidated
-           ORDER BY sf.year DESC
-           """)
-    List<StockFinancial> findAnnualByStockAndConsolidated(
-            @Param("stock") Stock stock,
-            @Param("isConsolidated") boolean isConsolidated,
-            Pageable pageable);
 
     /**
      * 분기 실적 조회 (최근 N분기)
@@ -72,4 +57,35 @@ public interface StockFinancialRepository extends JpaRepository<StockFinancial, 
      */
     List<StockFinancial> findByStockAndYearAndIsConsolidatedOrderByQuarterAsc(
             Stock stock, Integer year, boolean isConsolidated);
+
+
+
+    /**
+     * 모든 종목의 최신 StockFinancial 한 번에 조회
+     * ROW_NUMBER로 각 종목별 최신 1건만 선택
+     *
+     * Bulk 조회 쿼리
+     */
+    @Query(value = """
+        SELECT *
+        FROM (
+            SELECT sf.*,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY sf.stock_id
+                       ORDER BY sf.year DESC, sf.quarter DESC, sf.is_consolidated DESC
+                   ) as rn
+            FROM stock_financial sf
+        ) t
+        WHERE t.rn = 1
+        """, nativeQuery = true)
+    List<StockFinancial> findAllLatestByStock();
+
+
+    /**
+     * 특정 연도 목록의 모든 재무 데이터 조회 (올해 + 작년 한 번에)
+     *
+     * Bulk 조회 쿼리
+     */
+    @Query("SELECT sf FROM StockFinancial sf WHERE sf.year IN :years")
+    List<StockFinancial> findByYearIn(@Param("years") List<Integer> years);
 }

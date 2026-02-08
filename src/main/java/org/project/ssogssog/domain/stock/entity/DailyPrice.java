@@ -56,6 +56,22 @@ public class DailyPrice {
     /**
      * 비즈니스 로직
      */
+
+    // 등락 정보(changeRate, changePrice) 동기화가 필요한지 확인
+    public boolean needsChangeInfoSync() {
+        return changeRate == null || changePrice == null;
+    }
+
+    // 전일 종가를 기반으로 등락 정보 계산 및 설정
+    public void syncChangeInfo(Integer prevClosePrice) {
+        if (prevClosePrice == null || prevClosePrice == 0 || closePrice == null) {
+            return;
+        }
+        this.prevClosePrice = prevClosePrice;
+        this.changePrice = closePrice - prevClosePrice;
+        this.changeRate = ((double) (closePrice - prevClosePrice) / prevClosePrice) * 100.0;
+    }
+
     public void updateFrom(DailyPrice dailyPrice) {
         this.closePrice = dailyPrice.closePrice;
         this.openPrice = dailyPrice.openPrice;

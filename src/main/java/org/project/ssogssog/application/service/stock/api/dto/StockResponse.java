@@ -284,6 +284,9 @@ public class StockResponse {
             @Schema(description = "PER (주가수익비율)", example = "15.2")
             private Double per;
 
+            @Schema(description = "PBR (주가순자산비율)", example = "1.2")
+            private Double pbr;
+
             @Schema(description = "ROE (자기자본이익률, %)", example = "12.5")
             private Double roe;
 
@@ -347,6 +350,19 @@ public class StockResponse {
             @Schema(description = "연결재무제표 여부", example = "true")
             private Boolean isConsolidated;
         }
+    }
+
+    /**
+     * 주식 좋아요 여부 응답 DTO
+     */
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    @Schema(description = "주식 좋아요 여부")
+    public static class LikedStatusDTO{
+        @Schema(description = "좋아요 여부", example = "true")
+        private boolean liked;
     }
 
 }

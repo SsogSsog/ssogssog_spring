@@ -45,6 +45,7 @@ public enum ErrorStatus implements BaseErrorCode {
     FAIL_RT_CD(HttpStatus.INTERNAL_SERVER_ERROR, "KIS4001", "RT_CD 값을 받아오는 것에 실패했습니다"),
     KIS_HTTP_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "KIS4100", "KIS HTTP 에러가 발생했습니다."),
     KIS_OTHERS_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "KIS4200", "KIS unknown 에러가 발생했습니다."),
+    FAIL_TOKEN(HttpStatus.INTERNAL_SERVER_ERROR, "KIS4300", "KIS 토큰을 가져올 수 없습니다"),
 
 
     ;

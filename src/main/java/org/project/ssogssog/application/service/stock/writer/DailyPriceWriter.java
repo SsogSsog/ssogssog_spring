@@ -3,7 +3,7 @@ package org.project.ssogssog.application.service.stock.writer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.utils.DateUtils;
-import org.project.ssogssog.application.service.stock.usecase.dto.HistoricalPriceDTO;
+import org.project.ssogssog.application.service.stock.collect.dto.HistoricalPriceDTO;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.DailyPriceRepository;
@@ -118,5 +118,50 @@ public class DailyPriceWriter {
             log.info("[{}] 저장할 새로운 데이터가 없습니다.", stock.getCorpName());
         }
 
+    }
+
+    /**
+     * 특정 종목의 일별시세 등락 정보 동기화
+     * N+1 문제 방지: 해당 종목의 모든 DailyPrice를 한번에 조회
+     */
+    @Transactional
+    public int syncDailyPriceChangeInfo(Stock stock) {
+        // 한번에 모든 DailyPrice 조회 (날짜 오름차순)
+        List<DailyPrice> dailyPrices = dailyPriceRepository.findByStockOrderByDateAsc(stock);
+
+        if (dailyPrices.isEmpty()) {
+            return 0;
+        }
+
+        List<DailyPrice> updatedPrices = calculateChangeInfo(dailyPrices);
+
+        if (!updatedPrices.isEmpty()) {
+            dailyPriceRepository.saveAll(updatedPrices);
+            log.debug("종목 {} - {}개 데이터 등락 정보 업데이트", stock.getStockCode(), updatedPrices.size());
+        }
+
+        return updatedPrices.size();
+    }
+
+    /**
+     * 연속된 DailyPrice 리스트에서 등락 정보가 없는 데이터를 계산
+     * 계산 로직은 DailyPrice 엔티티에 위임
+     *
+     * @param dailyPrices 날짜순 정렬된 DailyPrice 리스트
+     * @return 업데이트된 DailyPrice 리스트
+     */
+    private List<DailyPrice> calculateChangeInfo(List<DailyPrice> dailyPrices) {
+        List<DailyPrice> updated = new ArrayList<>();
+        DailyPrice prev = null;
+
+        for (DailyPrice current : dailyPrices) {
+            if (current.needsChangeInfoSync() && prev != null) {
+                current.syncChangeInfo(prev.getClosePrice());
+                updated.add(current);
+            }
+            prev = current;
+        }
+
+        return updated;
     }
 }

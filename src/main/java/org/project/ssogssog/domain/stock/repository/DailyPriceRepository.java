@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-public interface DailyPriceRepository extends JpaRepository<DailyPrice, Long> {
+public interface DailyPriceRepository extends JpaRepository<DailyPrice, Long>, DailyPriceRepositoryCustom {
     // 이미 수집한 날짜인지 확인용
     Optional<DailyPrice> findByStockIdAndDate(Long stockId, LocalDate date);
 
@@ -84,4 +84,9 @@ public interface DailyPriceRepository extends JpaRepository<DailyPrice, Long> {
      * 특정 종목의 일별 시세 조회 (날짜 내림차순, 무한 스크롤용)
      */
     Slice<DailyPrice> findByStockOrderByDateDesc(Stock stock, Pageable pageable);
+
+    /**
+     * 특정 종목의 모든 일별 시세 조회 (날짜 오름차순, 등락 정보 동기화용)
+     */
+    List<DailyPrice> findByStockOrderByDateAsc(Stock stock);
 }
