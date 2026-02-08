@@ -3,6 +3,8 @@ package org.project.ssogssog.infrastructure.client.feign.kis.config;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
 import lombok.extern.slf4j.Slf4j;
+import org.project.ssogssog.global.payload.code.status.ErrorStatus;
+import org.project.ssogssog.global.payload.exception.GeneralException;
 import org.project.ssogssog.infrastructure.client.feign.kis.KisTokenManager;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -36,7 +38,7 @@ public class KisRequestInterceptor implements RequestInterceptor {
 
         if (accessToken == null) {
             log.warn("KIS 토큰을 가져올 수 없습니다");
-            return;
+            throw new GeneralException(ErrorStatus.FAIL_TOKEN);
         }
 
         // 공통 헤더 설정
