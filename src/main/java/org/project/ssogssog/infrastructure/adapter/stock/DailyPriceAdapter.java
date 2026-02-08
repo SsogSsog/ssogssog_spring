@@ -54,6 +54,11 @@ public class DailyPriceAdapter implements DailyPricePort {
                     stockCode
             );
 
+            if (response == null) {
+                log.warn("KIS API 응답이 null - 종목: {}", stockCode);
+                return null;
+            }
+
             // KIS API는 200 OK여도 rt_cd로 에러를 알림
             if (!response.isSuccess()) {
                 if (response.isRateLimitError()) {
