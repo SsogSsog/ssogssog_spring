@@ -113,6 +113,11 @@ public class DailyPriceAdapter implements DailyPricePort {
                     "1"               // 수정주가 반영
             );
 
+            if (response == null) {
+                log.warn("KIS 기간별 시세 응답이 null - 종목: {}", stockCode);
+                return null;
+            }
+
             if (!response.isSuccess()) {
                 if (response.isRateLimitError()) {
                     throw new RateLimitExceededException("KIS", 1L, response.getMsg1());
