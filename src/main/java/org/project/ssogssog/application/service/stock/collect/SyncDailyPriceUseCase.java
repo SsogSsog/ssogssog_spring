@@ -37,8 +37,15 @@ public class SyncDailyPriceUseCase {
         int processedStocks = 0;
 
         for (Stock stock : stocks) {
-            int updated = syncDailyPriceChangeInfo(stock);
-            totalUpdated += updated;
+            int updated = 0;
+
+            try {
+                updated = syncDailyPriceChangeInfo(stock);
+                totalUpdated += updated;
+            } catch (Exception e) {
+                log.error("등락 정보 동기화 실패 - 종목: {}({}), 에러: {}",
+                        stock.getCorpName(), stock.getStockCode(), e.getMessage());
+            }
             processedStocks++;
 
             if (processedStocks % 100 == 0) {
