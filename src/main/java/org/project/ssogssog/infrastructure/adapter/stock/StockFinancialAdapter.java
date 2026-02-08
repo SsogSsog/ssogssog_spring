@@ -62,6 +62,7 @@ public class StockFinancialAdapter implements StockFinancialPort {
         } catch (TimeoutException e) {
             log.warn("[TimeLimiter 타임아웃] OpenDART 재무정보 조회 시간 초과 - corpCode: {}, year: {}, reportCode: {}",
                     corpCode, year, reportCode);
+            // OpenDART API는 데이터가 없는 경우 타임아웃을 반환하므로 null 처리
             return null;
         } catch (Exception e) {
             // 1. CompletableFuture 등에서 감싸진 에러 꺼내기
