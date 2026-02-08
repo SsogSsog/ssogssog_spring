@@ -36,9 +36,9 @@ public class StockConverter {
             return StockResponse.FinancialOverviewResponseDTO.PerformanceItem.builder()
                     .year(year)
                     .quarter("4Q")
-                    .revenue(q4.getRevenue()/4L)
-                    .operatingProfit(q4.getOperatingProfit()/4L)
-                    .netIncome(q4.getNetIncome()/4L)
+                    .revenue(safeDivideBy4(q4.getRevenue()/4L))
+                    .operatingProfit(safeDivideBy4(q4.getOperatingProfit()/4L))
+                    .netIncome(safeDivideBy4(q4.getNetIncome()/4L))
                     .isConsolidated(q4.isConsolidated())
                     .build();
         }
@@ -85,5 +85,12 @@ public class StockConverter {
                 .volume(stockItemProjection.volume())
                 .changeRate(stockItemProjection.changeRate())
                 .build();
+    }
+
+    private static Long safeDivideBy4(Long value) {
+        if (value == null) {
+            return null; // 값이 없으면 null 반환 (0으로 주면 데이터 왜곡됨)
+        }
+        return value / 4L;
     }
 }
