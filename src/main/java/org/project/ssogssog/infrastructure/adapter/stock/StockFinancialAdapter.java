@@ -74,7 +74,8 @@ public class StockFinancialAdapter implements StockFinancialPort {
             }
 
             // 3. 그 외(네트워크 오류 등)는 재시도 대상
-            throw new RetryableApiException("OpenDART 통신 에러", 500, cause.getMessage());
+            throw new RetryableApiException("OpenDART", 500, "통신 에러: " + cause.getMessage());
+
         }
     }
 
