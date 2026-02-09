@@ -39,7 +39,10 @@ public class StockMetricCalculator {
             Map<String, StockFinancial> lastYear,
             String currentQuarter
     ) {
-        String stockCode = stock != null ? stock.getStockCode() : "unknown";
+        if(stock == null){
+            return null;
+        }
+        String stockCode = stock.getStockCode();
 
         // 필수 데이터 검증
         if (latest == null) {
