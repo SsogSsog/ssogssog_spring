@@ -1,6 +1,7 @@
 package org.project.ssogssog.application.service.stock.writer;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.domain.stock.entity.StockFinancial;
 import org.project.ssogssog.domain.stock.repository.StockFinancialRepository;
 import org.springframework.stereotype.Component;
@@ -8,14 +9,24 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+/**
+ * 재무 정보 저장 담당 Writer
+ *
+ * 저장만 담당하며, 캐시 무효화 이벤트는 UseCase에서 발행합니다.
+ */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class StockFinancialWriter {
 
     private final StockFinancialRepository stockFinancialRepository;
 
+    /**
+     * 재무 정보 저장 (Upsert)
+     *
+     * @param newData 저장할 재무 데이터
+     */
     @Transactional
-    // --- [내부 로직] 저장 (Upsert) ---
     public void saveOrUpdate(StockFinancial newData) {
         // 기존 데이터 확인 (Stock ID + 연도 + 분기)
         Optional<StockFinancial> existingOpt = stockFinancialRepository
@@ -25,14 +36,13 @@ public class StockFinancialWriter {
                         newData.getQuarter()
                 );
 
-        if (existingOpt.isPresent()) {
-            // 이미 있으면? -> (JPA Dirty Checking으로 업데이트하거나, 여기선 편의상 삭제 후 재등록 or 값 변경)
-            // 여기선 간단하게 기존 데이터가 있으면 pass (업데이트 로직 필요시 추가)
-            // log.info("이미 존재함: {}", newData.getStock().getCorpName());
-        } else {
+        boolean isNewData = existingOpt.isEmpty();
+
+        if (isNewData) {
             stockFinancialRepository.save(newData);
+            log.debug("[StockFinancialWriter] 새 재무 데이터 저장: {} {}년 {}분기",
+                    newData.getStock().getCorpName(), newData.getYear(), newData.getQuarter());
         }
+        // 기존 데이터가 있으면 업데이트 없이 패스 (필요시 업데이트 로직 추가)
     }
-
-
 }
