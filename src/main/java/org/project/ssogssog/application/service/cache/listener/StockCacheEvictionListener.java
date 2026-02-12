@@ -43,7 +43,6 @@ public class StockCacheEvictionListener {
      * 주식 기본 정보 업데이트 시 테마 통계 캐시 무효화
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
-    @CacheEvict(value = CacheType.Values.THEME_STATS, allEntries = true)
     public void handle(StockUpdatedEvent event) {
         log.info("[CacheEviction] 테마 통계 캐시 무효화 완료");
 
@@ -55,7 +54,6 @@ public class StockCacheEvictionListener {
      * 좋아요 변경 시 해당 회원의 좋아요 캐시 무효화
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @CacheEvict(value = CacheType.Values.MEMBER_LIKED_STOCKS, key = "#event.memberUuid()")
     public void handle(StockLikeUpdatedEvent event) {
         log.info("[CacheEviction] 회원 좋아요 캐시 무효화 완료 - uuid: {}", event.memberUuid());
 
@@ -66,7 +64,6 @@ public class StockCacheEvictionListener {
      * 전략 변경 시 해당 회원의 전략 캐시 무효화
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @CacheEvict(value = CacheType.Values.MEMBER_STRATEGIES, key = "#event.memberUuid()")
     public void handle(StrategyUpdatedEvent event) {
         log.info("[CacheEviction] 회원 전략 캐시 무효화 완료 - uuid: {}", event.memberUuid());
 

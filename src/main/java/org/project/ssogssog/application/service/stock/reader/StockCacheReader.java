@@ -144,10 +144,7 @@ public class StockCacheReader {
     /**
      * 랭킹 캐시 무효화
      */
-    @CacheEvict(
-            value = CacheType.Values.STOCK_RANKING,
-            key = CacheType.Keys.STOCK_RANKING
-    )
+    @CacheEvict(value = CacheType.Values.STOCK_RANKING, allEntries = true)
     public void evictRanking() {
         // 캐시만 삭제
     }
