@@ -141,7 +141,7 @@ public class MemberController {
         return ApiResponse.onSuccess(null);
     }
 
-    @PostMapping("/likes/{stockId}")
+    @PostMapping("/likes/{stockCode}")
     @Operation(
             summary = "주식 좋아요 설정/해제",
             description = """
@@ -158,8 +158,8 @@ public class MemberController {
                             required = true
                     ),
                     @Parameter(
-                            name = "stockId",
-                            description = "좋아요할 주식 ID",
+                            name = "stockCode",
+                            description = "좋아요할 주식 stockCode",
                             in = ParameterIn.PATH,
                             required = true
                     )
@@ -167,10 +167,10 @@ public class MemberController {
     )
     public ApiResponse<MemberResponse.LikeResponse> toggleLike(
             HttpServletRequest httpRequest,
-            @PathVariable Long stockId
+            @PathVariable String stockCode
     ) {
         String uuid = (String) httpRequest.getAttribute("memberUuId");
-        return ApiResponse.onSuccess(memberService.toggleLike(uuid, stockId));
+        return ApiResponse.onSuccess(memberService.toggleLike(uuid, stockCode));
     }
 
     @GetMapping("/likes")

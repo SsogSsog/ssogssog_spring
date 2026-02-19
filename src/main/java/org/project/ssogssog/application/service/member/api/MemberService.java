@@ -148,12 +148,13 @@ public class MemberService {
     }
 
     @Transactional
-    public MemberResponse.LikeResponse toggleLike(String uuid, Long stockId) {
+    public MemberResponse.LikeResponse toggleLike(String uuid, String stockCode) {
 
         Member member = memberRepository.findByUuid(uuid)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_MEMBER));
 
-        Stock stock = stockRepository.findById(stockId)
+        // 주식 가져오기
+        Stock stock = stockRepository.findByStockCode(stockCode)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
 
         Optional<StockLike> existingLike = stockLikeRepository.findByMemberAndStock(member, stock);
@@ -171,7 +172,7 @@ public class MemberService {
         eventPublisher.publishEvent(new StockLikeUpdatedEvent(uuid));
 
         return MemberResponse.LikeResponse.builder()
-                .stockId(stockId)
+                .stockId(stock.getId())
                 .liked(liked)
                 .build();
     }
