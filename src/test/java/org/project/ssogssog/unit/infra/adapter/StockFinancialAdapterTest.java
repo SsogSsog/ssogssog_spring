@@ -38,6 +38,10 @@ class StockFinancialAdapterTest {
     private TimeLimiterRegistry timeLimiterRegistry;
     @Mock
     private TimeLimiter timeLimiter;
+    @Mock
+    private Executor executor;
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private StockFinancialAdapter stockFinancialAdapter;
