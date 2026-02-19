@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.project.ssogssog.application.service.stock.writer.DailyPriceWriter;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
+import org.project.ssogssog.domain.stock.event.DailyPriceUpdatedEvent;
 import org.project.ssogssog.domain.stock.repository.DailyPriceRepository;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,8 @@ public class SyncDailyPriceUseCase {
 
     private final StockRepository stockRepository;
     private final DailyPriceWriter dailyPriceWriter;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 전 종목의 등락 정보 동기화
@@ -55,6 +59,7 @@ public class SyncDailyPriceUseCase {
         }
 
         log.info("등락 정보 동기화 완료 - 총 {}개 종목, {}개 데이터 업데이트", stocks.size(), totalUpdated);
+        eventPublisher.publishEvent(new DailyPriceUpdatedEvent());
     }
 
 }

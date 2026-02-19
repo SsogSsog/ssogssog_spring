@@ -19,6 +19,11 @@ import static org.project.ssogssog.application.utils.NormalizeUtils.normalizeNum
 import static org.project.ssogssog.application.utils.ParserUtils.parseIntOrNull;
 import static org.project.ssogssog.application.utils.ParserUtils.parseLongOrNull;
 
+/**
+ * 일별 가격 데이터 저장 담당 Writer
+ *
+ * 저장만 담당하며, 캐시 무효화 이벤트는 UseCase에서 발행합니다.
+ */
 @RequiredArgsConstructor
 @Component
 @Slf4j
@@ -27,8 +32,8 @@ public class DailyPriceWriter {
     private final DailyPriceRepository dailyPriceRepository;
     private final StockRepository stockRepository;
 
+
     @Transactional
-    // --- 저장 (중복 방지) ---
     public void saveDailyPrice(DailyPrice newPrice) {
 
         DailyPrice oldDailyPrice = dailyPriceRepository.findByStockIdAndDate(
