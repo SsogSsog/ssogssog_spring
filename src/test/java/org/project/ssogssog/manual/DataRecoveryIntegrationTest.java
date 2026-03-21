@@ -126,7 +126,7 @@ class DataRecoveryIntegrationTest {
 
         // Step 4: 재무제표 수집 (필요한 분기들)
         log.info("\n[Step 4/6] 재무제표 수집...");
-        collectFinancialsUseCase.updateAllFinancials(2026, "11013"); // 2024 4분기
+        collectFinancialsUseCase.updateAllFinancials(2026, "11013"); // 2026 1분기
         //collectFinancialsUseCase.refillMissingFinancials(2024, "11011");
 
         // Step 5: 섹터/CorpCode 보완
