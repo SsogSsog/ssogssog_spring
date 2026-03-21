@@ -63,6 +63,8 @@ public class StockFinancialCollectScheduler {
 
             int targetYear = determineTargetYear(year, month, reprtCode);
 
+            // TODO 예외에 대한 로그 수집 방향성 검토해보기 #85
+
             log.info("[재무제표 누락 재수집][{}] 대상: {}년 {}",
                     runId, targetYear, getReportName(reprtCode));
 
