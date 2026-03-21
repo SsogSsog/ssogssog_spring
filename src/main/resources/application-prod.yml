@@ -1,0 +1,172 @@
+spring:
+  application:
+    name: ssogssog
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://mysql:3306/ssogssog?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&serverTimezone=Asia/Seoul
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+      use_sql_comments: true
+      jdbc:
+        batch_size: 500
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+opendart:
+  api-key: ${OPENDART_API_KEY}
+  base-url: https://opendart.fss.or.kr
+  rate-limit:
+    permits-per-second: 5.0
+
+kis:
+  app-key: ${KIS_APP_KEY}
+  app-secret: ${KIS_APP_SECRET}
+  base-url: https://openapi.koreainvestment.com:9443
+  rate-limit:
+    permits-per-second: 10.0
+
+naver-search:
+  app-key: ${NAVER_APP_KEY}
+  app-secret: ${NAVER_APP_SECRET}
+  base-url: https://openapi.naver.com
+  rate-limit:
+    permits-per-second: 10.0
+
+scheduler:
+  today-price:
+    enabled: ${SCHEDULER_ENABLED:true}
+
+# Resilience4j 설정
+resilience4j:
+  # 재시도 설정
+  retry:
+    instances:
+      # KIS API 재시도 (시나리오 C: 일시적 장애)
+      kis-retry:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - org.project.ssogssog.infrastructure.client.common.exception.RetryableApiException
+          - java.net.SocketTimeoutException
+          - java.io.IOException
+        ignoreExceptions:
+          - org.project.ssogssog.infrastructure.client.common.exception.FatalApiException
+          - org.project.ssogssog.infrastructure.client.common.exception.RateLimitExceededException
+
+      # KIS 토큰 발급 재시도 (1분 대기) - 스케줄러용
+      kis-token-retry:
+        maxAttempts: 2
+        waitDuration: 60000ms
+        retryExceptions:
+          - org.project.ssogssog.infrastructure.client.common.exception.TokenExpiredException
+
+      # OpenDART API 재시도
+      opendart-retry:
+        maxAttempts: 3
+        waitDuration: 2s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - org.project.ssogssog.infrastructure.client.common.exception.RetryableApiException
+          - java.net.SocketTimeoutException
+        ignoreExceptions:
+          - org.project.ssogssog.infrastructure.client.common.exception.FatalApiException
+
+      # Naver API 재시도
+      naver-retry:
+        maxAttempts: 2
+        waitDuration: 500ms
+        retryExceptions:
+          - org.project.ssogssog.infrastructure.client.common.exception.RetryableApiException
+
+  # 서킷 브레이커 설정
+  circuitbreaker:
+    instances:
+      # KIS API 서킷 브레이커
+      kis-circuit:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        recordExceptions:
+          - org.project.ssogssog.infrastructure.client.common.exception.RetryableApiException
+          - org.project.ssogssog.infrastructure.client.common.exception.RateLimitExceededException
+        ignoreExceptions:
+          - org.project.ssogssog.infrastructure.client.common.exception.FatalApiException
+
+      # OpenDART API 서킷 브레이커
+      opendart-circuit:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 60s
+        permittedNumberOfCallsInHalfOpenState: 3
+
+      # Naver API 서킷 브레이커
+      naver-circuit:
+        registerHealthIndicator: true
+        slidingWindowType: TIME_BASED
+        slidingWindowSize: 60
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+
+  # Rate Limiter 설정 (Guava RateLimiter 대체)
+  ratelimiter:
+    instances:
+      kis-rate-limiter:
+        limitForPeriod: 10
+        limitRefreshPeriod: 1s
+        timeoutDuration: 5s
+
+      opendart-rate-limiter:
+        limitForPeriod: 5
+        limitRefreshPeriod: 1s
+        timeoutDuration: 10s
+
+      naver-rate-limiter:
+        limitForPeriod: 10
+        limitRefreshPeriod: 1s
+        timeoutDuration: 5s
+
+  # TimeLimiter 설정 (느린 API 타임아웃 제한)
+  timelimiter:
+    instances:
+      # OpenDART 느린 API용 (재무정보, 배당금 조회)
+      opendart-slow-api:
+        timeoutDuration: 3s
+        cancelRunningFuture: true
+
+# Actuator 설정 (Resilience4j 메트릭 노출)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers,ratelimiters,retries
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+    ratelimiters:
+      enabled: true
