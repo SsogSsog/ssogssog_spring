@@ -117,7 +117,7 @@ public class StockFinancialCollectScheduler {
         } else if (month <= 11 && (month < 11 || day <= 16)) {
             return "11014"; // 3분기 공시 기간
         } else {
-            return null; // 11/17~12/31: 공시 기간 아님
+            return "11014"; // 11/17~12/31 기간에도 3분기 데이터 수집
         }
     }
 
