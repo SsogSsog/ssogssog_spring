@@ -134,6 +134,7 @@ class DataRecoveryIntegrationTest {
         syncStockDataUseCase.updateMissingSectors();
         syncStockDataUseCase.fillCorpCodes();
 
+        // TODO 선행 단계 검증 후 메서드 실행 체크(#85)
         // Step 6: 투자 지표 재계산
         log.info("\n[Step 6/6] 투자 지표 재계산...");
         syncStockMetricDataUseCase.refreshAllMetricsOptimized();
