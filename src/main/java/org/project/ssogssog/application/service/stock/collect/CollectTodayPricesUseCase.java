@@ -108,9 +108,9 @@ public class CollectTodayPricesUseCase {
             String businessDateStr = output.path("stck_bsop_date").asText().trim();
             LocalDate actualDate;
 
-            if (businessDateStr.isEmpty()) {
+            if (businessDateStr.isEmpty() || "null".equals(businessDateStr)) {
                 // 만약 API가 날짜를 안 주면(그럴 리 없지만), 요청 날짜로 fallback 하거나 에러 처리
-                log.warn("영업일자(stck_bsop_date)가 비어있습니다. 요청 날짜로 대체합니다. 종목: {}", stock.getStockCode());
+                // log.warn("영업일자(stck_bsop_date)가 비어있습니다. 요청 날짜로 대체합니다. 종목: {}", stock.getStockCode());
                 actualDate = date;
             } else {
                 // "20240105" -> LocalDate 변환
