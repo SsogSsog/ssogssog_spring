@@ -42,7 +42,7 @@ public class StockCacheEvictionListener {
     /**
      * 주식 기본 정보 업데이트 시 테마 통계 캐시 무효화
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(StockUpdatedEvent event) {
         log.info("[CacheEviction] 테마 통계 캐시 무효화 완료");
 
