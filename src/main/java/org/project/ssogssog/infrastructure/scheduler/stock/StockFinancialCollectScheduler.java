@@ -106,8 +106,7 @@ public class StockFinancialCollectScheduler {
      * - 1/1~3/31: 사업보고서 공시 기간
      * - 4/1~5/15: 1분기 공시 기간
      * - 5/16~8/14: 반기 공시 기간
-     * - 8/15~11/16: 3분기 공시 기간
-     * - 11/17~12/31: 공시 없음 (null 반환)
+     * - 8/15~12/31: 3분기 공시 기간
      */
     private String determineLatestReportCode(int month, int day) {
         if (month <= 3) {
