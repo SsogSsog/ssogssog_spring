@@ -7,7 +7,9 @@ import org.project.ssogssog.application.utils.DateUtils;
 import org.project.ssogssog.application.service.stock.collect.dto.HistoricalPriceDTO;
 import org.project.ssogssog.application.service.stock.writer.DailyPriceWriter;
 import org.project.ssogssog.domain.stock.entity.Stock;
+import org.project.ssogssog.domain.stock.event.DailyPriceUpdatedEvent;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -24,6 +26,8 @@ public class CollectHistoricalPricesUseCase {
     private final DailyPriceWriter dailyPriceWriter;
 
     private final DailyPricePort dailyPricePort;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 특정 종목의 과거 N개월치 데이터를 가져와 DB에 저장
@@ -84,7 +88,7 @@ public class CollectHistoricalPricesUseCase {
             }
         }
 
-
+        eventPublisher.publishEvent(new DailyPriceUpdatedEvent());
 
     }
 

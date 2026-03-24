@@ -1,0 +1,33 @@
+# Build artifacts
+build/
+!build/libs/*.jar
+.gradle/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Git
+.git/
+.gitignore
+
+# Environment files
+.env
+*.env
+
+# Documentation
+*.md
+docs/
+
+# Test files
+src/test/
+
+# Logs
+*.log
+gc.log*
+*.hprof
+
+# Temporary files
+*.tmp
+*.swp

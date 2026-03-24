@@ -1,87 +1,85 @@
-name: Deploy to GCP
+name: Deploy to Raspberry Pi
 
 on:
   push:
-    branches: [ "main"]
+    branches: ["main"]
     paths-ignore:
       - "README.md"
+      - "docs/**"
 
-  pull_request:
-    branches: [ "main"]
-    paths-ignore:
-      - "README.md"
-
-  workflow_dispatch: # 수동 실행 기능..
-
+  workflow_dispatch:
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GAR_LOCATION: asia-northeast3
-  REPOSITORY: ssogssog-repo
-  IMAGE: ssogssog-server
+  IMAGE_NAME: ssogssog
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
 
     steps:
-      - name: 코드 가져오기
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Java 21 설치
+      - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
           cache: 'gradle'
 
-      - name: 📝 application.yml 생성
-        run: |
-          mkdir -p ./src/main/resources
-          cat > ./src/main/resources/application.yml <<'EOF'
-          ${{ secrets.APPLICATION_YML }}
-          EOF
+      - name: Build with Gradle
+        run: ./gradlew clean bootJar --no-daemon
 
-      - name: 🔨 Gradle 빌드
-        run: ./gradlew clean bootJar
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: 🔐 GCP 인증
-        id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
-          service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
-          token_format: access_token # 여기서 토큰 생성
+      - name: Setup QEMU (for ARM64 emulation)
+        uses: docker/setup-qemu-action@v3
 
-      - name: 🐳 Docker 로그인
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.GAR_LOCATION }}-docker.pkg.dev
-          username: oauth2accesstoken
-          password: ${{ steps.auth.outputs.access_token }} # 위에서 만든 토큰 적용
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Docker 이미지 빌드 & 푸시
-        run: |
-          IMAGE_TAG="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}"
-          LATEST_TAG="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:latest"
-          
-          docker build -t $IMAGE_TAG -t $LATEST_TAG .
-          docker push $IMAGE_TAG
-          docker push $LATEST_TAG
+      - name: Build and push Docker image (multi-arch)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: 🎯 GCE 서버에 배포
+      - name: Deploy to Raspberry Pi
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.GCE_HOST }}
-          username: ${{ secrets.GCE_USER }}
-          key: ${{ secrets.GCE_SSH_KEY }}
+          host: ${{ secrets.PI_HOST }}
+          username: ${{ secrets.PI_USER }}
+          key: ${{ secrets.PI_SSH_KEY }}
+          port: ${{ secrets.PI_SSH_PORT }}
           script: |
-            # .env 파일 생성 (민감 정보)
-            echo "${{ secrets.ENV_FILE }}" > /home/${{ secrets.GCE_USER }}/.env
-            
-            # 배포 스크립트 실행
-            sh /home/${{ secrets.GCE_USER }}/deploy.sh
+            cd ~/ssogssog
 
+            # Create .env file from individual secrets
+            cat > .env <<EOF
+            DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+            IMAGE_TAG=latest
+            DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}
+            DB_USERNAME=${{ secrets.DB_USERNAME }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            KIS_APP_KEY=${{ secrets.KIS_APP_KEY }}
+            KIS_APP_SECRET=${{ secrets.KIS_APP_SECRET }}
+            OPENDART_API_KEY=${{ secrets.OPENDART_API_KEY }}
+            NAVER_APP_KEY=${{ secrets.NAVER_APP_KEY }}
+            NAVER_APP_SECRET=${{ secrets.NAVER_APP_SECRET }}
+            SCHEDULER_ENABLED=${{ secrets.SCHEDULER_ENABLED }}
+            EOF
+
+            # Run deploy script
+            chmod +x deploy.sh
+            ./deploy.sh

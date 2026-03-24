@@ -6,7 +6,9 @@ import org.project.ssogssog.application.service.stock.port.StockPort;
 import org.project.ssogssog.application.utils.ParserUtils;
 import org.project.ssogssog.application.service.stock.writer.StockWriter;
 import org.project.ssogssog.domain.stock.entity.Stock;
+import org.project.ssogssog.domain.stock.event.StockUpdatedEvent;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,9 +27,11 @@ public class SyncStockDataUseCase {
 
     private final StockWriter stockWriter;
     private final StockPort stockPort;
+    private final ApplicationEventPublisher eventPublisher;
     /**
      * Stock에 sector(분야) 정보가 없는 종목들을 찾아 Stock의 sector 업데이트
      */
+    @Transactional
     public void updateMissingSectors() {
 
         // 1. 섹터가 null인 종목 조회
@@ -54,6 +58,12 @@ public class SyncStockDataUseCase {
                 log.error("[{}] 업데이트 실패: {}", stock.getCorpName(), e.getMessage());
             }
         }
+
+        // 섹터 업데이트 완료 후 캐시 무효화 이벤트 발행
+        if (count > 0) {
+            eventPublisher.publishEvent(new StockUpdatedEvent());
+        }
+
         log.info("총 {}개 종목 섹터 업데이트 완료", count);
     }
 
@@ -117,6 +127,7 @@ public class SyncStockDataUseCase {
         }
         log.info("총 {}개 종목 lastDps 업데이트 완료", count);
 
+        eventPublisher.publishEvent(new StockUpdatedEvent());
 
     }
 

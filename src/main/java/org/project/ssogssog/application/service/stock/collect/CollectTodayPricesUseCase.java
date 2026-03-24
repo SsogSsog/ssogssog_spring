@@ -8,8 +8,10 @@ import org.project.ssogssog.application.utils.ParserUtils;
 import org.project.ssogssog.application.service.stock.writer.DailyPriceWriter;
 import org.project.ssogssog.domain.stock.entity.DailyPrice;
 import org.project.ssogssog.domain.stock.entity.Stock;
+import org.project.ssogssog.domain.stock.event.DailyPriceUpdatedEvent;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -25,6 +27,9 @@ public class CollectTodayPricesUseCase {
     private final DailyPriceWriter dailyPriceWriter;
 
     private final DailyPricePort dailyPricePort;
+
+    private final ApplicationEventPublisher eventPublisher;
+
 
     /**
      * 전 종목 시세 업데이트(당일 정보) (Batch용)
@@ -65,6 +70,9 @@ public class CollectTodayPricesUseCase {
             }
         }
         log.info("✅ 시세 업데이트 완료. 성공: {}/{}", success, stocks.size());
+
+        // 전체 종목 시세 수집 완료 후 캐시 무효화 이벤트 발행
+        eventPublisher.publishEvent(new DailyPriceUpdatedEvent());
     }
 
 
@@ -100,9 +108,9 @@ public class CollectTodayPricesUseCase {
             String businessDateStr = output.path("stck_bsop_date").asText().trim();
             LocalDate actualDate;
 
-            if (businessDateStr.isEmpty()) {
+            if (businessDateStr.isEmpty() || "null".equals(businessDateStr)) {
                 // 만약 API가 날짜를 안 주면(그럴 리 없지만), 요청 날짜로 fallback 하거나 에러 처리
-                log.warn("영업일자(stck_bsop_date)가 비어있습니다. 요청 날짜로 대체합니다. 종목: {}", stock.getStockCode());
+                // log.warn("영업일자(stck_bsop_date)가 비어있습니다. 요청 날짜로 대체합니다. 종목: {}", stock.getStockCode());
                 actualDate = date;
             } else {
                 // "20240105" -> LocalDate 변환

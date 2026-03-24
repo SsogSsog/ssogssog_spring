@@ -8,6 +8,8 @@ import org.project.ssogssog.application.service.member.reader.MemberCacheReader;
 import org.project.ssogssog.domain.member.entity.Member;
 import org.project.ssogssog.domain.member.entity.StockLike;
 import org.project.ssogssog.domain.member.entity.Strategy;
+import org.project.ssogssog.domain.member.event.StockLikeUpdatedEvent;
+import org.project.ssogssog.domain.member.event.StrategyUpdatedEvent;
 import org.project.ssogssog.domain.member.factory.StrategyFactory;
 import org.project.ssogssog.domain.member.repository.StockLikeRepository;
 import org.project.ssogssog.domain.member.repository.MemberRepository;
@@ -18,6 +20,7 @@ import org.project.ssogssog.domain.stock.entity.Stock;
 import org.project.ssogssog.domain.stock.repository.StockRepository;
 import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +39,8 @@ public class MemberService {
     private final StockRepository stockRepository;
     private final StockService stockService;
     private final MemberCacheReader memberCacheReader;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public MemberResponse.RegisterResponse register(MemberRequest.RegisterRequest request) {
@@ -97,7 +102,7 @@ public class MemberService {
         strategyRepository.save(savedStrategy);
 
         // 캐시 무효화
-        memberCacheReader.evictStrategies(uuid);
+        eventPublisher.publishEvent(new StrategyUpdatedEvent(uuid));
 
         return MemberResponse.StrategyResponse.builder()
                 .strategyId(savedStrategy.getId())
@@ -131,7 +136,7 @@ public class MemberService {
         strategyRepository.delete(strategy);
 
         // 캐시 무효화
-        memberCacheReader.evictStrategies(uuid);
+        eventPublisher.publishEvent(new StrategyUpdatedEvent(uuid));
     }
 
     private int extractNumber(String strategyName) {
@@ -143,12 +148,13 @@ public class MemberService {
     }
 
     @Transactional
-    public MemberResponse.LikeResponse toggleLike(String uuid, Long stockId) {
+    public MemberResponse.LikeResponse toggleLike(String uuid, String stockCode) {
 
         Member member = memberRepository.findByUuid(uuid)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_MEMBER));
 
-        Stock stock = stockRepository.findById(stockId)
+        // 주식 가져오기
+        Stock stock = stockRepository.findByStockCode(stockCode)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.NOT_FOUND_STOCK));
 
         Optional<StockLike> existingLike = stockLikeRepository.findByMemberAndStock(member, stock);
@@ -163,10 +169,10 @@ public class MemberService {
         }
 
         // 캐시 무효화
-        memberCacheReader.evictLikedStocks(uuid);
+        eventPublisher.publishEvent(new StockLikeUpdatedEvent(uuid));
 
         return MemberResponse.LikeResponse.builder()
-                .stockId(stockId)
+                .stockId(stock.getId())
                 .liked(liked)
                 .build();
     }

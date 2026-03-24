@@ -16,6 +16,7 @@ import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
 import org.project.ssogssog.infrastructure.config.cache.CacheType;
 import org.project.ssogssog.presentation.controller.stock.enums.RankingType;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -112,6 +113,18 @@ public class StockCacheReader {
         return stockRepository.getThemeStockStats();
     }
 
+
+    /**
+     * 테마 통계 캐시 무효화
+     */
+    @CacheEvict(
+            value = CacheType.Values.THEME_STATS,
+            key = CacheType.Keys.THEME_STATS
+    )
+    public void evictThemeStats() {
+        // 캐시만 삭제
+    }
+
     /**
      * 랭킹 top 5 조회 (캐시)
      */
@@ -126,6 +139,14 @@ public class StockCacheReader {
             case VOLUME -> dailyPriceRepository.findTop5VolumeStocks();
         };
         return convertToRankingDTO(dailyPrices);
+    }
+
+    /**
+     * 랭킹 캐시 무효화
+     */
+    @CacheEvict(value = CacheType.Values.STOCK_RANKING, allEntries = true)
+    public void evictRanking() {
+        // 캐시만 삭제
     }
 
     /**
