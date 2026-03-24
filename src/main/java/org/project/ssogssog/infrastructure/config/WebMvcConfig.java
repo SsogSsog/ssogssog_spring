@@ -5,6 +5,7 @@ import org.project.ssogssog.infrastructure.interceptor.UuidInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 
 @Configuration
 @RequiredArgsConstructor
@@ -20,5 +21,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addPathPatterns("/members/**") // 개발, 테스트 편의성을 member 관련만 인증
                 .addPathPatterns("/stock/*/liked") // 주식 좋아요 여부 조회
                 .excludePathPatterns("/members/register");
+    }
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOriginPatterns("*")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true);
     }
 }
