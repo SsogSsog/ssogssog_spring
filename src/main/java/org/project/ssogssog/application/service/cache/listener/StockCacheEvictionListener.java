@@ -44,10 +44,12 @@ public class StockCacheEvictionListener {
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(StockUpdatedEvent event) {
-        log.info("[CacheEviction] 테마 통계 캐시 무효화 완료");
 
         stockCacheReader.evictRanking();
         stockCacheReader.evictThemeStats();
+
+        log.info("[CacheEviction] 테마 통계 캐시 무효화 완료");
+
     }
 
     /**
@@ -55,9 +57,10 @@ public class StockCacheEvictionListener {
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(StockLikeUpdatedEvent event) {
-        log.info("[CacheEviction] 회원 좋아요 캐시 무효화 완료 - uuid: {}", event.memberUuid());
 
         memberCacheReader.evictLikedStocks(event.memberUuid());
+        log.info("[CacheEviction] 회원 좋아요 캐시 무효화 완료 - uuid: {}", event.memberUuid());
+
     }
 
     /**
@@ -65,8 +68,9 @@ public class StockCacheEvictionListener {
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(StrategyUpdatedEvent event) {
-        log.info("[CacheEviction] 회원 전략 캐시 무효화 완료 - uuid: {}", event.memberUuid());
 
         memberCacheReader.evictStrategies(event.memberUuid());
+        log.info("[CacheEviction] 회원 전략 캐시 무효화 완료 - uuid: {}", event.memberUuid());
+
     }
 }
