@@ -1,0 +1,31 @@
+# Prometheus 설정
+# 문서: https://prometheus.io/docs/prometheus/latest/configuration/configuration/
+
+global:
+  scrape_interval: 15s      # 메트릭 수집 주기
+  evaluation_interval: 15s  # 규칙 평가 주기
+
+# 스크랩 대상 설정
+scrape_configs:
+  # Prometheus 자체 메트릭
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Spring Boot 앱 - 프로덕션 (Docker 네트워크 내부)
+  - job_name: 'spring-boot-docker'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['ssogssog-app:8080']
+        labels:
+          env: 'production'
+          app: 'ssogssog'
+
+  # Spring Boot 앱 - 로컬 개발 (Docker 외부, IDE에서 실행)
+  - job_name: 'spring-boot-local'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+        labels:
+          env: 'local'
+          app: 'ssogssog'

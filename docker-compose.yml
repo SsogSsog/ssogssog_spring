@@ -96,6 +96,7 @@ services:
     ports:
       - "3000:3000"
     environment:
+      # TODO : USER/PASSWORD 설정하기
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
