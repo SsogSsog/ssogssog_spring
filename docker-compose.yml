@@ -69,6 +69,44 @@ services:
       timeout: 5s
       retries: 3
 
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: ssogssog-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    networks:
+      - ssogssog-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana:10.4.1
+    container_name: ssogssog-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - ssogssog-network
+    depends_on:
+      - prometheus
+
 networks:
   ssogssog-network:
     driver: bridge
@@ -76,3 +114,5 @@ networks:
 volumes:
   mysql-data:
   redis-data:
+  prometheus-data:
+  grafana-data:

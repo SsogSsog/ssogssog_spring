@@ -1,0 +1,12 @@
+# Grafana Datasource 자동 설정
+# Grafana 시작 시 자동으로 Prometheus가 데이터소스로 등록됨
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://ssogssog-prometheus:9090
+    isDefault: true
+    editable: true
