@@ -156,17 +156,24 @@ resilience4j:
         timeoutDuration: 3s
         cancelRunningFuture: true
 
-# Actuator 설정 (Resilience4j 메트릭 노출)
+# Actuator 설정 (Resilience4j + Prometheus 메트릭 노출)
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,circuitbreakers,ratelimiters,retries
+        include: health,info,metrics,circuitbreakers,ratelimiters,retries,prometheus
   endpoint:
     health:
       show-details: always
+    prometheus:
+      enabled: true
   health:
     circuitbreakers:
       enabled: true
     ratelimiters:
       enabled: true
+  # Prometheus 메트릭 설정
+  prometheus:
+    metrics:
+      export:
+        enabled: true
