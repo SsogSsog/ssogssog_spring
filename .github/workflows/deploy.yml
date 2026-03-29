@@ -55,6 +55,17 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Copy deployment files to Raspberry Pi
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.PI_HOST }}
+          username: ${{ secrets.PI_USER }}
+          key: ${{ secrets.PI_SSH_KEY }}
+          port: ${{ secrets.PI_SSH_PORT }}
+          source: "deploy.sh,docker-compose.yml,monitoring/"
+          target: "~/ssogssog"
+          overwrite: true
+
       - name: Deploy to Raspberry Pi
         uses: appleboy/ssh-action@master
         with:
