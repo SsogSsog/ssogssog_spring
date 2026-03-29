@@ -1,0 +1,16 @@
+# Grafana Dashboard 자동 프로비저닝 설정
+# Grafana 시작 시 dashboards 폴더의 JSON 파일들이 자동으로 로드됨
+
+apiVersion: 1
+
+providers:
+  - name: 'ssogssog-dashboards'
+    orgId: 1
+    folder: ''
+    folderUid: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30  # 30초마다 변경 확인
+    allowUiUpdates: true       # UI에서 수정 허용
+    options:
+      path: /etc/grafana/provisioning/dashboards
