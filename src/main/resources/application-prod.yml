@@ -177,3 +177,11 @@ management:
     metrics:
       export:
         enabled: true
+  # Histogram 활성화 (p50/p95/p99 계산을 위해 필수)
+  metrics:
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
+      slo:
+        "[http.server.requests]": 50ms, 100ms, 200ms, 500ms, 1s, 2s, 5s
+
