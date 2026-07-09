@@ -8,6 +8,10 @@ group = 'com.example'
 version = '0.0.1-SNAPSHOT'
 description = 'ssogssog'
 
+ext {
+    springAiVersion = '1.0.0'
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
@@ -76,6 +80,10 @@ dependencies {
 
     // redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // Spring AI (Gemini via OpenAI-compatible endpoint)
+    implementation platform("org.springframework.ai:spring-ai-bom:${springAiVersion}")
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 
 
     // test
