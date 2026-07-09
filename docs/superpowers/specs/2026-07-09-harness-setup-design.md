@@ -27,6 +27,7 @@
 | 각색 수준 | 핵심 뼈대만 교체 (언어/아키텍처/빌드 커맨드), 교육적 내용·구조는 유지 |
 | 디렉토리 | `.claude/`(Claude Code)와 `.agent/`(Codex) **양쪽 모두** 생성, 스킬 세트 동일하게 |
 | 스킬 범위 | 참조 스킬 전부 각색 이식 + Artium의 pre-commit/pre-push 2종 추가 |
+| 작성 언어 | **AI가 읽는 하네스 문서(skills, commands, CLAUDE.md, AGENT.md, MAP.md, CONVENTIONS.md)는 영어**로 작성 (토큰 절약). 단, 이 설계 문서 자체와 향후 AI가 작성하는 코드 주석/Swagger는 한국어 규칙 유지 |
 
 ## 2. 워크플로우 (역할 분담)
 
