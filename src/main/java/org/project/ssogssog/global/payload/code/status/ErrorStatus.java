@@ -25,6 +25,11 @@ public enum ErrorStatus implements BaseErrorCode {
     // StockMetric 에러
     INVALID_METRIC_BASED_PERIOD(HttpStatus.BAD_REQUEST, "METRIC4100", "직전 분기 또는 작년 중 분기 선택이 필요합니다."),
 
+    // AI 에러
+    AI_QUESTION_REQUIRED(HttpStatus.BAD_REQUEST, "AI4000", "AI 질문은 필수입니다."),
+    AI_QUESTION_TOO_LONG(HttpStatus.BAD_REQUEST, "AI4001", "AI 질문은 1000자 이하여야 합니다."),
+    AI_TEMPERATURE_OUT_OF_RANGE(HttpStatus.BAD_REQUEST, "AI4002", "temperature는 0.0 이상 2.0 이하여야 합니다."),
+
     // DailyPrice 에러
     NOT_FOUND_DAILY_PRICE(HttpStatus.NOT_FOUND, "DAILY_PRICE4000", "해당 주식의 일별시세가 존재하지 않습니다"),
 
