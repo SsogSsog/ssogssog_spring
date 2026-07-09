@@ -83,6 +83,16 @@ Dependency rules:
 
 This project has no separate lint or format Gradle task. Use the commands above unless a task adds a new verifier.
 
+## Git Hooks
+
+A `pre-commit` hook lives in `.githooks/` and blocks commits that contain hardcoded secrets or a force-staged ignored `application.yml`. Because `core.hooksPath` is stored in local `.git/config`, it is not applied automatically on clone. After cloning, activate it once:
+
+```
+git config core.hooksPath .githooks
+```
+
+The hook is an automated safety net for `pre-commit-check` Check 1; still run the `pre-commit-check` skill before committing. Bypass intentionally with `git commit --no-verify`.
+
 ## Workflow
 
 - Spec authoring: superpowers, usually `brainstorming` then `writing-plans`.
