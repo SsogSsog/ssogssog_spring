@@ -1,0 +1,44 @@
+#!/bin/sh
+#
+# 비밀값/자격증명이 staged diff에 포함되면 커밋을 차단한다.
+# pre-commit-check 스킬(Check 1)을 자동화한 방어선.
+# 우회가 필요하면: git commit --no-verify
+#
+
+fail=0
+
+# 스테이징된 diff (추가된 라인만)
+staged_added=$(git diff --cached --no-color -U0 | grep '^+' | grep -v '^+++')
+
+# --- Check 1: 하드코딩된 자격증명 패턴 ---
+# key: value 형태에서 값이 실제 비밀처럼 보이면(6자 이상 영숫자/토큰) 차단.
+# ${ENV}, <PLACEHOLDER>, 빈 값, 짧은 더미(test 등)는 통과.
+secret_hits=$(printf '%s\n' "$staged_added" | grep -inE \
+  "(app-secret|app-key|api-key|api_key|apikey|secret|password|token|credential)[\"' ]*[:=][[:space:]]*[\"']?[A-Za-z0-9+/_-]{6,}" \
+  | grep -vE "\\\$\{" \
+  | grep -vE "<[A-Z_]+>" \
+  | grep -viE "(password|secret|key|token)[\"' ]*[:=][[:space:]]*[\"']?(test|dummy|changeme|example|your[_-]|placeholder|xxx)")
+
+if [ -n "$secret_hits" ]; then
+  echo "✖ pre-commit 차단: 하드코딩된 비밀값으로 보이는 내용이 있습니다."
+  echo "$secret_hits" | sed 's/^/  /'
+  echo ""
+  echo "  → 값을 \${ENV_VAR}나 placeholder로 바꾸거나, ignore 파일로 옮기세요."
+  fail=1
+fi
+
+# --- Check 2: ignore 대상인 application.yml 강제 스테이징 ---
+if git diff --cached --name-only | grep -qx "src/main/resources/application.yml"; then
+  if git check-ignore -q src/main/resources/application.yml; then
+    echo "✖ pre-commit 차단: ignore 대상인 application.yml이 강제 스테이징되었습니다."
+    fail=1
+  fi
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo ""
+  echo "의도적으로 우회하려면: git commit --no-verify"
+  exit 1
+fi
+
+exit 0
