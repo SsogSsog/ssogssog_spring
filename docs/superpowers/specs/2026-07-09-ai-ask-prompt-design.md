@@ -28,7 +28,7 @@ Day 2의 목표는 커리큘럼이 정한 세 가지를 코드로 실현하는 �
 | 시스템 프롬프트 범위 | **역할 + 지원 지표 목록 + 핵심 가드레일** (지표별 상세 설명은 YAGNI로 제외) |
 | 프롬프트 파일 형식 | **`.st` 파일 + Spring AI `Resource` 주입** (`@Value("classpath:...")`) |
 | 응답 형태 | **답변 텍스트 + 실제 적용된(resolved) temperature** 를 함께 반환 |
-| 남용 최소 안전장치 | **`@Profile({"local","dev"})` + `question` 최대 1000자**. 정교한 rate limit은 Week 4 (§8) |
+| 남용 최소 안전장치 | **`@Profile("!prod")` + `question` 최대 1000자**. 정교한 rate limit은 Week 4 (§8) |
 
 ## 2. 컴포넌트 배치
 
@@ -36,7 +36,7 @@ Day 2의 목표는 커리큘럼이 정한 세 가지를 코드로 실현하는 �
 
 ```text
 presentation/controller/ai/
-  AiAskController.java             (신규)  POST /ai/ask, @Profile({"local","dev"})
+  AiAskController.java             (신규)  POST /ai/ask, @Profile("!prod")
 
 application/service/ai/api/
   AiPingService.java               (기존, 변경 없음)
@@ -57,7 +57,7 @@ resources/prompts/
 
 - 컨트롤러는 얇게: 요청을 받아 서비스 호출, `ApiResponse<AiAskResponse>` 반환.
 - `AiConfig`, `/ai/ping`은 손대지 않는다.
-- `AiAskController`는 `@Profile({"local","dev"})`로 제한한다(§8 참조). 운영 프로파일에는 빈이 등록되지 않는다.
+- `AiAskController`는 `@Profile("!prod")`로 제한한다(§8 참조). 운영 프로파일에는 빈이 등록되지 않는다.
 
 ## 3. 요청 흐름
 
@@ -106,7 +106,10 @@ AiAskController → AiAskService → ChatClient
 ## 5. 시스템 프롬프트 내용 (`stock-assistant-system.st`)
 
 실제 도메인(`MetricValues` / `StockMetricScreenerCondition`) 기준으로 지원 지표를 명시한다.
-**커리큘럼 메모에는 PBR이 있었으나 실제 도메인에는 PBR이 없다(PER만 있음)**. 프롬프트는 실제 도메인 기준으로 작성한다.
+**커리큘럼 메모에는 PBR이 있었는데, PBR은 원천 데이터(`DailyPrice.pbr`)에는 존재하고 수집도 하지만
+`StockMetric` 기반 조회/스크리닝 지표에는 포함되지 않는다(그쪽엔 PER만 있음)**. 프롬프트는 이 서비스의
+조회/스크리닝 대상인 `StockMetric` 기준으로 작성하되, "지원하지 않는다"가 아니라 "현재 StockMetric 기반
+조회/스크리닝 지표로는 다루지 않는다"로 정확히 표현한다.
 
 지표는 **조회/설명 가능한 지표**와 **스크리닝(필터) 조건으로 지원하는 지표**를 구분한다.
 후자는 `StockMetricScreenerCondition`에 실제 필터가 있는 지표만 해당한다(수익률·순이익률 등은 조회는
@@ -133,8 +136,8 @@ AiAskController → AiAskService → ChatClient
   종목 스크리닝 조건으로는 사용할 수 없다. 스크리닝 요청 시 이 점을 명확히 알려라.
 
 [규칙]
-- 위 [조회·설명 가능한 지표] 목록에 없는 지표(예: PBR, EPS, PEG 등)는 주식쏙쏙이 지원하지 않는다.
-  요청받으면 지원하지 않는다고 명확히 답하라.
+- 위 [조회·설명 가능한 지표] 목록에 없는 지표(예: PBR, EPS, PEG 등)는 현재 이 서비스의 조회·설명 대상이 아니다.
+  요청받으면 "현재 제공하는 조회/스크리닝 지표로는 다루지 않는다"고 명확히 답하라.
 - 특정 종목의 매수/매도를 단정하거나 투자를 권유하지 마라. 지표 기반 해석과 일반적 설명까지만 제공하라.
 - 확실하지 않은 수치를 지어내지 마라. 데이터가 없으면 없다고 답하라.
 - 항상 한국어로, 간결하게 답하라.
@@ -164,20 +167,24 @@ AiAskController → AiAskService → ChatClient
 
 test-patterns 스킬은 구현 단계에서 적용한다. 실제 Gemini 호출은 테스트하지 않는다(외부 의존·비용·rate limit).
 
-- `AiAskService` 단위 테스트 (`ChatClient` 목킹):
-  - 시스템 프롬프트 + 질문이 올바르게 조립되는지.
-  - temperature 미지정 시 yml 기본값이 적용/반환되는지.
-  - temperature 지정 시 그 값이 적용/반환되는지.
-  - `temperature` 범위 밖 / 빈 질문 → 예외 발생.
-- 컨트롤러 슬라이스 테스트: `POST /ai/ask`가 `ApiResponse<AiAskResponse>` 형태로 응답하는지.
-- 실호출 검증: 사용자가 요청할 때 `debug-and-verify-locally`로 수동 확인.
+Spring AI `ChatClient`의 fluent API(`prompt().system().user().options().call().content()`)를 깊게 목킹하면
+프레임워크 호출 순서에 테스트가 과결합되어 깨지기 쉽다. 따라서 **순수 로직만 단위 테스트로 필수 커버**하고,
+실제 `ChatClient` 조립은 목킹하지 않는다(그 계약을 고정하지 않는다). 실호출은 수동으로 얇게 검증한다.
+
+- `AiAskService` 단위 테스트 (**`ChatClient` 목킹 없이 순수 로직**):
+  - `resolveTemperature`: 미지정 시 기본값, 지정 시 그 값, 범위 밖이면 예외, 경계값(0.0/2.0) 허용.
+  - `validateQuestion`: null/blank/1000자 초과 시 예외, 1000자 이하 통과.
+  - (프롬프트 리소스 로딩은 서비스 생성 시 정상 로드되는지 정도로 얇게 확인.)
+- 컨트롤러 슬라이스 테스트(`@WebMvcTest`): `AiAskService`를 목킹해 `POST /ai/ask`가
+  `ApiResponse<AiAskResponse>` 봉투(answer/temperature)로 응답하는지.
+- 실호출 검증: 사용자가 요청할 때 `debug-and-verify-locally`로 수동 확인(§ 실제 프롬프트 조립·응답).
 
 ## 8. 범위 밖 / 주의
 
 - **남용 최소 안전장치 (이번 스펙 포함)**: `/ai/ask`는 사용자 질문을 유료 Gemini 호출로 넘기므로
   `/ai/ping`보다 남용/비용 면적이 크다. 정교한 rate limit(Resilience4j 등)은 커리큘럼 **Week 4** 몫이지만,
   그 전까지 노출 면적을 최소화하기 위해 이번 스펙에 두 가지 최소 안전장치를 포함한다.
-  - **프로파일 제한**: `AiAskController`를 `@Profile({"local","dev"})`로 제한 → 운영 프로파일에 노출 안 됨.
+  - **프로파일 제한**: `AiAskController`를 `@Profile("!prod")`로 제한 → 운영 프로파일에 노출 안 됨.
   - **질문 길이 제한**: `question` 최대 1000자(§4, §6) → 토큰 비용 폭증 방지.
   - 인증·per-user rate limit 등 정교한 통제는 Week 4에서 다룬다.
 - **모델**: `application.yml`은 `.gitignore` 대상이며 현재 `gemini-2.5-flash`로 설정되어 있다
