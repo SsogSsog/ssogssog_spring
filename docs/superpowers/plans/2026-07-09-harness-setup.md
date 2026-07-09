@@ -53,17 +53,17 @@ docs/specs/CONVENTIONS.md                 # Java conventions (English)
 
 - [ ] **Step 1: Write `CLAUDE.md`** (English). Sections, adapted from the reference CLAUDE.md but rewritten for our stack:
   - Project overview: name ssogssog, stack (Spring Boot 3.5.8, Java 21, Gradle), package `org.project.ssogssog`.
-  - Architecture (hexagonal): describe `presentation/controller/{domain}`, `application/service/{domain}/{api,usecase,writer}`, `domain/{domain}/{entity,vo,enums,repository,factory}`, `infrastructure/{config,client,adapter,scheduler,persistence}`, `global/{payload,paging}`. Include dependency direction rules (presentation → application + global; application → domain + global; domain has no outward deps; infrastructure implements ports/clients; global is shared).
+  - Architecture (hexagonal): describe `presentation/controller/{domain}`, `application/service/{domain}/{api,usecase,writer,port}`, `domain/{domain}/{entity,vo,enums,repository,factory,projection,policy}`, `infrastructure/{config,client,adapter,scheduler,persistence}`, `global/{payload,paging}`. Note the outbound ports under `application/service/{domain}/port` (e.g. `StockPort`, `DailyPricePort`, `StockIssuePort`, `StockFinancialPort`) that `infrastructure` implements; read models live in `domain/{domain}/projection`; domain policies/registries in `domain/{domain}/policy` (e.g. `ThemeEmojiRegistry`). External clients under `infrastructure/client/{opendart,ksi,naver}` — the KIS (Korea Investment) client folder is literally `ksi` (`KISClient.java`); a typo, but src renaming is out of scope, so document the current path. Include dependency direction rules (presentation → application + global; application → domain + global; application defines ports, infrastructure implements them; domain has no outward deps; global is shared).
   - Coding conventions: `record` for VO/DTO, Lombok, `final` preferred, return `ApiResponse<T>` from controllers (never entities), standardize errors via `GeneralException` + `BaseErrorCode`/`ErrorStatus`. **Controller KDoc/Swagger `@Operation`/`@Schema` descriptions and DTO field descriptions in Korean** (this is the one Korean-output rule).
   - Branch convention: `{name}/{purpose}/{desc}` (purpose: feat/fix/refactor/chore/docs/test).
   - Commit convention: `{purpose}({scope}): {desc}` or `{purpose}: {desc}`.
-  - Build & verify: `./gradlew build`, `./gradlew test`, `./gradlew bootRun`. (No ktlint/harness task.)
+  - Build & verify: `./gradlew build`, `./gradlew test`, `./gradlew bootRun`. Do NOT reference a `harness` gradle task or a Kotlin lint formatter — this project has neither. (State this as "this project has no separate lint/format gradle task"; avoid writing the literal tool names so the residue grep stays clean.)
   - Workflow / role split (the key section): spec authoring = superpowers (brainstorming → writing-plans); spec review & code review = **Codex** (external, user-driven); code writing = Claude (implement-spring-backend-feature, jpa-patterns, test-patterns); local run/verify = Claude via debug-and-verify-locally **only when the user explicitly asks**; pre-commit / pre-push checks = Claude.
   - Skills list: reference `/dev-plan`, `/review`, `/harness-update` and the available skills.
 
 - [ ] **Step 2: Write `AGENT.md`** (English). Entry point. Point to: `CLAUDE.md` (read first), `docs/specs/MAP.md`, `docs/specs/CONVENTIONS.md`. Pre-work checklist (read CLAUDE.md, understand target package structure, know dependency rules, know `./gradlew build`/`test`). **Only reference files that exist** — no `docs/HARNESS_GUIDE.md`, no `docs/specs/ADR/`, no `EXECUTION_PLAN.md`.
 
-- [ ] **Step 3: Write `docs/specs/MAP.md`** (English). Architecture map: the hexagonal package tree (from design doc §4), request flow (`controller → service(api/usecase/writer) → domain/repository → infrastructure`), dependency direction rules, and where external clients live (`infrastructure/client/{opendart,kis,naver}`).
+- [ ] **Step 3: Write `docs/specs/MAP.md`** (English). Architecture map: the hexagonal package tree (from design doc §4, including `application/service/{domain}/port`, `domain/{domain}/projection`, `domain/{domain}/policy`), request flow (`controller → service(api/usecase/writer) → port → infrastructure` for outbound, and `service → domain/repository` for persistence), dependency direction rules (application defines ports, infrastructure implements them), and where external clients live (`infrastructure/client/{opendart,ksi,naver}` — note `ksi` is the actual KIS client folder name, a typo kept as-is). List existing ports: `StockPort`, `DailyPricePort`, `StockIssuePort`, `StockFinancialPort`, so agents reuse them instead of adding new persistence paths.
 
 - [ ] **Step 4: Write `docs/specs/CONVENTIONS.md`** (English). Detailed conventions with Java code examples: `record` VO example, controller returning `ApiResponse`, exception via `GeneralException`, QueryDSL custom repository pattern (`*RepositoryCustom` + impl), naming suffixes (`*Controller`, `*Service`, `*Repository`), Korean Swagger/DTO descriptions rule.
 
@@ -72,9 +72,10 @@ docs/specs/CONVENTIONS.md                 # Java conventions (English)
 Run:
 ```bash
 cd "/Users/imjunhyeon/spring projects/ssogssog_spring"
-grep -rniE 'kotlin|ktlint|\bval \b|data class|obrit|gradlew harness|data\.sql|HARNESS_GUIDE|specs/ADR|EXECUTION_PLAN' CLAUDE.md AGENT.md docs/specs/ ; echo "exit=$?"
+grep -rniE 'kotlin|\bval \b|data class|obrit|data\.sql|HARNESS_GUIDE|specs/ADR|EXECUTION_PLAN' CLAUDE.md AGENT.md docs/specs/ ; echo "exit=$?"
 ```
 Expected: no matches (grep exit=1). If any line matches, fix it.
+(Note: `ktlint` / `gradlew harness` are intentionally NOT in this grep — CLAUDE.md legitimately says the project has no such task. The build-verify wording above avoids the literal tool names anyway.)
 
 - [ ] **Step 6: Commit**
 
@@ -107,9 +108,10 @@ git commit -m "docs: add project guide, agent entry, and architecture/convention
 Run:
 ```bash
 cd "/Users/imjunhyeon/spring projects/ssogssog_spring"
-grep -rniE 'kotlin|ktlint|ArchUnit|obrit|gradlew harness|data\.sql|specs/ADR|EXECUTION_PLAN|HARNESS_GUIDE' .claude/commands/ ; echo "exit=$?"
+grep -rniE 'kotlin|obrit|data\.sql|specs/ADR|EXECUTION_PLAN|HARNESS_GUIDE' .claude/commands/ ; echo "exit=$?"
 ```
 Expected: no matches (exit=1).
+(As in Task 1, `ktlint`/`ArchUnit`/`gradlew harness` are excluded — a command may legitimately say the project has none of these.)
 
 - [ ] **Step 5: Commit**
 
@@ -145,7 +147,7 @@ git commit -m "chore: add adapted slash commands (dev-plan, review, harness-upda
 Run:
 ```bash
 cd "/Users/imjunhyeon/spring projects/ssogssog_spring"
-grep -rniE 'kotlin|ktlint|\bval \b|data class|obrit|gradlew harness|data\.sql' .claude/skills/implement-spring-backend-feature .claude/skills/review-spring-backend-change .claude/skills/select-spring-design-pattern .claude/skills/organize-domain-model ; echo "exit=$?"
+grep -rniE 'kotlin|\bval \b|data class|obrit|data\.sql' .claude/skills/implement-spring-backend-feature .claude/skills/review-spring-backend-change .claude/skills/select-spring-design-pattern .claude/skills/organize-domain-model ; echo "exit=$?"
 ```
 Expected: no matches (exit=1).
 
@@ -179,7 +181,7 @@ git commit -m "chore: add adapted implementation and review skills"
 Run:
 ```bash
 cd "/Users/imjunhyeon/spring projects/ssogssog_spring"
-grep -rniE 'kotlin|ktlint|\bval \b|data class|obrit|gradlew harness|data\.sql' .claude/skills/jpa-patterns .claude/skills/test-patterns .claude/skills/debug-and-verify-locally ; echo "exit=$?"
+grep -rniE 'kotlin|\bval \b|data class|obrit|data\.sql' .claude/skills/jpa-patterns .claude/skills/test-patterns .claude/skills/debug-and-verify-locally ; echo "exit=$?"
 ```
 Expected: no matches (exit=1).
 
@@ -206,14 +208,14 @@ git commit -m "chore: add adapted jpa, test, and debug skills"
 
 - [ ] **Step 2: Write `pre-push-check/SKILL.md`** (English). Keep structure: (1) tests must pass — run `./gradlew test`; (2) docs stay in sync. Adapt doc-sync target to `docs/specs/*` (there is no `docs/PRD/api-spec.md`); flag REST/DTO/error-shape changes not reflected in docs. Never auto-fix code.
 
-- [ ] **Step 3: Write `fill-github-template/SKILL.md`** (English). Adapt: fill `.github/PULL_REQUEST_TEMPLATE.md` / `.github/ISSUE_TEMPLATE/*` if present; if our repo has no template, state it fills a plain PR body in our commit-convention tone. Replace when2go/Artium repo names with ssogssog.
+- [ ] **Step 3: Write `fill-github-template/SKILL.md`** (English). Adapt: fill `.github/pull_request_template.md` (lowercase — this repo's actual filename) and `.github/ISSUE_TEMPLATE/*` if present; both exist in this repo. Instruct the skill to locate the PR template case-insensitively (`pull_request_template.md` or `PULL_REQUEST_TEMPLATE.md`). Replace when2go/Artium repo names with ssogssog.
 
 - [ ] **Step 4: Verify residue-free**
 
 Run:
 ```bash
 cd "/Users/imjunhyeon/spring projects/ssogssog_spring"
-grep -rniE 'kotlin|ktlint|\bval \b|data class|obrit|gradlew harness|when2go|api-spec\.md|PRD/idea' .claude/skills/pre-commit-check .claude/skills/pre-push-check .claude/skills/fill-github-template ; echo "exit=$?"
+grep -rniE 'kotlin|\bval \b|data class|obrit|when2go|api-spec\.md|PRD/idea' .claude/skills/pre-commit-check .claude/skills/pre-push-check .claude/skills/fill-github-template ; echo "exit=$?"
 ```
 Expected: no matches (exit=1).
 
@@ -268,13 +270,16 @@ cp .claude/settings.local.json .agent/settings.local.json
 
 - [ ] **Step 3: Mirror commands and skills into `.agent/`**
 
+`.agent/commands` and `.agent/skills` are harness-owned: this plan creates them and no user-authored local files live there. We create the `.agent` tree fresh in this run, so there is nothing to preserve. Use `rsync --delete` (mirror without a blind `rm -rf`) so the copy is idempotent and only touches these two subdirectories:
+
 Run:
 ```bash
 cd "/Users/imjunhyeon/spring projects/ssogssog_spring"
-rm -rf .agent/commands .agent/skills
-cp -R .claude/commands .agent/commands
-cp -R .claude/skills .agent/skills
+mkdir -p .agent/commands .agent/skills
+rsync -a --delete .claude/commands/ .agent/commands/
+rsync -a --delete .claude/skills/   .agent/skills/
 ```
+(If `rsync` is unavailable, fall back to `rm -rf .agent/commands .agent/skills && cp -R ...` — but only because `.agent` is harness-owned and was created by this plan.)
 
 - [ ] **Step 4: Verify the two trees match and counts are right**
 
@@ -308,10 +313,11 @@ git commit -m "chore: add permission settings and mirror harness into .agent"
 Run:
 ```bash
 cd "/Users/imjunhyeon/spring projects/ssogssog_spring"
-grep -rniE 'kotlin|ktlint|ArchUnit|\bval \b|data class|obrit|gradlew harness|data\.sql|when2go|HARNESS_GUIDE|specs/ADR|EXECUTION_PLAN|api-spec\.md' \
+grep -rniE 'kotlin|\bval \b|data class|obrit|data\.sql|when2go|HARNESS_GUIDE|specs/ADR|EXECUTION_PLAN|api-spec\.md' \
   CLAUDE.md AGENT.md docs/specs/ .claude/ .agent/ ; echo "exit=$?"
 ```
 Expected: no matches (exit=1). Fix any hit in the offending file and re-run.
+(`ktlint`/`ArchUnit`/`gradlew harness` excluded on purpose — see Task 1 note.)
 
 - [ ] **Step 2: Confirm structure completeness**
 

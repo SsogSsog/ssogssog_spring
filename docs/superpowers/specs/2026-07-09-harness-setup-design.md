@@ -91,6 +91,7 @@ application/
     api/                         # 외부에 노출되는 서비스 진입점
     usecase/                     # 유스케이스 단위 로직
     writer/                      # 쓰기(적재) 책임 분리
+    port/                        # 헥사고날 아웃바운드 포트 (StockPort, DailyPricePort, StockIssuePort, StockFinancialPort)
   utils/
 domain/
   {도메인}/
@@ -99,9 +100,11 @@ domain/
     enums/                       # 도메인 enum
     repository/                  # 리포지토리 + Custom(QueryDSL)
     factory/                     # 계산/생성 로직
+    projection/                  # 읽기 모델(read model) / QueryDSL projection
+    policy/                      # 도메인 정책/레지스트리 (예: ThemeEmojiRegistry)
 infrastructure/
   config/                        # QueryDSLConfig, CacheConfig, RateLimiterConfig 등
-  client/{opendart,kis,naver}/   # 외부 API 클라이언트
+  client/{opendart,ksi,naver}/   # 외부 API 클라이언트. 주의: KIS(한국투자증권) 클라이언트 폴더명이 실제로 `ksi`임(KISClient.java). 오타지만 src 리네이밍은 이번 범위 밖 → 현재 경로 그대로 문서화
   adapter/, scheduler/, persistence/
 global/
   payload/                       # ApiResponse, BaseErrorCode, GeneralException, ExceptionAdvice
