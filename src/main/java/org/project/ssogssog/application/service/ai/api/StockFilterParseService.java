@@ -1,8 +1,8 @@
 package org.project.ssogssog.application.service.ai.api;
 
+import org.project.ssogssog.application.service.ai.api.dto.AiRequest;
+import org.project.ssogssog.application.service.ai.api.dto.AiResponse;
 import org.project.ssogssog.application.service.ai.api.dto.StockFilterCondition;
-import org.project.ssogssog.application.service.ai.api.dto.StockFilterParseRequest;
-import org.project.ssogssog.application.service.ai.api.dto.StockFilterParseResponse;
 import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
 import org.springframework.ai.chat.client.ChatClient;
@@ -36,7 +36,7 @@ public class StockFilterParseService {
         this.defaultTemperature = defaultTemperature;
     }
 
-    public StockFilterParseResponse parse(final StockFilterParseRequest request) {
+    public AiResponse.FilterParseDTO parse(final AiRequest.FilterParseDTO request) {
         validateQuestion(request == null ? null : request.question());
         final Double resolvedTemperature = resolveTemperature(request.temperature());
 
@@ -49,7 +49,7 @@ public class StockFilterParseService {
                 .call()
                 .entity(StockFilterCondition.class);
 
-        return new StockFilterParseResponse(condition, resolvedTemperature);
+        return new AiResponse.FilterParseDTO(condition, resolvedTemperature);
     }
 
     Double resolveTemperature(final Double requestedTemperature) {

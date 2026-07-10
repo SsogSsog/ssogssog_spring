@@ -1,7 +1,7 @@
 package org.project.ssogssog.application.service.ai.api;
 
-import org.project.ssogssog.application.service.ai.api.dto.AiAskRequest;
-import org.project.ssogssog.application.service.ai.api.dto.AiAskResponse;
+import org.project.ssogssog.application.service.ai.api.dto.AiRequest;
+import org.project.ssogssog.application.service.ai.api.dto.AiResponse;
 import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
 import org.springframework.ai.chat.client.ChatClient;
@@ -31,7 +31,7 @@ public class AiAskService {
         this.defaultTemperature = defaultTemperature;
     }
 
-    public AiAskResponse ask(final AiAskRequest request) {
+    public AiResponse.AskDTO ask(final AiRequest.AskDTO request) {
         validateQuestion(request == null ? null : request.question());
         final Double resolvedTemperature = resolveTemperature(request.temperature());
 
@@ -44,7 +44,7 @@ public class AiAskService {
                 .call()
                 .content();
 
-        return new AiAskResponse(answer, resolvedTemperature);
+        return new AiResponse.AskDTO(answer, resolvedTemperature);
     }
 
     Double resolveTemperature(final Double requestedTemperature) {

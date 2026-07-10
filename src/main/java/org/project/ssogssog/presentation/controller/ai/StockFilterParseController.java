@@ -3,8 +3,8 @@ package org.project.ssogssog.presentation.controller.ai;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.project.ssogssog.application.service.ai.api.StockFilterParseService;
-import org.project.ssogssog.application.service.ai.api.dto.StockFilterParseRequest;
-import org.project.ssogssog.application.service.ai.api.dto.StockFilterParseResponse;
+import org.project.ssogssog.application.service.ai.api.dto.AiRequest;
+import org.project.ssogssog.application.service.ai.api.dto.AiResponse;
 import org.project.ssogssog.global.payload.ApiResponse;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,8 +28,8 @@ public class StockFilterParseController {
             Spring AI Structured Output(.entity())을 사용하며, 운영 프로파일에서는 노출되지 않습니다.
             """
     )
-    public ApiResponse<StockFilterParseResponse> parseFilter(@RequestBody StockFilterParseRequest request) {
-        StockFilterParseResponse result = stockFilterParseService.parse(request);
+    public ApiResponse<AiResponse.FilterParseDTO> parseFilter(@RequestBody AiRequest.FilterParseDTO request) {
+        AiResponse.FilterParseDTO result = stockFilterParseService.parse(request);
         return ApiResponse.onSuccess(result);
     }
 

@@ -3,8 +3,8 @@ package org.project.ssogssog.presentation.controller.ai;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.project.ssogssog.application.service.ai.api.AiAskService;
-import org.project.ssogssog.application.service.ai.api.dto.AiAskRequest;
-import org.project.ssogssog.application.service.ai.api.dto.AiAskResponse;
+import org.project.ssogssog.application.service.ai.api.dto.AiRequest;
+import org.project.ssogssog.application.service.ai.api.dto.AiResponse;
 import org.project.ssogssog.global.payload.ApiResponse;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,8 +28,8 @@ public class AiAskController {
             운영 프로파일에서는 노출되지 않는 실험용 엔드포인트입니다.
             """
     )
-    public ApiResponse<AiAskResponse> ask(@RequestBody AiAskRequest request) {
-        AiAskResponse result = aiAskService.ask(request);
+    public ApiResponse<AiResponse.AskDTO> ask(@RequestBody AiRequest.AskDTO request) {
+        AiResponse.AskDTO result = aiAskService.ask(request);
         return ApiResponse.onSuccess(result);
     }
 

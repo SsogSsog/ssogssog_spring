@@ -3,8 +3,8 @@ package org.project.ssogssog.presentation.controller.ai;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.project.ssogssog.application.service.ai.api.AiAskService;
-import org.project.ssogssog.application.service.ai.api.dto.AiAskRequest;
-import org.project.ssogssog.application.service.ai.api.dto.AiAskResponse;
+import org.project.ssogssog.application.service.ai.api.dto.AiRequest;
+import org.project.ssogssog.application.service.ai.api.dto.AiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -31,8 +31,8 @@ class AiAskControllerTest {
     @Test
     @DisplayName("POST /ai/ask는 ApiResponse 봉투로 AI 답변과 적용 temperature를 반환한다")
     void ask() throws Exception {
-        when(aiAskService.ask(any(AiAskRequest.class)))
-                .thenReturn(new AiAskResponse("PER은 주가수익비율입니다.", 0.7));
+        when(aiAskService.ask(any(AiRequest.AskDTO.class)))
+                .thenReturn(new AiResponse.AskDTO("PER은 주가수익비율입니다.", 0.7));
 
         mockMvc.perform(post("/ai/ask")
                         .contentType(MediaType.APPLICATION_JSON)
