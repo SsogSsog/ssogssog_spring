@@ -15,7 +15,8 @@ class AiAskServiceTest {
     private final AiAskService aiAskService = new AiAskService(
             null,
             new ClassPathResource("prompts/stock-assistant-system.st"),
-            0.0
+            0.0,
+            null
     );
 
     @Test
