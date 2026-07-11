@@ -85,13 +85,13 @@ This project has no separate lint or format Gradle task. Use the commands above 
 
 ## Git Hooks
 
-A `pre-commit` hook lives in `.githooks/` and blocks commits that contain hardcoded secrets or a force-staged ignored `application.yml`. Because `core.hooksPath` is stored in local `.git/config`, it is not applied automatically on clone. After cloning, activate it once:
+Two hooks live in `.githooks/`: `pre-commit` blocks commits that contain hardcoded secrets or a force-staged ignored `application.yml`, and `pre-push` runs `./gradlew test` and blocks the push on failure. Because `core.hooksPath` is stored in local `.git/config`, it is not applied automatically on clone. After cloning, activate it once:
 
 ```
 git config core.hooksPath .githooks
 ```
 
-The hook is an automated safety net for `pre-commit-check` Check 1; still run the `pre-commit-check` skill before committing. Bypass intentionally with `git commit --no-verify`.
+The hooks are automated safety nets for `pre-commit-check` Check 1 and `pre-push-check` Check 1; still run the `pre-commit-check` skill before committing and the `pre-push-check` skill before pushing (its docs-sync check cannot be automated). Bypass intentionally with `git commit --no-verify` / `git push --no-verify`.
 
 ## Workflow
 

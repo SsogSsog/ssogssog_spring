@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+# push 전에 테스트를 실행해 실패 시 push를 차단한다.
+# pre-push-check 스킬(Check 1)을 자동화한 방어선.
+# Check 2(docs 동기화 판단)는 자동화할 수 없으므로 스킬로 계속 수행한다.
+# 우회가 필요하면: git push --no-verify
+#
+
+echo "pre-push: ./gradlew test 실행 중..."
+
+./gradlew test
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "✖ pre-push 차단: 테스트 실패. 수정 후 다시 push 하세요."
+  exit 1
+fi
+
+exit 0
