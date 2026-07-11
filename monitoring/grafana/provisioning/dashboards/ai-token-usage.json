@@ -1,0 +1,100 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "title": "AI 토큰 사용량 / 비용",
+  "uid": "ai-token-usage",
+  "tags": ["ai", "cost"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-7d", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "input_price",
+        "label": "입력 단가 (USD / 1M tokens)",
+        "type": "textbox",
+        "query": "0.30",
+        "current": { "text": "0.30", "value": "0.30" }
+      },
+      {
+        "name": "output_price",
+        "label": "출력 단가 (USD / 1M tokens, thinking 포함)",
+        "type": "textbox",
+        "query": "2.50",
+        "current": { "text": "2.50", "value": "2.50" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "오늘 총 토큰 (total 기준, thinking 포함)",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(increase(ai_tokens_total{type=\"total\"}[1d]))", "legendFormat": "total" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "오늘 예상 비용 (USD)",
+      "description": "입력 토큰 × 입력단가 + 출력 토큰 × 출력단가. thinking은 출력 요금으로 과금되므로 (total-input)을 출력분으로 계산.",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "(sum(increase(ai_tokens_total{type=\"input\"}[1d])) / 1e6 * $input_price) + ((sum(increase(ai_tokens_total{type=\"total\"}[1d])) - sum(increase(ai_tokens_total{type=\"input\"}[1d]))) / 1e6 * $output_price)",
+          "legendFormat": "USD/day"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD", "decimals": 4 } }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "월간 예상 비용 (USD, 오늘 기준 ×30)",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "((sum(increase(ai_tokens_total{type=\"input\"}[1d])) / 1e6 * $input_price) + ((sum(increase(ai_tokens_total{type=\"total\"}[1d])) - sum(increase(ai_tokens_total{type=\"input\"}[1d]))) / 1e6 * $output_price)) * 30",
+          "legendFormat": "USD/month"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD", "decimals": 2 } }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "일일 토큰 사용량 (엔드포인트별, total)",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (endpoint) (increase(ai_tokens_total{type=\"total\"}[1d]))",
+          "legendFormat": "{{endpoint}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "bars", "fillOpacity": 40 } } }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "thinking 토큰 (total - input - output) — 숨은 비용",
+      "description": "Gemini 2.5의 추론 토큰. 눈에 안 보이지만 출력 요금으로 과금됨.",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (endpoint) (increase(ai_tokens_total{type=\"total\"}[1d])) - sum by (endpoint) (increase(ai_tokens_total{type=\"input\"}[1d])) - sum by (endpoint) (increase(ai_tokens_total{type=\"output\"}[1d]))",
+          "legendFormat": "{{endpoint}} thinking"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 20 } } }
+    }
+  ]
+}

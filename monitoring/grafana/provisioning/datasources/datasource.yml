@@ -6,6 +6,7 @@ apiVersion: 1
 datasources:
   - name: Prometheus  # Grafana에서 보이는 이름
     type: prometheus  # 데이터소스 타입
+    uid: prometheus   # 대시보드 JSON에서 이 UID로 참조
     access: proxy     # Grafana 서버가 대신 요청 (브라우저 접근 x)
     url: http://ssogssog-prometheus:9090  # Promethues 주소 (Docker 네트워크)
     isDefault: true   # 기본 데이터소스로 설정
