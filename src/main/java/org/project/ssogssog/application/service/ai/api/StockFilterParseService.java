@@ -1,11 +1,14 @@
 package org.project.ssogssog.application.service.ai.api;
 
+import org.project.ssogssog.application.service.ai.AiTokenMetrics;
 import org.project.ssogssog.application.service.ai.api.dto.AiRequest;
 import org.project.ssogssog.application.service.ai.api.dto.AiResponse;
 import org.project.ssogssog.application.service.ai.api.dto.StockFilterCondition;
 import org.project.ssogssog.global.payload.code.status.ErrorStatus;
 import org.project.ssogssog.global.payload.exception.GeneralException;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.ResponseEntity;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -25,29 +28,36 @@ public class StockFilterParseService {
     private final ChatClient chatClient;
     private final Resource systemPrompt;
     private final Double defaultTemperature;
+    private final AiTokenMetrics tokenMetrics;
 
     public StockFilterParseService(
             ChatClient chatClient,
             @Value("classpath:prompts/stock-filter-parser-system.st") Resource systemPrompt,
-            @Value("${ssogssog.ai.default-temperature:0.0}") Double defaultTemperature
+            @Value("${ssogssog.ai.default-temperature:0.0}") Double defaultTemperature,
+            AiTokenMetrics tokenMetrics
     ) {
         this.chatClient = chatClient;
         this.systemPrompt = systemPrompt;
         this.defaultTemperature = defaultTemperature;
+        this.tokenMetrics = tokenMetrics;
     }
 
     public AiResponse.FilterParseDTO parse(final AiRequest.FilterParseDTO request) {
         validateQuestion(request == null ? null : request.question());
         final Double resolvedTemperature = resolveTemperature(request.temperature());
 
-        final StockFilterCondition condition = chatClient.prompt()
+        final ResponseEntity<ChatResponse, StockFilterCondition> responseEntity = chatClient.prompt()
                 .system(systemPrompt)
                 .user(request.question())
                 .options(ChatOptions.builder()
                         .temperature(resolvedTemperature)
                         .build())
                 .call()
-                .entity(StockFilterCondition.class);
+                .responseEntity(StockFilterCondition.class);
+
+        tokenMetrics.record("parse-filter", responseEntity.getResponse());
+
+        final StockFilterCondition condition = responseEntity.entity();
 
         return new AiResponse.FilterParseDTO(condition, resolvedTemperature);
     }

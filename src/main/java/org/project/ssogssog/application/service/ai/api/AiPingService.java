@@ -1,7 +1,9 @@
 package org.project.ssogssog.application.service.ai.api;
 
 import lombok.RequiredArgsConstructor;
+import org.project.ssogssog.application.service.ai.AiTokenMetrics;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.stereotype.Service;
 
 /**
@@ -15,12 +17,17 @@ public class AiPingService {
     private static final String PING_PROMPT = "안녕! 너와 연결됐는지 확인 중이야. 한 문장으로 짧게 인사해줘.";
 
     private final ChatClient chatClient;
+    private final AiTokenMetrics tokenMetrics;
 
     public String ping() {
-        return chatClient.prompt()
+        final ChatResponse response = chatClient.prompt()
                 .user(PING_PROMPT)
                 .call()
-                .content();
+                .chatResponse();
+
+        tokenMetrics.record("ping", response);
+
+        return response.getResult().getOutput().getText();
     }
 
 }
