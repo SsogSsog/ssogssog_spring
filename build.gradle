@@ -87,6 +87,10 @@ dependencies {
     implementation platform("org.springframework.ai:spring-ai-bom:${springAiVersion}")
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 
+    // Spring AI pgvector (RAG 공시 임베딩 저장용, 기존 MySQL과 별도 DataSource)
+    implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
+    runtimeOnly 'org.postgresql:postgresql'
+
 
     // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
