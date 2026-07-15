@@ -32,6 +32,7 @@ public class DisclosureRagService {
 
     static final int TOP_K = 4;
     static final int MAX_QUESTION_LENGTH = 1000;
+    static final double SIMILARITY_THRESHOLD = 0.7;
 
     private final VectorStore vectorStore;
     private final ChatClient chatClient;
@@ -89,6 +90,7 @@ public class DisclosureRagService {
         final SearchRequest searchRequest = SearchRequest.builder()
                 .query(question)
                 .topK(TOP_K)
+                .similarityThreshold(SIMILARITY_THRESHOLD)
                 .build();
 
         final List<Document> found = vectorStore.similaritySearch(searchRequest);

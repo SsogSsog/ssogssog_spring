@@ -83,6 +83,7 @@ class DisclosureRagServiceTest {
         final SearchRequest searchRequest = searchRequestCaptor.getValue();
         assertThat(searchRequest.getQuery()).isEqualTo(question);
         assertThat(searchRequest.getTopK()).isEqualTo(4);
+        assertThat(searchRequest.getSimilarityThreshold()).isEqualTo(0.7);
         assertThat(searchRequest.hasFilterExpression()).isFalse();
 
         verify(userSpec).text(userPrompt);
