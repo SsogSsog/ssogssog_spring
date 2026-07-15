@@ -43,7 +43,12 @@ class DisclosureRagServiceTest {
         final Resource userPrompt = new ClassPathResource("prompts/disclosure-rag-user.st");
 
         final List<Document> foundDocuments = List.of(
-                Document.builder().text("현금·현물배당 결정").build(),
+                Document.builder()
+                        .text("현금·현물배당 결정")
+                        .metadata("submitter", "삼성전자")
+                        .metadata("date", "2026-07-10")
+                        .build(),
+                // metadata 없는 문서 → "회사 미상 · 날짜 미상"으로 대체되는지 함께 검증
                 Document.builder().text("자기주식취득 결정").build()
         );
         when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(foundDocuments);
@@ -81,8 +86,8 @@ class DisclosureRagServiceTest {
         assertThat(searchRequest.hasFilterExpression()).isFalse();
 
         verify(userSpec).text(userPrompt);
-        verify(userSpec).param("context", "1. 현금·현물배당 결정" + System.lineSeparator()
-                + "2. 자기주식취득 결정");
+        verify(userSpec).param("context", "1. [삼성전자 · 2026-07-10] 현금·현물배당 결정" + System.lineSeparator()
+                + "2. [회사 미상 · 날짜 미상] 자기주식취득 결정");
         verify(userSpec).param("question", question);
         verify(tokenMetrics).record("rag-ask", chatResponse);
         assertThat(result.answer()).isEqualTo("배당과 자기주식 관련 공시가 있습니다.");

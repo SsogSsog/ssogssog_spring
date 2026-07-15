@@ -99,15 +99,29 @@ public class DisclosureRagService {
         return documents;
     }
 
-    /** 검색된 공시 제목을 번호가 붙은 하나의 프롬프트 컨텍스트로 변환한다. */
+    /** 검색된 공시를 [회사 · 날짜] 제목 형태의 번호 붙은 프롬프트 컨텍스트로 변환한다. */
     private String buildContext(final List<Document> documents) {
         if (documents.isEmpty()) {
             return "검색된 공시가 없습니다.";
         }
 
         return IntStream.range(0, documents.size())
-                .mapToObj(index -> "%d. %s".formatted(index + 1, documents.get(index).getText()))
+                .mapToObj(index -> {
+                    final Document document = documents.get(index);
+                    final String submitter = metadataOrDefault(document, "submitter", "회사 미상");
+                    final String date = metadataOrDefault(document, "date", "날짜 미상");
+                    return "%d. [%s · %s] %s".formatted(index + 1, submitter, date, document.getText());
+                })
                 .collect(Collectors.joining(System.lineSeparator()));
+    }
+
+    /** metadata 값을 문자열로 꺼내되, 없거나 비어 있으면 기본값을 돌려준다. */
+    private String metadataOrDefault(final Document document, final String key, final String defaultValue) {
+        final Object value = document.getMetadata().get(key);
+        if (value == null || value.toString().isBlank()) {
+            return defaultValue;
+        }
+        return value.toString();
     }
 
     private void validateQuestion(final String question) {
